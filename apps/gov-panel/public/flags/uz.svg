@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="60" height="30" role="img" aria-label="O'zbekiston bayrog'i">
+  <!-- 5-pointed star, outer radius 0.7, centered at (0,0). Reused via <use>. -->
+  <defs>
+    <polygon id="us" points="0,-0.7 0.165,-0.216 0.666,-0.216 0.256,0.083 0.412,0.567 0,0.267 -0.412,0.567 -0.256,0.083 -0.666,-0.216 -0.165,-0.216" fill="#ffffff"/>
+  </defs>
+
+  <!-- 5 horizontal bands per the official flag: sky blue, white (red-bordered), green.
+       Colors: PMS 313 #0099b5, PMS 354 #1eb53a, red ribbon #ce1126. -->
+  <rect width="60" height="10" y="0"  fill="#0099b5"/>
+  <rect width="60" height="10" y="10" fill="#ffffff"/>
+  <rect width="60" height="10" y="20" fill="#1eb53a"/>
+  <rect width="60" height="0.6" y="9.7"  fill="#ce1126"/>
+  <rect width="60" height="0.6" y="19.7" fill="#ce1126"/>
+
+  <!-- Crescent moon: top-left of the blue band, opens to the right. -->
+  <circle cx="9"    cy="5" r="3"   fill="#ffffff"/>
+  <circle cx="10.3" cy="5" r="2.6" fill="#0099b5"/>
+
+  <!-- 12 stars to the right of the crescent.
+       Layout: 3 rows of 3-4-5 (top to bottom). The RIGHTMOST column is
+       aligned across every row; each subsequent row extends one more star
+       to the LEFT. This produces the canonical triangle that fans out
+       toward the bottom-left of the cluster. -->
+
+  <!-- Row 1 (top): 3 stars, rightmost 3 columns. -->
+  <use href="#us" x="24"   y="2"/>
+  <use href="#us" x="27.5" y="2"/>
+  <use href="#us" x="31"   y="2"/>
+
+  <!-- Row 2 (middle): 4 stars, one more on the left. -->
+  <use href="#us" x="20.5" y="4.5"/>
+  <use href="#us" x="24"   y="4.5"/>
+  <use href="#us" x="27.5" y="4.5"/>
+  <use href="#us" x="31"   y="4.5"/>
+
+  <!-- Row 3 (bottom): 5 stars, leftmost reaches furthest left. -->
+  <use href="#us" x="17"   y="7"/>
+  <use href="#us" x="20.5" y="7"/>
+  <use href="#us" x="24"   y="7"/>
+  <use href="#us" x="27.5" y="7"/>
+  <use href="#us" x="31"   y="7"/>
+</svg>

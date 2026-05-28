@@ -1,0 +1,32 @@
+# Kiosk Gov - Flutter Kiosk Voice Agent
+#
+# Single admin_ui service hosts both:
+#   - Admin dashboard (React/Vite frontend)
+#   - Kiosk voice WebSocket endpoint (/ws/kiosk/voice) for Flutter client
+
+name: kiosk-gov
+
+services:
+  admin_ui:
+    image: kiosk-gov-admin-ui:latest
+    pull_policy: build
+    build:
+      context: ./admin_ui
+      dockerfile: Dockerfile
+      network: host
+    container_name: admin_ui
+    network_mode: host
+    # Grant docker socket access to non-root user (appuser runs as UID 1000)
+    group_add:
+      - ${DOCKER_GID:-999}
+    volumes:
+      - ./:/app/project
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock
+      - /etc/os-release:/host/etc/os-release:ro
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - PROJECT_ROOT=/app/project
+      - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT:-/home/rocked/github.com/kiosk_gov}
+    restart: unless-stopped

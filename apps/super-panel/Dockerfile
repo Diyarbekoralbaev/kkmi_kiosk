@@ -1,0 +1,31 @@
+# Super-panel production image. Two stages so the final image is just the
+# built static files behind nginx — no node_modules, no source code shipped.
+#
+# Vite hardcodes `import.meta.env.VITE_*` values into the bundled JS at build
+# time, so the API base URL must be a build arg (passed by CI). Changing the
+# backend URL = rebuild the image.
+
+ARG VITE_API_BASE_URL=https://kiosk-api.example.uz
+
+# ── 1. Build SPA ────────────────────────────────────────────────────────
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY . .
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+RUN npm run build
+
+# ── 2. Static serve ─────────────────────────────────────────────────────
+FROM nginx:1.27-alpine AS runtime
+
+# Drop the default config and ship our SPA-fallback rewriter.
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+    CMD wget -qO- http://localhost/ >/dev/null || exit 1

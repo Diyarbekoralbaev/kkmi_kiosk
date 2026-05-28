@@ -1,0 +1,200 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Русский. _Locale_ru: unique sentinel for LocalizationService. -->
+    <x:String x:Key="_Locale_ru">ru</x:String>
+
+    <!-- Header / footer / language labels -->
+    <x:String x:Key="HeaderTagline">AI-ассистент «Умной приёмной»</x:String>
+    <x:String x:Key="LangUz">Ўзбекша</x:String>
+    <x:String x:Key="LangRu">Русский</x:String>
+    <x:String x:Key="LangKk">Қарақалпақша</x:String>
+    <x:String x:Key="FooterRights">Все права защищены.</x:String>
+    <x:String x:Key="HelpLabel">Помощь:</x:String>
+
+    <!-- Home page (2026 redesign) -->
+    <x:String x:Key="HomeGreetingChip">Добро пожаловать!</x:String>
+    <x:String x:Key="HomeQuestion">Чем мы можем вам помочь?</x:String>
+    <x:String x:Key="HomeQuestionHighlight">помочь</x:String>
+    <x:String x:Key="HomeSubtitle">Выберите одну из услуг ниже. Оставьте обращение, поговорите с AI-ассистентом или запишитесь на приём.</x:String>
+    <x:String x:Key="HomeTileSubmitTitle">Подать обращение</x:String>
+    <x:String x:Key="HomeTileSubmitSubtitle">Оформите жалобу или предложение в электронном виде</x:String>
+    <x:String x:Key="HomeTileAiTitle">Поговорить с AI ассистентом</x:String>
+    <x:String x:Key="HomeTileAiSubtitle">Получите быстрые ответы от искусственного интеллекта</x:String>
+    <x:String x:Key="HomeTileDeputyTitle">Приём заместителя хокима</x:String>
+    <x:String x:Key="HomeTileDeputySubtitle">Запись на встречу с заместителем по нужному направлению</x:String>
+    <x:String x:Key="HomeTileMayorTitle">Личный приём хокима</x:String>
+    <x:String x:Key="HomeTileMayorSubtitle">Запись на личный приём к хокиму города</x:String>
+
+    <!-- NavBar -->
+    <x:String x:Key="NavBack">Назад</x:String>
+    <x:String x:Key="NavHome">Главное меню</x:String>
+
+    <!-- AI Yordamchi page -->
+    <x:String x:Key="AiPageTitle">AI ассистент</x:String>
+    <x:String x:Key="AiPageStatusConnecting">Подключение...</x:String>
+    <x:String x:Key="AiPageStatusListening">Говорите, я слушаю</x:String>
+    <x:String x:Key="AiPageHint">Задайте вопрос или расскажите о вашем обращении. Робот вас слушает.</x:String>
+
+    <!-- MicOrb -->
+    <x:String x:Key="MicListening">Слушает</x:String>
+    <x:String x:Key="MicTapToStart">Нажмите чтобы начать</x:String>
+    <x:String x:Key="MicDisconnected">Не подключен</x:String>
+    <x:String x:Key="MicConnecting">Подключение</x:String>
+    <x:String x:Key="MicSpeaking">Говорите</x:String>
+    <x:String x:Key="MicStopping">Останавливается...</x:String>
+    <x:String x:Key="MicStarting">Запускается...</x:String>
+    <x:String x:Key="MicError">Ошибка</x:String>
+
+    <!-- Qabul page -->
+    <x:String x:Key="QabulPageTitle">Запись на приём</x:String>
+    <x:String x:Key="QabulPageTitleChief">Запись на личный приём хокима</x:String>
+    <x:String x:Key="QabulPageTitleDeputy">Запись на приём заместителя</x:String>
+    <x:String x:Key="QabulPickPrompt">С кем хотите встретиться?</x:String>
+    <x:String x:Key="QabulPickPromptChief">Личный приём хокима:</x:String>
+    <x:String x:Key="QabulPickPromptDeputy">Выберите заместителя хокима:</x:String>
+    <x:String x:Key="QabulPhonePreviewTitle">Проверьте ваш номер телефона</x:String>
+    <x:String x:Key="QabulPhonePreviewHint">Перед отправкой убедитесь, что номер указан верно. Если ошибка — нажмите «Исправить».</x:String>
+    <x:String x:Key="QabulPhonePreviewEdit">Исправить</x:String>
+    <x:String x:Key="QabulPhonePreviewSend">Да, отправить</x:String>
+    <x:String x:Key="QabulSelectedLabel">Выбранное должностное лицо</x:String>
+    <x:String x:Key="QabulPickAnother">Выбрать другое должностное лицо</x:String>
+    <x:String x:Key="QabulPhoneLabel">Номер телефона</x:String>
+    <x:String x:Key="QabulConfirmButton">Подтвердить</x:String>
+    <x:String x:Key="QabulConfirmErrorPhoneShort">Номер телефона неполный (минимум 9 цифр)</x:String>
+    <x:String x:Key="QabulConfirmSending">Отправляется...</x:String>
+    <x:String x:Key="QabulConfirmError">Ошибка. Проверьте интернет и попробуйте снова.</x:String>
+
+    <!-- Voice-flow preview card — shown after AI agent calls preview_appointment -->
+    <x:String x:Key="QabulVoicePreviewTitle">Подтверждение</x:String>
+    <x:String x:Key="QabulVoicePreviewOfficialLabel">Должностное лицо</x:String>
+    <x:String x:Key="QabulVoicePreviewDateLabel">Дата</x:String>
+    <x:String x:Key="QabulVoicePreviewTimeLabel">Время</x:String>
+    <x:String x:Key="QabulVoicePreviewPhoneLabel">Телефон</x:String>
+    <x:String x:Key="QabulVoicePreviewTopicLabel">Направление</x:String>
+    <x:String x:Key="QabulVoicePreviewConfirm">Подтверждаю</x:String>
+    <x:String x:Key="QabulVoicePreviewReject">Нет, вернуть</x:String>
+
+    <x:String x:Key="QabulTalonTitle">НОМЕР ПРИЁМА</x:String>
+    <x:String x:Key="QabulTalonSubtitleChief">Номер на личный приём</x:String>
+    <x:String x:Key="QabulTalonSubtitleDeputy">Номер на приём заместителя</x:String>
+    <x:String x:Key="QabulTalonQueuePrefix">НОМЕР</x:String>
+    <x:String x:Key="QabulTalonScanHint">Отсканируйте QR на телефоне.</x:String>
+    <!-- On-screen talon labels (must match the printed receipt's
+         RECEIPT_STRINGS in backend/src/ai/receipt.py). Standardized glossary:
+         Official=Должностное лицо, Topic=Направление, Ticket=Номер. -->
+    <x:String x:Key="QabulTalonChipta">Номер приёма: </x:String>
+    <x:String x:Key="QabulTalonMansabdor">Должностное лицо: </x:String>
+    <x:String x:Key="QabulTalonMasala">Направление: </x:String>
+    <x:String x:Key="QabulTalonSana">Дата: </x:String>
+    <x:String x:Key="QabulTalonVaqt">Время: </x:String>
+    <x:String x:Key="QabulTalonNavbat">Номер: </x:String>
+    <x:String x:Key="QabulTalonTelefon">Телефон: </x:String>
+
+    <!-- Submit page -->
+    <x:String x:Key="SubmitPageTitle">Подать обращение</x:String>
+    <x:String x:Key="SubmitStep1">1. Направление</x:String>
+    <x:String x:Key="SubmitStep2">2. Полный текст</x:String>
+    <x:String x:Key="SubmitStep3">3. Проверка</x:String>
+    <x:String x:Key="SubmitStep4">4. Готово</x:String>
+    <x:String x:Key="SubmitTopicLabel">Направление</x:String>
+    <x:String x:Key="SubmitBodyLabel">Полный текст</x:String>
+    <x:String x:Key="SubmitPhoneLabel">Телефон</x:String>
+
+    <!-- Contacts page -->
+    <x:String x:Key="ContactsPageTitle">Контакты</x:String>
+    <x:String x:Key="ContactsAddressLabel">📍  Адрес</x:String>
+    <x:String x:Key="ContactsAddressValue">г. Нукус, ул. Бердака 1</x:String>
+    <x:String x:Key="ContactsPhoneIconLabel">☎  Телефон</x:String>
+    <x:String x:Key="ContactsPhoneValue">(+998 61) 222 12 34</x:String>
+    <x:String x:Key="ContactsEmailLabel">✉  Эл. почта</x:String>
+    <x:String x:Key="ContactsEmailValue">info@nukushokimiyat.uz</x:String>
+    <x:String x:Key="ContactsHoursLabel">🕐  Часы работы</x:String>
+    <x:String x:Key="ContactsHoursValue">Пн–Пт  09:00 – 18:00</x:String>
+
+    <!-- Offline overlay -->
+    <x:String x:Key="OfflineTitle">Нет соединения</x:String>
+    <x:String x:Key="OfflineHint">Соединение восстанавливается...</x:String>
+
+    <!-- Revoked overlay -->
+    <x:String x:Key="RevokedTitle">Доступ к этому киоску запрещён</x:String>
+    <x:String x:Key="RevokedBody">Доступ этого устройства отозван администратором. Оператор должен ввести новый код.</x:String>
+    <x:String x:Key="RevokedButton">Ввести новый код</x:String>
+
+    <!-- Submit success overlay -->
+    <x:String x:Key="SubmitSuccessTitle">Ваше обращение принято</x:String>
+    <x:String x:Key="SubmitSuccessBody">Сотрудники хокимията рассмотрят ваше обращение.</x:String>
+    <x:String x:Key="SubmitSuccessTopicLabel">Тема:</x:String>
+    <x:String x:Key="SubmitSuccessIdLabel">Номер:</x:String>
+
+    <!-- Updating page -->
+    <x:String x:Key="UpdatingTitle">Система обновляется</x:String>
+    <x:String x:Key="UpdatingBody">Через несколько секунд произойдёт перезагрузка. Подождите...</x:String>
+    <x:String x:Key="UpdatingStatusPreparing">Подготовка...</x:String>
+    <x:String x:Key="UpdatingVersionLabel">Версия: </x:String>
+    <x:String x:Key="UpdatingDownloadingLabel">Загружается...</x:String>
+    <x:String x:Key="UpdatingMandatory">Обязательное обновление...</x:String>
+    <x:String x:Key="UpdatingApplying">Применяется...</x:String>
+    <x:String x:Key="UpdatingFailed">Обновление не прошло — работает старая версия.</x:String>
+
+    <!-- Admin PIN dialog -->
+    <x:String x:Key="AdminPinTitle">Настройки администратора</x:String>
+    <x:String x:Key="AdminPinPrompt">Введите PIN-код</x:String>
+    <x:String x:Key="AdminPinIncorrect">PIN-код неверный</x:String>
+    <x:String x:Key="AdminPinCancel">Отмена</x:String>
+    <x:String x:Key="AdminPinConfirm">Войти</x:String>
+
+    <!-- Admin choice dialog -->
+    <x:String x:Key="AdminChoiceTitle">Выберите</x:String>
+    <x:String x:Key="AdminChoicePrompt">Выйти из программы или открыть настройки</x:String>
+    <x:String x:Key="AdminExit">Выход</x:String>
+    <x:String x:Key="AdminSettings">Настройки</x:String>
+    <x:String x:Key="AdminCancel">Отмена</x:String>
+
+    <!-- Admin settings window -->
+    <x:String x:Key="AdminSettingsTitle">Настройки администратора</x:String>
+    <x:String x:Key="AdminSettingsIntro">Выберите микрофон, динамик и принтер. После изменений перезапустите аудио-сессию.</x:String>
+    <x:String x:Key="AdminSettingsMicLabel">Аудио вход (Микрофон)</x:String>
+    <x:String x:Key="AdminSettingsSpeakerLabel">Аудио выход (Динамик)</x:String>
+    <x:String x:Key="AdminSettingsVolume">Громкость</x:String>
+    <x:String x:Key="AdminSettingsPrinter">Принтер</x:String>
+    <x:String x:Key="AdminSettingsAutoPrint">Автоматически печатать талон</x:String>
+    <x:String x:Key="AdminSettingsTestPrint">Пробная печать</x:String>
+    <x:String x:Key="AdminSettingsTestMic">Проверить микрофон</x:String>
+    <x:String x:Key="MicTestSpeakNow">Говорите (3 секунды)...</x:String>
+    <x:String x:Key="MicTestPass">Микрофон работает</x:String>
+    <x:String x:Key="MicTestSilent">Звук не обнаружен — попробуйте другое устройство</x:String>
+    <x:String x:Key="MicTestErrorOpen">Не удалось открыть устройство</x:String>
+    <x:String x:Key="MicTestNoDevice">Микрофон не выбран</x:String>
+    <x:String x:Key="AdminSettingsSave">Сохранить</x:String>
+
+    <!-- Enrollment window -->
+    <x:String x:Key="EnrollmentTitle">Регистрация киоска</x:String>
+    <x:String x:Key="EnrollmentIntro">Первое подключение. Введите код регистрации из супер-панели.</x:String>
+    <x:String x:Key="EnrollmentBackendLabel">Адрес сервера</x:String>
+    <x:String x:Key="EnrollmentCodeLabel">Код регистрации</x:String>
+    <x:String x:Key="EnrollmentButton">Зарегистрировать</x:String>
+
+    <!-- Manual qabul topic step -->
+    <x:String x:Key="QabulTopicLabel">Кратко опишите свой вопрос</x:String>
+    <x:String x:Key="QabulTopicHint">Одной-двумя фразами</x:String>
+    <x:String x:Key="QabulTopicErrorShort">Введите минимум 3 символа</x:String>
+    <x:String x:Key="QabulContinueButton">Продолжить</x:String>
+
+    <!-- Manual murojaat flow -->
+    <x:String x:Key="ManualSubmitPageTitle">Подать обращение</x:String>
+    <x:String x:Key="ManualMurajatTopicTitle">Тема обращения</x:String>
+    <x:String x:Key="ManualMurajatTopicHint">Кратко — одной-двумя фразами</x:String>
+    <x:String x:Key="ManualMurajatBodyTitle">Подробное описание</x:String>
+    <x:String x:Key="ManualMurajatBodyHint">Что произошло, что просите — изложите подробно</x:String>
+    <x:String x:Key="ManualMurajatBodyErrorShort">Введите минимум 5 символов</x:String>
+    <x:String x:Key="ManualMurajatPhoneTitle">Контактный номер</x:String>
+    <x:String x:Key="ManualMurajatPreviewTitle">Проверьте данные</x:String>
+    <x:String x:Key="ManualMurajatSuccessTitle">Обращение принято</x:String>
+    <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
+    <x:String x:Key="ManualMurajatSuccessHint">Сотрудники хокимията рассмотрят ваше обращение.</x:String>
+    <x:String x:Key="ManualMurajatSubmitting">Отправка...</x:String>
+    <x:String x:Key="ManualMurajatSubmitError">Не удалось отправить. Попробуйте ещё раз.</x:String>
+    <x:String x:Key="ManualBackButton">Назад</x:String>
+    <x:String x:Key="ManualConfirmButton">Подтвердить и отправить</x:String>
+    <x:String x:Key="ManualEditButton">Изменить</x:String>
+</ResourceDictionary>

@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="380"
+        x:Class="Kiosk.App.Pages.AdminChoiceDialog"
+        Title="Kiosk · Tańlań"
+        Width="420" Height="380"
+        WindowStartupLocation="CenterScreen"
+        Background="#f4f7fb"
+        CanResize="False">
+    <StackPanel Margin="36" Spacing="18" VerticalAlignment="Center">
+        <TextBlock Text="{DynamicResource AdminChoiceTitle}" FontSize="22" FontWeight="Light" Foreground="#0a4d8c" />
+        <TextBlock Text="{DynamicResource AdminChoicePrompt}"
+                   FontSize="13" Foreground="#64748b" TextWrapping="Wrap" />
+
+        <Button Content="{DynamicResource AdminExit}" Click="OnExit" Classes="action danger" IsDefault="True" />
+        <Button Content="{DynamicResource AdminSettings}" Click="OnSettings" Classes="action primary" />
+        <Button Content="{DynamicResource AdminCancel}" Click="OnCancel" Classes="action ghost" />
+    </StackPanel>
+
+    <Window.Styles>
+        <Style Selector="Button.action">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="20,16" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#dc2626" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#64748b" />
+            <Setter Property="BorderBrush" Value="#cbd5e1" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+    </Window.Styles>
+</Window>

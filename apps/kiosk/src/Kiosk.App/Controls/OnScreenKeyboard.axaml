@@ -1,0 +1,135 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="540"
+             x:Class="Kiosk.App.Controls.OnScreenKeyboard">
+    <!-- Touch keyboard for manual qabul + manual murajat flows. 5 rows ×
+         12 columns. Row 0 numbers + punctuation (always visible). Rows
+         1-3 letters (Cyrillic by default; ABC key toggles to Latin).
+         Row 4 Karakalpak specials + space + Clear. Caps-lock key in
+         row 2 column 11. Backspace in row 3 column 11.
+
+         Letter buttons have Tag="L:row,col" so the code-behind can
+         walk them and rewrite Content when mode or caps changes.
+         Action keys have Tag="A:caps" / "A:mode" / "A:back" /
+         "A:space" / "A:clear". -->
+    <Border Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1"
+            CornerRadius="14" Padding="10">
+        <Grid RowDefinitions="*,*,*,*,*"
+              ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,*,*"
+              RowSpacing="6" ColumnSpacing="6">
+
+            <!-- ── Row 0: numbers + punctuation (no caps variant) ── -->
+            <Button Grid.Row="0" Grid.Column="0"  Classes="key num" Content="1" Tag="N:0,0" />
+            <Button Grid.Row="0" Grid.Column="1"  Classes="key num" Content="2" Tag="N:0,1" />
+            <Button Grid.Row="0" Grid.Column="2"  Classes="key num" Content="3" Tag="N:0,2" />
+            <Button Grid.Row="0" Grid.Column="3"  Classes="key num" Content="4" Tag="N:0,3" />
+            <Button Grid.Row="0" Grid.Column="4"  Classes="key num" Content="5" Tag="N:0,4" />
+            <Button Grid.Row="0" Grid.Column="5"  Classes="key num" Content="6" Tag="N:0,5" />
+            <Button Grid.Row="0" Grid.Column="6"  Classes="key num" Content="7" Tag="N:0,6" />
+            <Button Grid.Row="0" Grid.Column="7"  Classes="key num" Content="8" Tag="N:0,7" />
+            <Button Grid.Row="0" Grid.Column="8"  Classes="key num" Content="9" Tag="N:0,8" />
+            <Button Grid.Row="0" Grid.Column="9"  Classes="key num" Content="0" Tag="N:0,9" />
+            <Button Grid.Row="0" Grid.Column="10" Classes="key num" Content="." Tag="N:0,10" />
+            <Button Grid.Row="0" Grid.Column="11" Classes="key num" Content="," Tag="N:0,11" />
+
+            <!-- ── Row 1: 12 letter keys (cyrillic default) ── -->
+            <Button Grid.Row="1" Grid.Column="0"  Classes="key letter" Content="й" Tag="L:1,0" />
+            <Button Grid.Row="1" Grid.Column="1"  Classes="key letter" Content="ц" Tag="L:1,1" />
+            <Button Grid.Row="1" Grid.Column="2"  Classes="key letter" Content="у" Tag="L:1,2" />
+            <Button Grid.Row="1" Grid.Column="3"  Classes="key letter" Content="к" Tag="L:1,3" />
+            <Button Grid.Row="1" Grid.Column="4"  Classes="key letter" Content="е" Tag="L:1,4" />
+            <Button Grid.Row="1" Grid.Column="5"  Classes="key letter" Content="н" Tag="L:1,5" />
+            <Button Grid.Row="1" Grid.Column="6"  Classes="key letter" Content="г" Tag="L:1,6" />
+            <Button Grid.Row="1" Grid.Column="7"  Classes="key letter" Content="ш" Tag="L:1,7" />
+            <Button Grid.Row="1" Grid.Column="8"  Classes="key letter" Content="щ" Tag="L:1,8" />
+            <Button Grid.Row="1" Grid.Column="9"  Classes="key letter" Content="з" Tag="L:1,9" />
+            <Button Grid.Row="1" Grid.Column="10" Classes="key letter" Content="х" Tag="L:1,10" />
+            <Button Grid.Row="1" Grid.Column="11" Classes="key letter" Content="ъ" Tag="L:1,11" />
+
+            <!-- ── Row 2: 11 letter keys + Caps-lock (col 11) ── -->
+            <Button Grid.Row="2" Grid.Column="0"  Classes="key letter" Content="ф" Tag="L:2,0" />
+            <Button Grid.Row="2" Grid.Column="1"  Classes="key letter" Content="ы" Tag="L:2,1" />
+            <Button Grid.Row="2" Grid.Column="2"  Classes="key letter" Content="в" Tag="L:2,2" />
+            <Button Grid.Row="2" Grid.Column="3"  Classes="key letter" Content="а" Tag="L:2,3" />
+            <Button Grid.Row="2" Grid.Column="4"  Classes="key letter" Content="п" Tag="L:2,4" />
+            <Button Grid.Row="2" Grid.Column="5"  Classes="key letter" Content="р" Tag="L:2,5" />
+            <Button Grid.Row="2" Grid.Column="6"  Classes="key letter" Content="о" Tag="L:2,6" />
+            <Button Grid.Row="2" Grid.Column="7"  Classes="key letter" Content="л" Tag="L:2,7" />
+            <Button Grid.Row="2" Grid.Column="8"  Classes="key letter" Content="д" Tag="L:2,8" />
+            <Button Grid.Row="2" Grid.Column="9"  Classes="key letter" Content="ж" Tag="L:2,9" />
+            <Button Grid.Row="2" Grid.Column="10" Classes="key letter" Content="э" Tag="L:2,10" />
+            <Button x:Name="CapsKey" Grid.Row="2" Grid.Column="11" Classes="key alt" Content="Aa" Tag="A:caps" />
+
+            <!-- ── Row 3: 10 letter keys + ABC toggle + Backspace ── -->
+            <Button Grid.Row="3" Grid.Column="0"  Classes="key letter" Content="я" Tag="L:3,0" />
+            <Button Grid.Row="3" Grid.Column="1"  Classes="key letter" Content="ч" Tag="L:3,1" />
+            <Button Grid.Row="3" Grid.Column="2"  Classes="key letter" Content="с" Tag="L:3,2" />
+            <Button Grid.Row="3" Grid.Column="3"  Classes="key letter" Content="м" Tag="L:3,3" />
+            <Button Grid.Row="3" Grid.Column="4"  Classes="key letter" Content="и" Tag="L:3,4" />
+            <Button Grid.Row="3" Grid.Column="5"  Classes="key letter" Content="т" Tag="L:3,5" />
+            <Button Grid.Row="3" Grid.Column="6"  Classes="key letter" Content="ь" Tag="L:3,6" />
+            <Button Grid.Row="3" Grid.Column="7"  Classes="key letter" Content="б" Tag="L:3,7" />
+            <Button Grid.Row="3" Grid.Column="8"  Classes="key letter" Content="ю" Tag="L:3,8" />
+            <Button Grid.Row="3" Grid.Column="9"  Classes="key letter" Content="ё" Tag="L:3,9" />
+            <Button x:Name="ModeKey" Grid.Row="3" Grid.Column="10" Classes="key alt" Content="ABC" Tag="A:mode" />
+            <Button Grid.Row="3" Grid.Column="11" Classes="key alt" Content="←" Tag="A:back" />
+
+            <!-- ── Row 4: 9 Karakalpak specials + Space (2 cols wide) + Clear ── -->
+            <Button Grid.Row="4" Grid.Column="0"  Classes="key letter" Content="қ" Tag="L:4,0" />
+            <Button Grid.Row="4" Grid.Column="1"  Classes="key letter" Content="ў" Tag="L:4,1" />
+            <Button Grid.Row="4" Grid.Column="2"  Classes="key letter" Content="ғ" Tag="L:4,2" />
+            <Button Grid.Row="4" Grid.Column="3"  Classes="key letter" Content="ҳ" Tag="L:4,3" />
+            <Button Grid.Row="4" Grid.Column="4"  Classes="key letter" Content="ң" Tag="L:4,4" />
+            <Button Grid.Row="4" Grid.Column="5"  Classes="key letter" Content="ө" Tag="L:4,5" />
+            <Button Grid.Row="4" Grid.Column="6"  Classes="key letter" Content="ү" Tag="L:4,6" />
+            <Button Grid.Row="4" Grid.Column="7"  Classes="key letter" Content="ә" Tag="L:4,7" />
+            <Button Grid.Row="4" Grid.Column="8"  Classes="key letter" Content="і" Tag="L:4,8" />
+            <Button Grid.Row="4" Grid.Column="9" Grid.ColumnSpan="2" Classes="key alt" Content="␣" Tag="A:space" />
+            <Button Grid.Row="4" Grid.Column="11" Classes="key alt" Content="✕" Tag="A:clear" />
+        </Grid>
+    </Border>
+
+    <UserControl.Styles>
+        <Style Selector="Button.key">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="MinHeight" Value="68" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Background" Value="#f1f5f9" />
+            <Setter Property="Foreground" Value="#0f172a" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+        <Style Selector="Button.key:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#cbd5e1" />
+        </Style>
+        <Style Selector="Button.key:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#94a3b8" />
+        </Style>
+        <Style Selector="Button.key.num">
+            <Setter Property="Background" Value="#e8eff7" />
+            <Setter Property="Foreground" Value="#0a4d8c" />
+            <Setter Property="FontSize" Value="22" />
+        </Style>
+        <Style Selector="Button.key.alt">
+            <Setter Property="Background" Value="#e2e8f0" />
+            <Setter Property="Foreground" Value="#0a4d8c" />
+            <Setter Property="FontSize" Value="22" />
+        </Style>
+        <!-- Caps-lock / Latin-mode visual ON state. Code-behind toggles
+             the 'on' class on CapsKey / ModeKey when active. -->
+        <Style Selector="Button.key.alt.on">
+            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Foreground" Value="#ffffff" />
+        </Style>
+        <Style Selector="Button.key.alt.on:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1565b3" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

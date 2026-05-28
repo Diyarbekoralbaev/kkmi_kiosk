@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="80"
+             x:Class="Kiosk.App.Controls.NavBar">
+    <!-- Two large buttons. Both navigate to Home (no real back stack yet —
+         Home is always one step away on this kiosk). Aligned right to stay
+         clear of the top-left admin hot zone. -->
+    <StackPanel Orientation="Horizontal" Spacing="12"
+                HorizontalAlignment="Right">
+        <Button x:Name="BackButton" Click="OnBack" Classes="navbtn">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="←" FontSize="24" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource NavBack}" FontSize="18" VerticalAlignment="Center" />
+            </StackPanel>
+        </Button>
+        <Button x:Name="HomeButton" Click="OnHome" Classes="navbtn primary">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="🏠" FontSize="22" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource NavHome}" FontSize="18" VerticalAlignment="Center" />
+            </StackPanel>
+        </Button>
+    </StackPanel>
+
+    <UserControl.Styles>
+        <Style Selector="Button.navbtn">
+            <Setter Property="MinHeight" Value="60" />
+            <Setter Property="Padding" Value="22,10" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="#ffffff" />
+            <Setter Property="Foreground" Value="#0f172a" />
+            <Setter Property="BorderBrush" Value="#cbd5e1" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.navbtn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#f1f5f9" />
+        </Style>
+        <Style Selector="Button.navbtn.primary">
+            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.navbtn.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#0a4d8c" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

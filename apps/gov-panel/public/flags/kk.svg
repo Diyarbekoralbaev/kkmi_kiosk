@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="60" height="30" role="img" aria-label="Qoraqalpog'iston Respublikasi bayrog'i">
+  <!-- 5-pointed star, outer radius 0.42, centered at (0,0). Smaller than the
+       Uzbek flag's because all 5 must fit close to the crescent. -->
+  <defs>
+    <polygon id="ks" points="0,-0.42 0.099,-0.130 0.400,-0.130 0.154,0.050 0.247,0.340 0,0.160 -0.247,0.340 -0.154,0.050 -0.400,-0.130 -0.099,-0.130" fill="#ffffff"/>
+  </defs>
+
+  <!-- Three equal horizontal bands: turquoise / gold / green, separated by
+       thin white+red ribbons. Colors approximated from the canonical
+       Republic of Karakalpakstan flag rendering. -->
+  <rect width="60" height="10"   y="0"    fill="#1eaadc"/>
+  <rect width="60" height="0.3"  y="10"   fill="#ffffff"/>
+  <rect width="60" height="0.3"  y="10.3" fill="#d22730"/>
+  <rect width="60" height="8.8"  y="10.6" fill="#fcc826"/>
+  <rect width="60" height="0.3"  y="19.4" fill="#d22730"/>
+  <rect width="60" height="0.3"  y="19.7" fill="#ffffff"/>
+  <rect width="60" height="10"   y="20"   fill="#1eb53a"/>
+
+  <!-- Crescent moon — top-left of the blue band, opens to the right. -->
+  <circle cx="7.5" cy="5" r="2.6" fill="#ffffff"/>
+  <circle cx="8.7" cy="5" r="2.2" fill="#1eaadc"/>
+
+  <!-- 5 stars next to the crescent. Layout: 2 stars on top, 3 stars below
+       (horizontal-row pattern, matches the canonical flag). -->
+  <use href="#ks" x="12"   y="3.8"/>
+  <use href="#ks" x="14"   y="3.8"/>
+  <use href="#ks" x="11"   y="5.8"/>
+  <use href="#ks" x="13"   y="5.8"/>
+  <use href="#ks" x="15"   y="5.8"/>
+</svg>

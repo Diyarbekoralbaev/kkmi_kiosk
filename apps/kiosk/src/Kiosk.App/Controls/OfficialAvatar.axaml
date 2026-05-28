@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="140" d:DesignHeight="140"
+             x:Class="Kiosk.App.Controls.OfficialAvatar">
+    <!-- Circular avatar that renders either the official's uploaded
+         photo (fetched once per page-load from the backend's public
+         photo endpoint) or an initials fallback in a coloured circle.
+         The two children sit in a Grid; code-behind flips IsVisible
+         based on whether the photo download succeeded. -->
+    <Grid x:Name="Root" Width="140" Height="140">
+        <!-- Initials fallback (shown by default; hidden once a photo loads). -->
+        <Border x:Name="FallbackCircle"
+                Background="{StaticResource KioskPrimary}"
+                CornerRadius="999"
+                ClipToBounds="True">
+            <TextBlock x:Name="Initials"
+                       Text="?"
+                       FontSize="48" FontWeight="SemiBold"
+                       Foreground="White"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+        </Border>
+        <!-- Photo, when loaded. ClipToBounds + CornerRadius on the
+             Border masks the rectangle into a circle. -->
+        <Border x:Name="PhotoFrame" IsVisible="False"
+                CornerRadius="999" ClipToBounds="True"
+                Background="{StaticResource KioskBorder}">
+            <Image x:Name="PhotoImage" Stretch="UniformToFill" />
+        </Border>
+    </Grid>
+</UserControl>

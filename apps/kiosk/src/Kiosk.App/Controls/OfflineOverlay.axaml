@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="Kiosk.App.Controls.OfflineOverlay">
+    <Grid Background="#ccffffff">
+        <Border VerticalAlignment="Center" HorizontalAlignment="Center"
+                Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1"
+                CornerRadius="16" Padding="56,40">
+            <StackPanel Spacing="20" HorizontalAlignment="Center">
+                <TextBlock Text="{DynamicResource OfflineTitle}"
+                           FontSize="36" FontWeight="Light"
+                           Foreground="#0a4d8c" HorizontalAlignment="Center" />
+                <TextBlock Text="{DynamicResource OfflineHint}"
+                           FontSize="18" Foreground="#64748b"
+                           HorizontalAlignment="Center" />
+                <ProgressBar IsIndeterminate="True" Width="320" Height="4"
+                             Foreground="#0a4d8c" Background="#f4f7fb" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

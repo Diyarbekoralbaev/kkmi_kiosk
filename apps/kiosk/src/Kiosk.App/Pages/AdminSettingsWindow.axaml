@@ -1,0 +1,118 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="640"
+        x:Class="Kiosk.App.Pages.AdminSettingsWindow"
+        Title="Kiosk · Admin sazlamalar"
+        Width="720" Height="700"
+        WindowStartupLocation="CenterScreen"
+        Background="#f4f7fb">
+    <ScrollViewer>
+        <StackPanel Margin="32" Spacing="20">
+            <TextBlock Text="{DynamicResource AdminSettingsTitle}" FontSize="32" FontWeight="Light" Foreground="#0a4d8c" />
+            <TextBlock Text="{DynamicResource AdminSettingsIntro}"
+                       FontSize="13" Foreground="#64748b" TextWrapping="Wrap" />
+
+            <Border Background="#f1f5f9" BorderBrush="#cbd5e1" BorderThickness="1"
+                    CornerRadius="14" Padding="22,18">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="{DynamicResource AdminSettingsMicLabel}" FontSize="14" Foreground="#0a4d8c" />
+                    <ComboBox x:Name="MicCombo" HorizontalAlignment="Stretch" />
+                    <!-- Live mic test. 3-second capture against the selected
+                         device, with a peak-RMS readout next to the button
+                         so the operator can SEE that audio is actually
+                         landing (vs picking the wrong host API variant
+                         silently). Status row to the right shows real-time
+                         level + the final verdict. -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Button Grid.Column="0" x:Name="TestMicButton"
+                                Content="{DynamicResource AdminSettingsTestMic}" Click="OnTestMic"
+                                Classes="primary" />
+                        <TextBlock Grid.Column="1" x:Name="MicTestStatus"
+                                   VerticalAlignment="Center"
+                                   Foreground="#64748b" FontSize="13"
+                                   TextWrapping="Wrap" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="#f1f5f9" BorderBrush="#cbd5e1" BorderThickness="1"
+                    CornerRadius="14" Padding="22,18">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="{DynamicResource AdminSettingsSpeakerLabel}" FontSize="14" Foreground="#0a4d8c" />
+                    <ComboBox x:Name="SpeakerCombo" HorizontalAlignment="Stretch" />
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                        <TextBlock Grid.Column="0" Text="{DynamicResource AdminSettingsVolume}" VerticalAlignment="Center" Foreground="#0f172a" />
+                        <Slider Grid.Column="1" x:Name="VolumeSlider" Minimum="0" Maximum="1" TickFrequency="0.05"
+                                HorizontalAlignment="Stretch" />
+                        <TextBlock Grid.Column="2" x:Name="VolumeLabel" Text="0%" VerticalAlignment="Center" Foreground="#64748b" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="#f1f5f9" BorderBrush="#cbd5e1" BorderThickness="1"
+                    CornerRadius="14" Padding="22,18">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="{DynamicResource AdminSettingsPrinter}" FontSize="14" Foreground="#0a4d8c" />
+                    <ComboBox x:Name="PrinterCombo" HorizontalAlignment="Stretch" />
+                    <CheckBox x:Name="AutoPrintCheck" Foreground="#0f172a"
+                              Content="{DynamicResource AdminSettingsAutoPrint}" />
+                    <Button Content="{DynamicResource AdminSettingsTestPrint}" Click="OnTestPrint"
+                            Classes="primary" HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <Border IsVisible="{Binding #StatusText.IsVisible}"
+                    Background="#f1f5f9" BorderBrush="#cbd5e1" BorderThickness="1"
+                    CornerRadius="14" Padding="22,12">
+                <TextBlock x:Name="StatusText" Foreground="#0a4d8c" />
+            </Border>
+
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                <Button Grid.Column="0" Content="{DynamicResource AdminExit}" Click="OnExit" Classes="danger" />
+                <Button Grid.Column="2" Content="{DynamicResource AdminPinCancel}" Click="OnCancel" Classes="ghost" />
+                <Button Grid.Column="3" Content="{DynamicResource AdminSettingsSave}" Click="OnSave" Classes="primary" />
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+
+    <Window.Styles>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1a4d8c" />
+        </Style>
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#64748b" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BorderBrush" Value="#cbd5e1" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#dc2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#ffffff" />
+            <Setter Property="Foreground" Value="#0f172a" />
+            <Setter Property="BorderBrush" Value="#cbd5e1" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="14,10" />
+        </Style>
+    </Window.Styles>
+</Window>

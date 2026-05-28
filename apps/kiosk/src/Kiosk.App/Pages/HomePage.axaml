@@ -1,0 +1,262 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:state="using:Kiosk.App.State"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1572"
+             x:Class="Kiosk.App.Pages.HomePage"
+             x:DataType="state:SessionStore">
+    <!-- 2026 redesign v4: 4 tiles in order — AI Yordamchi (amber accent),
+         Hokim jeke qabuli (chief), Hokim orinbosari qabili (deputy), and
+         Murajaat (Submit) at the bottom. Operator-driven order so qabul
+         booking is more prominent than complaint submission. Submit tile
+         is a second entry point into the AI flow (both AI + Submit click
+         handlers navigate to KioskPage.Ai); the two reception tiles set
+         SessionStore.QabulRoleFilter before navigating to KioskPage.Qabul.
+         Icons are direct ports of infokiosk.html SVG glyphs. -->
+    <Grid Background="{StaticResource KioskBg}">
+        <Grid RowDefinitions="Auto,*" Margin="60,32,60,32">
+            <!-- ── Hero ─────────────────────────────────────────────── -->
+            <StackPanel Grid.Row="0" Spacing="20" HorizontalAlignment="Center"
+                        Margin="0,8,0,24">
+                <Border Background="#e8eff7" CornerRadius="999"
+                        Padding="22,10" HorizontalAlignment="Center">
+                    <TextBlock Text="{DynamicResource HomeGreetingChip}"
+                               FontSize="22" FontWeight="SemiBold"
+                               Foreground="{StaticResource KioskPrimary}"
+                               HorizontalAlignment="Center" />
+                </Border>
+                <TextBlock Text="{DynamicResource HomeQuestion}"
+                           FontSize="52" FontWeight="Bold"
+                           Foreground="{StaticResource KioskText}"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="900" />
+                <TextBlock Text="{DynamicResource HomeSubtitle}"
+                           FontSize="20"
+                           Foreground="{StaticResource KioskTextMuted}"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="860" />
+            </StackPanel>
+
+            <!-- ── Tiles ────────────────────────────────────────────── -->
+            <StackPanel Grid.Row="1" Spacing="22" VerticalAlignment="Top">
+
+                <!-- 1. AI Yordamchi (amber accent variant) -->
+                <Button x:Name="TileAi" Click="OnTileAi" Classes="tile accent">
+                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
+                                Background="{StaticResource KioskAccentTint}"
+                                VerticalAlignment="Center">
+                            <!-- Robot glyph from infokiosk.html (24x24 viewbox):
+                                 rect(3,11,18,10) + circle(12,5,r=2) + line(12,7→11) + two eye dots -->
+                            <Viewbox Width="72" Height="72"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <Rectangle Canvas.Left="3" Canvas.Top="11"
+                                               Width="18" Height="10"
+                                               RadiusX="2" RadiusY="2"
+                                               Stroke="{StaticResource KioskAccentDark}"
+                                               StrokeThickness="2"
+                                               Fill="Transparent" />
+                                    <Ellipse Canvas.Left="10" Canvas.Top="3"
+                                             Width="4" Height="4"
+                                             Stroke="{StaticResource KioskAccentDark}"
+                                             StrokeThickness="2"
+                                             Fill="Transparent" />
+                                    <Line StartPoint="12,7" EndPoint="12,11"
+                                          Stroke="{StaticResource KioskAccentDark}"
+                                          StrokeThickness="2" StrokeLineCap="Round" />
+                                    <Ellipse Canvas.Left="7" Canvas.Top="15"
+                                             Width="2" Height="2"
+                                             Fill="{StaticResource KioskAccentDark}" />
+                                    <Ellipse Canvas.Left="15" Canvas.Top="15"
+                                             Width="2" Height="2"
+                                             Fill="{StaticResource KioskAccentDark}" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
+                                    Margin="28,0,16,0">
+                            <TextBlock Text="{DynamicResource HomeTileAiTitle}"
+                                       FontSize="32" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{DynamicResource HomeTileAiSubtitle}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource KioskTextMuted}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
+                                Background="{StaticResource KioskAccentDark}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </Button>
+
+                <!-- 2. Hokim jeke qabili (chief reception, primary) -->
+                <Button x:Name="TileMayor" Click="OnTileMayor" Classes="tile">
+                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
+                                Background="{StaticResource KioskTileTint}"
+                                VerticalAlignment="Center">
+                            <!-- Building/column glyph from infokiosk.html:
+                                 ground line + roofline + door + window dot. -->
+                            <Viewbox Width="72" Height="72"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <Path Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          StrokeJoin="Round"
+                                          Fill="Transparent"
+                                          Data="M3,21 H21 M5,21 V10 L12,5 L19,10 V21 M9,21 V15 H15 V21" />
+                                    <Ellipse Canvas.Left="11" Canvas.Top="7"
+                                             Width="2" Height="2"
+                                             Fill="{StaticResource KioskPrimary}" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
+                                    Margin="28,0,16,0">
+                            <TextBlock Text="{DynamicResource HomeTileMayorTitle}"
+                                       FontSize="32" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{DynamicResource HomeTileMayorSubtitle}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource KioskTextMuted}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
+                                Background="{StaticResource KioskPrimary}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </Button>
+
+                <!-- 3. Hokim orinbosari qabili (deputy reception) -->
+                <Button x:Name="TileDeputy" Click="OnTileDeputy" Classes="tile">
+                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
+                                Background="{StaticResource KioskTileTint}"
+                                VerticalAlignment="Center">
+                            <!-- 2-user group glyph from infokiosk.html:
+                                 user-1 body+head + user-2 body+head behind right. -->
+                            <Viewbox Width="72" Height="72"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <Path Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          StrokeJoin="Round"
+                                          Fill="Transparent"
+                                          Data="M17,21 V19 A4,4 0 0 0 13,15 H5 A4,4 0 0 0 1,19 V21 M23,21 V19 A4,4 0 0 0 20,15.13 M16,3.13 A4,4 0 0 1 16,10.88" />
+                                    <Ellipse Canvas.Left="5" Canvas.Top="3"
+                                             Width="8" Height="8"
+                                             Stroke="{StaticResource KioskPrimary}"
+                                             StrokeThickness="2"
+                                             Fill="Transparent" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
+                                    Margin="28,0,16,0">
+                            <TextBlock Text="{DynamicResource HomeTileDeputyTitle}"
+                                       FontSize="32" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{DynamicResource HomeTileDeputySubtitle}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource KioskTextMuted}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
+                                Background="{StaticResource KioskPrimary}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </Button>
+
+                <!-- 4. Murojaat (Submit) — second entry into AI flow.
+                     Document/file-text glyph from infokiosk.html. -->
+                <Button x:Name="TileSubmit" Click="OnTileSubmit" Classes="tile">
+                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
+                                Background="{StaticResource KioskTileTint}"
+                                VerticalAlignment="Center">
+                            <Viewbox Width="72" Height="72"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <!-- Document outline with corner fold -->
+                                    <Path Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          StrokeJoin="Round"
+                                          Fill="Transparent"
+                                          Data="M14,3 H6 A2,2 0 0 0 4,5 V19 A2,2 0 0 0 6,21 H18 A2,2 0 0 0 20,19 V9 L14,3 Z M14,3 V9 H20" />
+                                    <!-- Three text lines inside -->
+                                    <Line StartPoint="8,13" EndPoint="16,13"
+                                          Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2" StrokeLineCap="Round" />
+                                    <Line StartPoint="8,16" EndPoint="16,16"
+                                          Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2" StrokeLineCap="Round" />
+                                    <Line StartPoint="8,10" EndPoint="11,10"
+                                          Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2" StrokeLineCap="Round" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
+                                    Margin="28,0,16,0">
+                            <TextBlock Text="{DynamicResource HomeTileSubmitTitle}"
+                                       FontSize="32" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{DynamicResource HomeTileSubmitSubtitle}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource KioskTextMuted}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
+                                Background="{StaticResource KioskPrimary}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+
+    <UserControl.Styles>
+        <Style Selector="Button.tile">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="28" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="36,30" />
+            <Setter Property="MinHeight" Value="178" />
+        </Style>
+        <Style Selector="Button.tile:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+        <Style Selector="Button.tile.accent">
+            <Setter Property="BorderBrush" Value="{StaticResource KioskAccent}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

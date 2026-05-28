@@ -1,0 +1,67 @@
+# Kiosk Windows binary — triggered on master push when apps/kiosk/** changes,
+# or manually via workflow_dispatch. Outputs the Velopack-packed bundle as a
+# GitHub Release asset (tagged with the timestamp of the run). The backend's
+# webhook endpoint then auto-syncs the new release into kiosk_releases.
+
+name: build-kiosk
+
+on:
+  push:
+    branches: [master]
+    # Only run when kiosk source actually changed — avoids burning Windows
+    # runner minutes on backend/SPA-only commits.
+    paths:
+      - "apps/kiosk/**"
+      - ".github/workflows/build-kiosk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # to upload assets to the GitHub Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Install vpk (Velopack CLI)
+        shell: pwsh
+        run: dotnet tool install -g vpk
+
+      - name: Native AOT publish + Velopack pack
+        shell: bash
+        env:
+          KIOSK_CERT_PIN_SHA256: ${{ secrets.KIOSK_CERT_PIN_SHA256 }}
+        run: |
+          cd apps/kiosk
+          # Two constraints: Velopack vpk requires strict 3-part SemVer 2.0
+          # (no revision); .NET AssemblyVersion requires each component
+          # <= 65534. Squeeze date into MINOR=YY*1000+DOY (max ~99365 — fits
+          # for ~40 years) and PATCH=HHMM. Stays monotonic across days.
+          YY=$((10#$(date -u +%y)))
+          DOY=$((10#$(date -u +%j)))
+          HHMM=$((10#$(date -u +%H%M)))
+          MINOR=$((YY * 1000 + DOY))
+          export VERSION="0.${MINOR}.${HHMM}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          ./publish.win.sh velopack
+          ls -lh Releases/
+
+      - name: Upload Velopack bundle to a GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Bare SemVer 2.0 — backend's webhook handler regex expects
+          # M.m.p[-pre+build] with no prefix. The prefix used to be "kiosk-",
+          # which broke github_release_missing_fields parsing.
+          tag_name: "${{ env.VERSION }}"
+          name: "Kiosk ${{ env.VERSION }}"
+          # Upload everything vpk emits: full + delta nupkg, Setup.exe,
+          # releases.win.json (Velopack manifest). Backend's release-sync
+          # picks whichever asset its download endpoint should serve.
+          files: apps/kiosk/Releases/*
+          generate_release_notes: true
+          token: ${{ secrets.GITHUB_TOKEN }}

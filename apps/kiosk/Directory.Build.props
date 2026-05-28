@@ -1,0 +1,24 @@
+<Project>
+  <!-- Shared MSBuild props for every project in apps/kiosk. -->
+  <PropertyGroup>
+    <Authors>Kiosk Gov</Authors>
+    <Company>Kiosk Gov</Company>
+    <Product>Kiosk</Product>
+    <NeutralLanguage>kk</NeutralLanguage>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Strip debug symbols from Release builds to make decompilation harder
+         and shrink the .exe by a few MB. publish.win.sh layers Native AOT on
+         top of this for the production binary. -->
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <DebugSymbols Condition="'$(Configuration)' == 'Release'">false</DebugSymbols>
+
+    <!-- Globalization data is heavy and we ship a single locale (kk). Disabling
+         it removes ICU which would otherwise be ~30 MB of strings the AOT
+         publish carries around. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- Hide PII in stack traces / .NET-emitted error pages. -->
+    <DetailedTrace>false</DetailedTrace>
+  </PropertyGroup>
+</Project>

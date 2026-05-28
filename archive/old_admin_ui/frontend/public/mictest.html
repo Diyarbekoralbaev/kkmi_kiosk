@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mic Diagnostics</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0a1628; color: #eee; max-width: 800px; margin: 40px auto; padding: 20px; }
+  h1 { color: #f7bd29; }
+  button { padding: 14px 24px; font-size: 18px; margin: 6px; border: none; border-radius: 8px; cursor: pointer; background: #008eb7; color: white; }
+  button:hover { background: #40b0e0; }
+  button.stop { background: #e74c3c; }
+  pre { background: #13202e; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 14px; border: 1px solid #223348; }
+  .ok { color: #209c3a; }
+  .err { color: #e74c3c; }
+  .warn { color: #f7bd29; }
+  .meter { width: 100%; height: 24px; background: #13202e; border-radius: 4px; overflow: hidden; margin: 12px 0; }
+  .meter-fill { height: 100%; background: #209c3a; width: 0%; transition: width 0.1s; }
+  section { margin-bottom: 30px; border: 1px solid #223348; padding: 16px; border-radius: 8px; }
+  section h2 { margin-top: 0; color: #b8c4d2; font-size: 20px; }
+</style>
+</head>
+<body>
+<h1>🎤 Mikrofon Diagnostics</h1>
+
+<section>
+  <h2>1. Environment</h2>
+  <pre id="envInfo">Loading...</pre>
+</section>
+
+<section>
+  <h2>2. Enumerate devices (no permission yet)</h2>
+  <button onclick="listDevicesNoPerm()">List devices</button>
+  <pre id="devPre">Click the button above</pre>
+</section>
+
+<section>
+  <h2>3. Request mic permission + list labels</h2>
+  <button onclick="requestMic()">Request mic permission</button>
+  <pre id="permPre">Click the button above</pre>
+</section>
+
+<section>
+  <h2>4. Record + live level meter</h2>
+  <button onclick="startMeter()">Start meter</button>
+  <button class="stop" onclick="stopMeter()">Stop</button>
+  <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+  <pre id="meterPre">—</pre>
+</section>
+
+<section>
+  <h2>5. AudioContext 16kHz test</h2>
+  <button onclick="testContext16()">Create AudioContext 16kHz</button>
+  <pre id="ctxPre">—</pre>
+</section>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Env
+function envInfo() {
+  const info = {
+    userAgent: navigator.userAgent,
+    location: location.href,
+    protocol: location.protocol,
+    isSecureContext: window.isSecureContext,
+    hasMediaDevices: !!navigator.mediaDevices,
+    hasGetUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+    hasAudioContext: typeof AudioContext !== 'undefined',
+    hasEnumerate: !!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices),
+  };
+  $('envInfo').textContent = JSON.stringify(info, null, 2);
+}
+envInfo();
+
+async function listDevicesNoPerm() {
+  try {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      $('devPre').innerHTML = '<span class="err">enumerateDevices() not supported</span>';
+      return;
+    }
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const lines = devs.map(d => `${d.kind}: [${d.deviceId ? d.deviceId.slice(0, 12) + '…' : 'empty'}] "${d.label || '(no label — needs permission)'}"`);
+    $('devPre').textContent = lines.join('\n') || '(empty)';
+  } catch (e) {
+    $('devPre').innerHTML = '<span class="err">' + e.name + ': ' + e.message + '</span>';
+  }
+}
+
+async function requestMic() {
+  const out = $('permPre');
+  out.textContent = 'Requesting permission...';
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    out.innerHTML = '<span class="ok">✓ Permission granted</span>\n';
+
+    const tracks = stream.getAudioTracks();
+    tracks.forEach(t => {
+      out.textContent += `\nTrack: ${t.label} (kind=${t.kind}, enabled=${t.enabled}, muted=${t.muted})\n`;
+      const settings = t.getSettings();
+      out.textContent += 'Settings: ' + JSON.stringify(settings, null, 2) + '\n';
+    });
+
+    // Re-enumerate — now labels should be populated
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const mics = devs.filter(d => d.kind === 'audioinput');
+    out.textContent += '\nInput devices found: ' + mics.length + '\n';
+    mics.forEach((m, i) => {
+      out.textContent += `  [${i}] ${m.label || '(no label)'} — id=${m.deviceId.slice(0, 16)}…\n`;
+    });
+
+    stream.getTracks().forEach(t => t.stop());
+  } catch (e) {
+    out.innerHTML = '<span class="err">✗ ' + e.name + ': ' + e.message + '</span>\n\n';
+    out.textContent += 'Full error:\n' + (e.stack || e);
+  }
+}
+
+// Meter
+let meterCtx, meterStream, meterRaf, meterAnalyser;
+async function startMeter() {
+  const out = $('meterPre');
+  out.textContent = 'Starting...';
+  try {
+    meterStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    meterCtx = new AudioContext();
+    const src = meterCtx.createMediaStreamSource(meterStream);
+    meterAnalyser = meterCtx.createAnalyser();
+    meterAnalyser.fftSize = 512;
+    src.connect(meterAnalyser);
+
+    out.innerHTML = '<span class="ok">✓ Meter running at ' + meterCtx.sampleRate + ' Hz</span>';
+
+    const data = new Uint8Array(meterAnalyser.frequencyBinCount);
+    const tick = () => {
+      meterAnalyser.getByteTimeDomainData(data);
+      // RMS
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = (data[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      $('meterFill').style.width = Math.min(100, rms * 300) + '%';
+      meterRaf = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (e) {
+    out.innerHTML = '<span class="err">✗ ' + e.name + ': ' + e.message + '</span>';
+  }
+}
+
+async function stopMeter() {
+  cancelAnimationFrame(meterRaf);
+  try {
+    if (meterStream) meterStream.getTracks().forEach(t => t.stop());
+    if (meterCtx) await meterCtx.close();
+  } catch (_) {}
+  meterStream = null;
+  meterCtx = null;
+  $('meterFill').style.width = '0%';
+  $('meterPre').textContent = 'Stopped';
+}
+
+async function testContext16() {
+  const out = $('ctxPre');
+  try {
+    const ctx = new AudioContext({ sampleRate: 16000 });
+    await ctx.resume();
+    const actualRate = ctx.sampleRate;
+    out.innerHTML = '<span class="ok">✓ Created</span>\n'
+      + 'Requested: 16000 Hz\n'
+      + 'Actual: ' + actualRate + ' Hz\n'
+      + 'State: ' + ctx.state + '\n'
+      + 'Destination channels: ' + ctx.destination.maxChannelCount;
+    if (actualRate !== 16000) {
+      out.innerHTML += '\n<span class="warn">⚠ Browser used ' + actualRate + ' instead of 16000</span>';
+    }
+    await ctx.close();
+  } catch (e) {
+    out.innerHTML = '<span class="err">✗ ' + e.name + ': ' + e.message + '</span>';
+  }
+}
+</script>
+</body>
+</html>

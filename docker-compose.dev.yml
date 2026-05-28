@@ -1,0 +1,81 @@
+name: joqari-kenes-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kiosk
+      POSTGRES_PASSWORD: kiosk
+      POSTGRES_DB: joqari_kenes
+    ports:
+      # Bind to localhost only — never expose Postgres to the network
+      - "127.0.0.1:5443:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kiosk -d joqari_kenes"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    # No host port published — port 6379 is already taken on dev machines.
+    # Backend reaches it via docker network as `redis:6379`.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ../apps/backend
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kiosk:kiosk@postgres:5432/joqari_kenes
+      REDIS_URL: redis://redis:6379/0
+      ENV: development
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/backend/src:/app/src
+      - ../apps/backend/alembic:/app/alembic
+      - ../archive:/app/archive:ro
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  super-panel:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../apps/super-panel:/app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  gov-panel:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../apps/gov-panel:/app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5174"
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

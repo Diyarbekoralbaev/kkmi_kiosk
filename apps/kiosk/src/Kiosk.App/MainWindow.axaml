@@ -1,0 +1,87 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:state="using:Kiosk.App.State"
+        xmlns:controls="using:Kiosk.App.Controls"
+        xmlns:app="using:Kiosk.App"
+        mc:Ignorable="d"
+        x:Class="Kiosk.App.MainWindow"
+        x:DataType="state:SessionStore"
+        Title="Kiosk"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource KioskBg}">
+    <Grid RowDefinitions="260,*,88">
+        <!-- Sticky header (row 0). All pages share the same chrome. -->
+        <controls:KioskHeader Grid.Row="0" />
+
+        <!-- Page content (row 1) -->
+        <ContentControl Grid.Row="1" Content="{Binding CurrentView}" />
+
+        <!-- Copyright footer (row 2). Hidden behind overlays via z-order. -->
+        <controls:KioskFooter Grid.Row="2" />
+
+        <!-- Offline overlay — transient: backend unreachable / network down.
+             Spans all 3 rows so it covers header + footer while reconnecting. -->
+        <controls:OfflineOverlay Grid.Row="0" Grid.RowSpan="3"
+                                 IsVisible="{Binding ShowOfflineOverlay}" />
+
+        <!-- Revoked overlay — terminal: this device's key was revoked by the
+             operator. Covers everything including the header. -->
+        <controls:RevokedOverlay Grid.Row="0" Grid.RowSpan="3"
+                                 IsVisible="{Binding IsRevoked}" />
+
+        <!-- Submit success modal. Auto-hides after 4 s. -->
+        <controls:SubmitSuccessOverlay Grid.Row="0" Grid.RowSpan="3"
+                                       IsVisible="{Binding ShowSubmitSuccess}" />
+
+        <!-- Bottom-right voice indicator. Visible on every page EXCEPT the
+             AI assistant page (where the robot itself is the listening
+             indicator — see MainWindow.axaml.cs OnSessionPropertyChanged). -->
+        <controls:MicOrb x:Name="MicOrb" Grid.Row="1"
+                        VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                        Margin="0,0,40,32" />
+
+        <!-- Hidden admin gesture: tap the top-LEFT corner 5 times within ~3 s
+             to open the PIN dialog → choice (Exit / Settings / Cancel). The
+             zone spans all rows so the gerb area can also be tapped — the
+             gerb is decorative so there's no conflict. -->
+        <Border x:Name="AdminHotZone"
+                Grid.Row="0" Grid.RowSpan="3"
+                VerticalAlignment="Top" HorizontalAlignment="Left"
+                Width="200" Height="200"
+                Background="Transparent" />
+
+        <!-- Debug nav. Top-right. Visible only in DEBUG builds — Release
+             ships with these buttons stripped (admin gesture is the only
+             way to leave the home screen by hand). Sits in content row so
+             it doesn't clash with the header's language toggle. -->
+        <Border Grid.Row="1"
+                VerticalAlignment="Top" HorizontalAlignment="Right"
+                Margin="0,16,16,0" CornerRadius="20" Padding="6,4"
+                Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1"
+                Opacity="0.85"
+                IsVisible="{x:Static app:DebugFlags.IsDebugBuild}">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+                <Button Content="Home" Click="NavHome" Classes="nav" />
+                <Button Content="Qabul" Click="NavQabul" Classes="nav" />
+                <Button Content="Submit" Click="NavSubmit" Classes="nav" />
+                <Button Content="Contacts" Click="NavContacts" Classes="nav" />
+            </StackPanel>
+        </Border>
+    </Grid>
+
+    <Window.Styles>
+        <Style Selector="Button.nav">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#0a4d8c" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#cbd5e1" />
+        </Style>
+    </Window.Styles>
+</Window>

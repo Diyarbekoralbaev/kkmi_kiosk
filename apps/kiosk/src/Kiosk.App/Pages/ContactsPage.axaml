@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:state="using:Kiosk.App.State"
+             xmlns:controls="using:Kiosk.App.Controls"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1920"
+             x:Class="Kiosk.App.Pages.ContactsPage"
+             x:DataType="state:SessionStore">
+    <Grid Background="#f4f7fb" RowDefinitions="Auto,*" Margin="56,80,56,180">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+            <TextBlock Grid.Column="0" Text="{DynamicResource ContactsPageTitle}"
+                       FontSize="44" FontWeight="Light" Foreground="#0a4d8c"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap" MaxWidth="640" />
+            <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Margin="0,28,0,0">
+            <StackPanel Spacing="14">
+                <Border Padding="26" CornerRadius="14"
+                        Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{DynamicResource ContactsAddressLabel}"
+                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                        <TextBlock Text="{Binding OrgAddress}"
+                                   FontSize="28" FontWeight="SemiBold"
+                                   Foreground="#0f172a" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Padding="26" CornerRadius="14"
+                        Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{DynamicResource ContactsPhoneIconLabel}"
+                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                        <TextBlock Text="{Binding HelplinePhone}"
+                                   FontSize="28" FontWeight="SemiBold" Foreground="#0f172a" />
+                    </StackPanel>
+                </Border>
+                <Border Padding="26" CornerRadius="14"
+                        Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{DynamicResource ContactsEmailLabel}"
+                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                        <TextBlock Text="{Binding OrgEmail}"
+                                   FontSize="28" FontWeight="SemiBold" Foreground="#0f172a" />
+                    </StackPanel>
+                </Border>
+                <Border Padding="26" CornerRadius="14"
+                        Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{DynamicResource ContactsHoursLabel}"
+                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                        <TextBlock Text="{Binding OrgWorkHours}"
+                                   FontSize="28" FontWeight="SemiBold" Foreground="#0f172a" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

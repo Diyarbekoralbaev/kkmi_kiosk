@@ -1,0 +1,8 @@
+{
+  "admin": {
+    "username": "admin",
+    "hashed_password": "$pbkdf2-sha256$29000$GqN0bo2xViqF0Lp3Tomxdg$H24mbg4RPrxcsyd5J/0dRasDt2Y0BSPyH1QIksO0QUs",
+    "disabled": false,
+    "must_change_password": true
+  }
+}

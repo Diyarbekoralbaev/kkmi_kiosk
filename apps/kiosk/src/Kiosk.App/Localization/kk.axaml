@@ -1,0 +1,204 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Қарақалпақша (Cyrillic). Default kiosk locale, per the 2026 mockup.
+         _Locale_kk: unique sentinel for LocalizationService. -->
+    <x:String x:Key="_Locale_kk">kk</x:String>
+
+    <!-- ===== Header / footer / language labels ===== -->
+    <x:String x:Key="HeaderTagline">«Ақыллы қабыллаўхана» AI жәрдемшиси</x:String>
+    <x:String x:Key="LangUz">Өзбекше</x:String>
+    <x:String x:Key="LangRu">Русский</x:String>
+    <x:String x:Key="LangKk">Қарақалпақша</x:String>
+    <x:String x:Key="FooterRights">Барлық ҳуқықлар қорғалған.</x:String>
+    <x:String x:Key="HelpLabel">Жәрдем:</x:String>
+
+    <!-- ===== Home page ===== -->
+    <x:String x:Key="HomeGreetingChip">Хош келдиңиз!</x:String>
+    <x:String x:Key="HomeQuestion">Сизге қандай жәрдем бере аламыз?</x:String>
+    <x:String x:Key="HomeQuestionHighlight">жәрдем</x:String>
+    <x:String x:Key="HomeSubtitle">Төмендеги хызметлердиң бирин сайлаң. Мүрәжатыңызды қалдырың, AI жәрдемши менен сөйлесиң ямаса қабыллаўға жазылың.</x:String>
+    <x:String x:Key="HomeTileSubmitTitle">Мүрәжат жибериў</x:String>
+    <x:String x:Key="HomeTileSubmitSubtitle">Арзыңызды ямаса усынысыңызды электрон түрде рәсмийлестириң</x:String>
+    <x:String x:Key="HomeTileAiTitle">AI жәрдемши менен сөйлесиў</x:String>
+    <x:String x:Key="HomeTileAiSubtitle">Сораўларыңызға жасалма интеллекттен тез арада жуўап алың</x:String>
+    <x:String x:Key="HomeTileDeputyTitle">Ҳәким орынбасары қабыллаўы</x:String>
+    <x:String x:Key="HomeTileDeputySubtitle">Тийисли тараўдағы орынбасар қабыллаўына жазылыў</x:String>
+    <x:String x:Key="HomeTileMayorTitle">Ҳәкимниң жеке қабыллаўы</x:String>
+    <x:String x:Key="HomeTileMayorSubtitle">Қала ҳәкиминиң жеке қабыллаўына жазылыў</x:String>
+
+    <!-- ===== NavBar ===== -->
+    <x:String x:Key="NavBack">Артқа</x:String>
+    <x:String x:Key="NavHome">Бас бет</x:String>
+
+    <!-- ===== AI Yordamchi page ===== -->
+    <x:String x:Key="AiPageTitle">AI жәрдемши</x:String>
+    <x:String x:Key="AiPageStatusConnecting">Жалғанып атыр...</x:String>
+    <x:String x:Key="AiPageStatusListening">Сөйлеңиз, мен сизди тыңлап атырман</x:String>
+    <x:String x:Key="AiPageHint">Сораўыңызды бериң ямаса мүрәжатыңызды айтыңыз. Робот сизди тыңлап атыр.</x:String>
+
+    <!-- ===== MicOrb ===== -->
+    <x:String x:Key="MicListening">Тыңлап атыр</x:String>
+    <x:String x:Key="MicTapToStart">Сөйлеў ушын басың</x:String>
+    <x:String x:Key="MicDisconnected">Жалғанбаған</x:String>
+    <x:String x:Key="MicConnecting">Жалғанып атыр</x:String>
+    <x:String x:Key="MicSpeaking">Сөйлеп атырсыз</x:String>
+    <x:String x:Key="MicStopping">Тоқтап атыр...</x:String>
+    <x:String x:Key="MicStarting">Баслап атыр...</x:String>
+    <x:String x:Key="MicError">Қәтелик</x:String>
+
+    <!-- ===== Qabul page ===== -->
+    <x:String x:Key="QabulPageTitle">Қабыллаўға жазылыў</x:String>
+    <x:String x:Key="QabulPageTitleChief">Ҳәкимниң жеке қабыллаўына жазылыў</x:String>
+    <x:String x:Key="QabulPageTitleDeputy">Ҳәким орынбасары қабыллаўына жазылыў</x:String>
+    <x:String x:Key="QabulPickPrompt">Кимниң қабыллаўына жазылмақшысыз?</x:String>
+    <x:String x:Key="QabulPickPromptChief">Ҳәкимниң жеке қабыллаўы:</x:String>
+    <x:String x:Key="QabulPickPromptDeputy">Ҳәкимниң орынбасарын сайлаң:</x:String>
+    <x:String x:Key="QabulPhonePreviewTitle">Телефон номериңизди тексериң</x:String>
+    <x:String x:Key="QabulPhonePreviewHint">Жуўмақламастан алдын номериңиздиң дурыслығына көз жеткизиң. Қәте болса «Дүзетиў» түймесин басың.</x:String>
+    <x:String x:Key="QabulPhonePreviewEdit">Дүзетиў</x:String>
+    <x:String x:Key="QabulPhonePreviewSend">Аўа, жибериў</x:String>
+    <x:String x:Key="QabulSelectedLabel">Сайланған лаўазымлы шахс</x:String>
+    <x:String x:Key="QabulPickAnother">Басқа лаўазымлы шахсты сайлаў</x:String>
+    <x:String x:Key="QabulPhoneLabel">Телефон номериңиз</x:String>
+    <x:String x:Key="QabulConfirmButton">Тастыйықлаў</x:String>
+    <x:String x:Key="QabulConfirmErrorPhoneShort">Телефон номери толық емес (кеминде 9 сан)</x:String>
+    <x:String x:Key="QabulConfirmSending">Жиберилип атыр...</x:String>
+    <x:String x:Key="QabulConfirmError">Қәтелик. Интернетти тексерип, қайтадан урынып көриң.</x:String>
+
+    <!-- Voice-flow preview card — shown after AI agent calls preview_appointment.
+         "Яқ" is the proper Karakalpak "no" — DO NOT replace with Kazakh "Жоқ". -->
+    <x:String x:Key="QabulVoicePreviewTitle">Тастыйықлаў</x:String>
+    <x:String x:Key="QabulVoicePreviewOfficialLabel">Лаўазымлы шахс</x:String>
+    <x:String x:Key="QabulVoicePreviewDateLabel">Сәне</x:String>
+    <x:String x:Key="QabulVoicePreviewTimeLabel">Уақыт</x:String>
+    <x:String x:Key="QabulVoicePreviewPhoneLabel">Телефон</x:String>
+    <x:String x:Key="QabulVoicePreviewTopicLabel">Мәселе</x:String>
+    <x:String x:Key="QabulVoicePreviewConfirm">Тастыйықлайман</x:String>
+    <x:String x:Key="QabulVoicePreviewReject">Яқ, қайтарың</x:String>
+
+    <x:String x:Key="QabulTalonTitle">ҚАБЫЛЛАЎ НАЎБЕТИ</x:String>
+    <x:String x:Key="QabulTalonSubtitleChief">Жеке қабыллаў наўбети</x:String>
+    <x:String x:Key="QabulTalonSubtitleDeputy">Орынбасар қабыллаў наўбети</x:String>
+    <x:String x:Key="QabulTalonQueuePrefix">НАЎБЕТ</x:String>
+    <x:String x:Key="QabulTalonScanHint">QR-кодты телефонда сканерлең.</x:String>
+    <!-- On-screen talon labels (must match the printed receipt's
+         RECEIPT_STRINGS in backend/src/ai/receipt.py). Trailing space is
+         intentional — these are bold "Label: " runs followed by a value run.
+         Standardized glossary: Official=Лаўазымлы шахс, Topic=Мәселе,
+         Ticket=Наўбет. -->
+    <x:String x:Key="QabulTalonChipta">Наўбет номери: </x:String>
+    <x:String x:Key="QabulTalonMansabdor">Лаўазымлы шахс: </x:String>
+    <x:String x:Key="QabulTalonMasala">Мәселеси: </x:String>
+    <x:String x:Key="QabulTalonSana">Сәне: </x:String>
+    <x:String x:Key="QabulTalonVaqt">Ўақты: </x:String>
+    <x:String x:Key="QabulTalonNavbat">Наўбети: </x:String>
+    <x:String x:Key="QabulTalonTelefon">Телефон: </x:String>
+
+    <!-- ===== Submit page ===== -->
+    <x:String x:Key="SubmitPageTitle">Мүрәжат жибериў</x:String>
+    <x:String x:Key="SubmitStep1">1. Мәселе</x:String>
+    <x:String x:Key="SubmitStep2">2. Толық мүрәжат</x:String>
+    <x:String x:Key="SubmitStep3">3. Тексериў</x:String>
+    <x:String x:Key="SubmitStep4">4. Жуўмақ</x:String>
+    <x:String x:Key="SubmitTopicLabel">Мәселе</x:String>
+    <x:String x:Key="SubmitBodyLabel">Мүрәжат тексти</x:String>
+    <x:String x:Key="SubmitPhoneLabel">Телефон</x:String>
+
+    <!-- ===== Contacts page (kept for back-compat; not on Home anymore) ===== -->
+    <x:String x:Key="ContactsPageTitle">Байланыс</x:String>
+    <x:String x:Key="ContactsAddressLabel">📍 Мәнзил</x:String>
+    <x:String x:Key="ContactsAddressValue">Нөкис қ., Бердақ гүзәри, 1-үй</x:String>
+    <x:String x:Key="ContactsPhoneIconLabel">☎ Телефон</x:String>
+    <x:String x:Key="ContactsPhoneValue">(+998 61) 222 12 34</x:String>
+    <x:String x:Key="ContactsEmailLabel">✉ Электрон почта</x:String>
+    <x:String x:Key="ContactsEmailValue">info@nukushokimiyat.uz</x:String>
+    <x:String x:Key="ContactsHoursLabel">🕐 Жумыс ўақты</x:String>
+    <x:String x:Key="ContactsHoursValue">Дү–Жу 09:00 – 18:00</x:String>
+
+    <!-- ===== Offline overlay ===== -->
+    <x:String x:Key="OfflineTitle">Байланыс жоқ</x:String>
+    <x:String x:Key="OfflineHint">Байланыс қайта тикленбекте...</x:String>
+
+    <!-- ===== Revoked overlay ===== -->
+    <x:String x:Key="RevokedTitle">Бул киоскқа рухсат жоқ</x:String>
+    <x:String x:Key="RevokedBody">Бул үскенениң кириў коды администратор тәрепинен бийкар етилген. Сазлаўшы жаңаланыў кодын киритсин.</x:String>
+    <x:String x:Key="RevokedButton">Жаңа код киритиў</x:String>
+
+    <!-- ===== Submit success overlay ===== -->
+    <x:String x:Key="SubmitSuccessTitle">Мүрәжатыңыз қабыл етилди</x:String>
+    <x:String x:Key="SubmitSuccessBody">Ҳәкимият хызметкерлери сиздиң мүрәжатыңызды көрип шығады.</x:String>
+    <x:String x:Key="SubmitSuccessTopicLabel">Мәселе:</x:String>
+    <x:String x:Key="SubmitSuccessIdLabel">Номер:</x:String>
+
+    <!-- ===== Updating page ===== -->
+    <x:String x:Key="UpdatingTitle">Система жаңаланып атыр</x:String>
+    <x:String x:Key="UpdatingBody">Бираздан соң қайта иске түседи. Илтимас, күтиң...</x:String>
+    <x:String x:Key="UpdatingStatusPreparing">Таярланып атыр...</x:String>
+    <x:String x:Key="UpdatingVersionLabel">Версия: </x:String>
+    <x:String x:Key="UpdatingDownloadingLabel">Жүкленип атыр...</x:String>
+    <x:String x:Key="UpdatingMandatory">Мәжбүрий жаңаланыў...</x:String>
+    <x:String x:Key="UpdatingApplying">Жаңаланыў орнатылмақта...</x:String>
+    <x:String x:Key="UpdatingFailed">Жаңаланыў сәтсиз тамамланды — киоск ески версияда ислеп тур.</x:String>
+
+    <!-- ===== Admin PIN dialog ===== -->
+    <x:String x:Key="AdminPinTitle">Админ сазламалары</x:String>
+    <x:String x:Key="AdminPinPrompt">PIN-кодты киритиң</x:String>
+    <x:String x:Key="AdminPinIncorrect">PIN-код қәте</x:String>
+    <x:String x:Key="AdminPinCancel">Бийкар етиў</x:String>
+    <x:String x:Key="AdminPinConfirm">Кириў</x:String>
+
+    <!-- ===== Admin choice dialog ===== -->
+    <x:String x:Key="AdminChoiceTitle">Сайлаң</x:String>
+    <x:String x:Key="AdminChoicePrompt">Программадан шығыў ямаса сазламаларды ашыў</x:String>
+    <x:String x:Key="AdminExit">Шығыў</x:String>
+    <x:String x:Key="AdminSettings">Сазламалар</x:String>
+    <x:String x:Key="AdminCancel">Бийкар етиў</x:String>
+
+    <!-- ===== Admin settings window ===== -->
+    <x:String x:Key="AdminSettingsTitle">Админ сазламалары</x:String>
+    <x:String x:Key="AdminSettingsIntro">Микрофон, динамик ҳәм принтерди сайлаң. Өзгерислерден кейин аудио сессияны қайта баслаң.</x:String>
+    <x:String x:Key="AdminSettingsMicLabel">Аудио кириў (Микрофон)</x:String>
+    <x:String x:Key="AdminSettingsSpeakerLabel">Аудио шығыс (Динамик)</x:String>
+    <x:String x:Key="AdminSettingsVolume">Даўыс деңгейи</x:String>
+    <x:String x:Key="AdminSettingsPrinter">Принтер</x:String>
+    <x:String x:Key="AdminSettingsAutoPrint">Қабыл талонын автомат түрде басып шығарыў</x:String>
+    <x:String x:Key="AdminSettingsTestPrint">Тест ушын басып шығарыў</x:String>
+    <x:String x:Key="AdminSettingsTestMic">Микрофонды тексериў</x:String>
+    <x:String x:Key="MicTestSpeakNow">Сөйлең (3 секунд)...</x:String>
+    <x:String x:Key="MicTestPass">Микрофон ислеп тур</x:String>
+    <x:String x:Key="MicTestSilent">Даўыс анықланбады — басқа үскенени сынап көриң</x:String>
+    <x:String x:Key="MicTestErrorOpen">Үскенени ашыў имканы болмады</x:String>
+    <x:String x:Key="MicTestNoDevice">Микрофон сайланбаған</x:String>
+    <x:String x:Key="AdminSettingsSave">Сақлаў</x:String>
+
+    <!-- ===== Enrollment window ===== -->
+    <x:String x:Key="EnrollmentTitle">Киоскты дизимге алыў</x:String>
+    <x:String x:Key="EnrollmentIntro">Биринши мәрте жалғаныў. Супер-панелдеги дизимге алыў кодын киритиң.</x:String>
+    <x:String x:Key="EnrollmentBackendLabel">Сервер мәнзили</x:String>
+    <x:String x:Key="EnrollmentCodeLabel">Дизимге алыў коды</x:String>
+    <x:String x:Key="EnrollmentButton">Дизимнен өтиў</x:String>
+
+    <!-- ===== Manual qabul topic step (QabulPage SectionEnterTopic) ===== -->
+    <x:String x:Key="QabulTopicLabel">Мәселеңиз не ҳаққында?</x:String>
+    <x:String x:Key="QabulTopicHint">1–2 гәп пенен жазың</x:String>
+    <x:String x:Key="QabulTopicErrorShort">Кеминде 3 ҳәрип жазың</x:String>
+    <x:String x:Key="QabulContinueButton">Даўам етиў</x:String>
+
+    <!-- ===== Manual murajaat flow (ManualSubmitPage) ===== -->
+    <x:String x:Key="ManualSubmitPageTitle">Мүрәжат жибериў</x:String>
+    <x:String x:Key="ManualMurajatTopicTitle">Мәселеңиздиң темасы</x:String>
+    <x:String x:Key="ManualMurajatTopicHint">Қысқаша — 1-2 сөз бенен</x:String>
+    <x:String x:Key="ManualMurajatBodyTitle">Толық мазмуны</x:String>
+    <x:String x:Key="ManualMurajatBodyHint">Не болды, не сорайсыз — толық жазың</x:String>
+    <x:String x:Key="ManualMurajatBodyErrorShort">Кеминде 5 ҳәрип жазың</x:String>
+    <x:String x:Key="ManualMurajatPhoneTitle">Байланыс телефоны</x:String>
+    <x:String x:Key="ManualMurajatPreviewTitle">Мағлыўматларды тексериң</x:String>
+    <x:String x:Key="ManualMurajatSuccessTitle">Мүрәжатыңыз қабыл етилди</x:String>
+    <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
+    <x:String x:Key="ManualMurajatSuccessHint">Ҳәкимият хызметкерлери мүрәжатыңызды көрип шығады.</x:String>
+    <x:String x:Key="ManualMurajatSubmitting">Жиберилмекте...</x:String>
+    <x:String x:Key="ManualMurajatSubmitError">Жибериў мүмкин болмады. Қайтадан сынап көриң.</x:String>
+    <x:String x:Key="ManualBackButton">Артқа</x:String>
+    <x:String x:Key="ManualConfirmButton">Тастыйықлаў ҳәм жибериў</x:String>
+    <x:String x:Key="ManualEditButton">Өзгертиў</x:String>
+</ResourceDictionary>

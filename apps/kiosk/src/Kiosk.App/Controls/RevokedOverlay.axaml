@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="Kiosk.App.Controls.RevokedOverlay">
+    <Grid Background="#eeffffff">
+        <Border VerticalAlignment="Center" HorizontalAlignment="Center"
+                Background="#ffffff" BorderBrush="#dc2626" BorderThickness="2"
+                CornerRadius="16" Padding="64,48" MaxWidth="640">
+            <StackPanel Spacing="20" HorizontalAlignment="Center">
+                <TextBlock Text="🔒" FontSize="64" HorizontalAlignment="Center" />
+                <TextBlock Text="{DynamicResource RevokedTitle}"
+                           FontSize="32" FontWeight="Light"
+                           Foreground="#dc2626" HorizontalAlignment="Center" />
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center"
+                           FontSize="16" Foreground="#64748b" MaxWidth="500"
+                           Text="{DynamicResource RevokedBody}" />
+                <Button x:Name="ReenrollButton" Click="OnReenrollClicked"
+                        Content="{DynamicResource RevokedButton}"
+                        HorizontalAlignment="Center" Padding="32,12"
+                        Background="#0a4d8c" Foreground="White"
+                        BorderThickness="0" CornerRadius="8" FontSize="16" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

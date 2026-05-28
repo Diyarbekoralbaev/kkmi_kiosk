@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:state="using:Kiosk.App.State"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="Kiosk.App.Controls.SubmitSuccessOverlay"
+             x:DataType="state:SessionStore">
+    <!-- Talon-style success card — same visual language as the qabul talon
+         on QabulPage so visitors see a consistent "you got a record" screen
+         regardless of which flow they came through. Card has a header
+         stripe with the brand color + big checkmark, body with the
+         submitted request metadata, footer with the standard hokimligi
+         message. Auto-dismisses after 4 s (driven by SessionStore). -->
+    <Grid Background="#cc1a2740">
+        <Border VerticalAlignment="Center" HorizontalAlignment="Center"
+                Background="{StaticResource KioskCard}"
+                BorderBrush="{StaticResource KioskBorder}"
+                BorderThickness="1"
+                CornerRadius="22"
+                MaxWidth="780"
+                MinWidth="560">
+            <StackPanel>
+                <!-- ── Header: brand-blue stripe with success icon ──── -->
+                <Border Background="{StaticResource KioskPrimary}"
+                        CornerRadius="22,22,0,0"
+                        Padding="44,32">
+                    <StackPanel Spacing="12" HorizontalAlignment="Center">
+                        <!-- Circle background + Path checkmark, drawn in
+                             XAML to keep AOT-safe (no Material icon font). -->
+                        <Grid Width="96" Height="96" HorizontalAlignment="Center">
+                            <Ellipse Width="96" Height="96"
+                                     Fill="#ffffff" Opacity="0.18" />
+                            <Path Data="M 26,50 L 44,68 L 72,32"
+                                  Stroke="#ffffff"
+                                  StrokeThickness="6"
+                                  StrokeLineCap="Round"
+                                  StrokeJoin="Round" />
+                        </Grid>
+                        <TextBlock Text="{DynamicResource SubmitSuccessTitle}"
+                                   FontSize="34" FontWeight="Bold"
+                                   Foreground="#ffffff"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Body: request metadata, mirrors the qabul talon ── -->
+                <StackPanel Spacing="14" Margin="48,32,48,16">
+                    <!-- Murajat (topic) -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource SubmitSuccessTopicLabel}"
+                                   FontSize="22" FontWeight="SemiBold"
+                                   Foreground="{StaticResource KioskTextMuted}"
+                                   VerticalAlignment="Top" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding SubmitTopic}"
+                                   FontSize="26" FontWeight="SemiBold"
+                                   Foreground="{StaticResource KioskText}"
+                                   TextWrapping="Wrap" />
+                    </Grid>
+                    <!-- Murajat ID — pre-styled mono so it reads like a receipt -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource SubmitSuccessIdLabel}"
+                                   FontSize="22" FontWeight="SemiBold"
+                                   Foreground="{StaticResource KioskTextMuted}" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding SubmittedId}"
+                                   FontSize="22"
+                                   FontFamily="Consolas, Menlo, Courier New, monospace"
+                                   Foreground="{StaticResource KioskText}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- ── Dashed divider, same as QabulPage talon ──────── -->
+                <Path Stroke="{StaticResource KioskBorder}" StrokeThickness="1"
+                      StrokeDashArray="3,3" Data="M0,0 L1,0"
+                      Stretch="Fill" Height="1" Margin="48,0,48,0" />
+
+                <!-- ── Footer message ─────────────────────────────────── -->
+                <TextBlock Text="{DynamicResource SubmitSuccessBody}"
+                           FontSize="20"
+                           Foreground="{StaticResource KioskTextMuted}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Margin="48,24,48,40" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

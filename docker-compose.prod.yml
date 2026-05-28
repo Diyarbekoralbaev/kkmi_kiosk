@@ -1,0 +1,127 @@
+# Production stack — built and run on the server (no registry).
+#
+# Host nginx (port 80/443) is the public ingress and proxies into these
+# containers. They bind 127.0.0.1 only.
+#
+# Bring up:
+#   cd /root/joqari_kenes
+#   git pull
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#
+# `--build` rebuilds images from local Dockerfiles when source has changed.
+
+name: joqari-kenes
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # No host port bind — docker-network only. Host's own postgres stays on 5432.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: apps/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.prod
+    environment:
+      ENV: production
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      RELEASES_DIR: /var/lib/kiosk/releases
+      PHOTOS_DIR: /var/lib/kiosk/photos
+    volumes:
+      - releases:/var/lib/kiosk/releases
+      - photos:/var/lib/kiosk/photos
+    ports:
+      - "127.0.0.1:8011:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  super-panel:
+    build:
+      context: apps/super-panel
+      dockerfile: Dockerfile
+      args:
+        # Same-origin /api/* via nginx — empty base URL works because the SPA
+        # uses `/` as axios baseURL. Leave blank.
+        VITE_API_BASE_URL: ""
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8012:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  gov-panel:
+    build:
+      context: apps/gov-panel
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8013:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Status page + alerting. Joins joqari-kenes_default so it can reach the backend
+  # over the docker network for Phase 2 deep checks (http://backend:8000). The
+  # NTFY_TOPIC env var (from .env.prod) is the alert destination. Config is
+  # bind-mounted read-only from the repo; history persists in the gatusdata volume.
+  gatus:
+    image: ghcr.io/twin/gatus:stable
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    volumes:
+      - ./deploy/gatus/config.yaml:/config/config.yaml:ro
+      - gatusdata:/data
+    ports:
+      - "127.0.0.1:8015:8080"
+
+volumes:
+  pgdata:
+  redisdata:
+  releases:
+  photos:
+  gatusdata:

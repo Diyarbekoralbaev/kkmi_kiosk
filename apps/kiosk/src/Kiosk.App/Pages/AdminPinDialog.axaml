@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="using:Kiosk.App.Controls"
+        mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="820"
+        x:Class="Kiosk.App.Pages.AdminPinDialog"
+        Title="Kiosk · PIN"
+        Width="560" Height="820"
+        WindowStartupLocation="CenterScreen"
+        Background="#f4f7fb"
+        CanResize="False">
+    <StackPanel Margin="36,32" Spacing="18">
+        <TextBlock Text="{DynamicResource AdminPinTitle}" FontSize="26" FontWeight="Light" Foreground="#0a4d8c" />
+        <TextBlock Text="{DynamicResource AdminPinPrompt}" FontSize="15" Foreground="#64748b" />
+        <TextBox x:Name="PinBox" PasswordChar="*" FontSize="32" IsReadOnly="True"
+                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                 Background="#ffffff" Foreground="#0f172a"
+                 BorderBrush="#cbd5e1" BorderThickness="1"
+                 CornerRadius="10" Padding="14,16" />
+        <controls:NumericKeypad x:Name="Keypad" />
+        <TextBlock x:Name="ErrorText" Text="{DynamicResource AdminPinIncorrect}"
+                   Foreground="#dc2626" FontSize="14" IsVisible="False"
+                   HorizontalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Stretch">
+            <Button Content="{DynamicResource AdminPinCancel}" Click="OnCancel" Classes="ghost"
+                    HorizontalAlignment="Stretch" />
+            <Button Content="{DynamicResource AdminPinConfirm}" Click="OnConfirm" Classes="primary" IsDefault="True"
+                    HorizontalAlignment="Stretch" />
+        </StackPanel>
+    </StackPanel>
+
+    <Window.Styles>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="20,16" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinWidth" Value="200" />
+        </Style>
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#64748b" />
+            <Setter Property="Padding" Value="20,16" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BorderBrush" Value="#cbd5e1" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="MinWidth" Value="200" />
+        </Style>
+    </Window.Styles>
+</Window>

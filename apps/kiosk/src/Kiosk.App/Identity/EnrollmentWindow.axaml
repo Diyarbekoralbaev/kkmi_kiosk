@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="Kiosk.App.Identity.EnrollmentWindow"
+        Title="Kiosk enrollment"
+        Width="560" Height="460"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        Background="#f4f7fb">
+    <Grid Margin="48,40,48,32" RowDefinitions="Auto,8,Auto,28,Auto,4,Auto,20,Auto,4,Auto,28,Auto,16,Auto">
+        <TextBlock Grid.Row="0" Text="{DynamicResource EnrollmentTitle}"
+                   FontSize="28" FontWeight="Light" Foreground="#0a4d8c" />
+        <TextBlock Grid.Row="2" Foreground="#94a3b8" FontSize="13"
+                   Text="{DynamicResource EnrollmentIntro}"
+                   TextWrapping="Wrap" />
+
+        <TextBlock Grid.Row="4" Text="{DynamicResource EnrollmentBackendLabel}" Foreground="#64748b" FontSize="12" />
+        <TextBox Grid.Row="6" x:Name="BackendUrlBox"
+                 Text="http://localhost:8000"
+                 Background="#ffffff" Foreground="#0f172a"
+                 BorderBrush="#cbd5e1" BorderThickness="1"
+                 CornerRadius="6" Padding="12,10" FontSize="14" />
+
+        <TextBlock Grid.Row="8" Text="{DynamicResource EnrollmentCodeLabel}" Foreground="#64748b" FontSize="12" />
+        <TextBox Grid.Row="10" x:Name="CodeBox"
+                 PlaceholderText="XXXX-XXXX-XXXX"
+                 Background="#ffffff" Foreground="#0f172a"
+                 BorderBrush="#cbd5e1" BorderThickness="1"
+                 CornerRadius="6" Padding="12,10" FontSize="16"
+                 FontFamily="Consolas, Menlo, monospace" />
+
+        <Button Grid.Row="12" x:Name="EnrollButton"
+                Content="{DynamicResource EnrollmentButton}"
+                IsDefault="True"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Background="#0a4d8c" Foreground="White"
+                BorderThickness="0" CornerRadius="6"
+                Padding="0,14" FontSize="16" FontWeight="SemiBold" />
+
+        <TextBlock Grid.Row="14" x:Name="StatusText"
+                   Foreground="#94a3b8" FontSize="12" TextWrapping="Wrap" />
+    </Grid>
+</Window>

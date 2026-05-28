@@ -1,0 +1,88 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Kiosk.App.App"
+             RequestedThemeVariant="Light">
+    <Application.Resources>
+        <!-- All 3 language dictionaries declared HERE (not in code) so the
+             Avalonia XAML compiler statically resolves them — Native AOT
+             trimmer then preserves the compiled XAML. Runtime-constructed
+             ResourceInclude (which is what the previous version did) gets
+             stripped by the AOT trimmer and crashes with XamlLoadException:
+             "No precompiled XAML found for avares://...". The Avalonia warning
+             IL2026 spells this out: "defined in XAML are resolved compile time
+             and are safe with trimming and AOT".
+
+             Order = priority (last wins on duplicate keys). kk (Cyrillic)
+             is LAST so Қарақалпақша is the default language;
+             LocalizationService reorders this list at runtime to switch
+             languages. -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Kiosk.App/Localization/ru.axaml" />
+                <ResourceInclude Source="avares://Kiosk.App/Localization/uz.axaml" />
+                <ResourceInclude Source="avares://Kiosk.App/Localization/kk.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- ===== Theme tokens — referenced as {StaticResource KioskX} -->
+            <!-- Deep blue / amber palette per the 2026 redesign mockup
+                 (infokiosk.html). Single-file palette swap point for any
+                 future re-theming pass. -->
+            <Color x:Key="KioskPrimaryColor">#0a4d8c</Color>
+            <Color x:Key="KioskPrimaryDarkColor">#073966</Color>
+            <Color x:Key="KioskAccentColor">#f5b932</Color>
+            <Color x:Key="KioskAccentDarkColor">#d99b18</Color>
+            <Color x:Key="KioskBgColor">#f4f7fb</Color>
+            <Color x:Key="KioskCardColor">#ffffff</Color>
+            <Color x:Key="KioskTextColor">#1a2740</Color>
+            <Color x:Key="KioskTextMutedColor">#5a6b85</Color>
+            <Color x:Key="KioskBorderColor">#e2e8f0</Color>
+            <Color x:Key="KioskErrorColor">#dc2626</Color>
+            <Color x:Key="KioskSuccessColor">#10b981</Color>
+            <Color x:Key="KioskTileTintColor">#e8eff7</Color>
+            <Color x:Key="KioskAccentTintColor">#fdf1d4</Color>
+
+            <SolidColorBrush x:Key="KioskPrimary" Color="{StaticResource KioskPrimaryColor}" />
+            <SolidColorBrush x:Key="KioskPrimaryDark" Color="{StaticResource KioskPrimaryDarkColor}" />
+            <SolidColorBrush x:Key="KioskAccent" Color="{StaticResource KioskAccentColor}" />
+            <SolidColorBrush x:Key="KioskAccentDark" Color="{StaticResource KioskAccentDarkColor}" />
+            <SolidColorBrush x:Key="KioskBg" Color="{StaticResource KioskBgColor}" />
+            <SolidColorBrush x:Key="KioskCard" Color="{StaticResource KioskCardColor}" />
+            <SolidColorBrush x:Key="KioskText" Color="{StaticResource KioskTextColor}" />
+            <SolidColorBrush x:Key="KioskTextMuted" Color="{StaticResource KioskTextMutedColor}" />
+            <SolidColorBrush x:Key="KioskBorder" Color="{StaticResource KioskBorderColor}" />
+            <SolidColorBrush x:Key="KioskError" Color="{StaticResource KioskErrorColor}" />
+            <SolidColorBrush x:Key="KioskSuccess" Color="{StaticResource KioskSuccessColor}" />
+            <SolidColorBrush x:Key="KioskTileTint" Color="{StaticResource KioskTileTintColor}" />
+            <SolidColorBrush x:Key="KioskAccentTint" Color="{StaticResource KioskAccentTintColor}" />
+
+            <!-- ===== Typography tokens — canonical font sizes =====
+                 New code should pick from this set rather than inventing
+                 a one-off literal. Goal: visual rhythm + easy global
+                 retuning (bump every "kiosk body" font once instead of
+                 across 40 XAML files). Existing literals get migrated
+                 opportunistically; the values here match the most
+                 frequent existing sizes so the migration is no-op for
+                 most TextBlocks. -->
+            <x:Double x:Key="KioskFontDisplay">56</x:Double>  <!-- hero questions, dashboards -->
+            <x:Double x:Key="KioskFontH1">44</x:Double>       <!-- page title -->
+            <x:Double x:Key="KioskFontH2">32</x:Double>       <!-- card hero name -->
+            <x:Double x:Key="KioskFontH3">24</x:Double>       <!-- section heading, status pill -->
+            <x:Double x:Key="KioskFontH4">22</x:Double>       <!-- tile title, list item name -->
+            <x:Double x:Key="KioskFontBodyLg">18</x:Double>   <!-- tile subtitle -->
+            <x:Double x:Key="KioskFontBody">16</x:Double>     <!-- default body -->
+            <x:Double x:Key="KioskFontCaption">14</x:Double>  <!-- meta info -->
+            <x:Double x:Key="KioskFontCaptionSm">12</x:Double><!-- timestamps, helper text -->
+            <x:Double x:Key="KioskFontQueue">64</x:Double>    <!-- talon queue number -->
+
+            <!-- ===== Radius tokens — canonical corner radii ===== -->
+            <CornerRadius x:Key="KioskRadiusCard">22</CornerRadius>   <!-- info cards -->
+            <CornerRadius x:Key="KioskRadiusTile">28</CornerRadius>   <!-- home tiles, hero -->
+            <CornerRadius x:Key="KioskRadiusButton">12</CornerRadius> <!-- primary buttons -->
+            <CornerRadius x:Key="KioskRadiusChip">999</CornerRadius>  <!-- pill chips, avatars -->
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+</Application>

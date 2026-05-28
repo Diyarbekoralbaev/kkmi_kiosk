@@ -1,0 +1,242 @@
+# Gatus — status page + alerting for the kiosk platform.
+# Runs as a container (127.0.0.1:8005), fronted by nginx at status.kioska.dbc.uz.
+#
+# PHASE 1 (this file): Tier 1 external checks only — hit the public HTTPS
+# endpoints from outside. These catch total outages (nginx down, server down,
+# cert expired, panel container dead) without needing any backend change.
+#
+# PHASE 2 (added after the backend /health/deep endpoint ships): Tier 2 internal
+# component checks (postgres, redis, gemini relay WS, telegram relay, disk, tls)
+# and Tier 3 informational kiosk last-online. Those reference the deep endpoint
+# over the docker network (http://backend:8000/health/deep) and must set
+# ui.hide-url so internal hostnames never render on the public page.
+#
+# The ntfy topic is injected from the NTFY_TOPIC env var (kept out of git — it
+# is effectively a shared secret; anyone who knows it can read/post alerts).
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+ui:
+  title: "Nókis hákimligi — sistema halaty"
+  header: "Kiosk platforma — status"
+  logo: ""
+
+alerting:
+  ntfy:
+    topic: "${NTFY_TOPIC}"
+    url: "https://ntfy.sh"
+    priority: 5            # 1–5; 5 = max/urgent (phone alerts loudly)
+    default-alert:
+      failure-threshold: 2 # alert only after 2 consecutive failures (ignore 1 blip)
+      success-threshold: 2 # consider resolved after 2 consecutive successes
+      send-on-resolved: true
+
+endpoints:
+  - name: "Backend API"
+    group: "Core"
+    url: "https://api.kioska.dbc.uz/health"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: ntfy
+
+  - name: "Gov panel"
+    group: "Core"
+    url: "https://gov.kioska.dbc.uz"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: ntfy
+
+  - name: "Super panel"
+    group: "Core"
+    url: "https://super.kioska.dbc.uz"
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: ntfy
+
+  # ── Cloudflare relay Workers — their OWN health over plain HTTPS ──────────
+  # HTTPS to *.workers.dev works from Moscow even when the WS upgrade is
+  # blocked. So pairing these with the WS-based "Gemini AI" deep check gives
+  # the diagnostic split that took hours to find today:
+  #   relay GREEN + Gemini-AI RED  → Worker is up, the WS path is blocked
+  #   relay RED                    → the Worker / Cloudflare itself is down
+  # Auth tokens come from .env.prod (same vars the backend uses).
+  - name: "Gemini relay (Cloudflare)"
+    group: "Cloudflare relays"
+    url: "https://gemini-relay.diyarbekoralbaev.workers.dev/"
+    interval: 120s
+    headers:
+      X-Kiosk-Auth: "${GEMINI_RELAY_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+    ui:
+      hide-url: true
+      hide-conditions: true
+    alerts:
+      - type: ntfy
+
+  - name: "Telegram relay (Cloudflare)"
+    group: "Cloudflare relays"
+    url: "https://telegram-dust-3226.diyarbekoralbaev.workers.dev/"
+    interval: 120s
+    headers:
+      X-Relay-Auth: "${TELEGRAM_RELAY_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+    ui:
+      hide-url: true
+      hide-conditions: true
+    alerts:
+      - type: ntfy
+
+  # ── Tier 2: internal components (via backend /health/deep over docker net) ──
+  # All hit the same deep endpoint with the X-Health-Token header; the backend
+  # caches the result (~30s) so these 7 rows don't trigger 7 live checks.
+  # ui.hide-* keeps the internal URL + JSON paths off the public page.
+  - name: "Postgres"
+    group: "Internal"
+    url: "http://backend:8000/health/deep"
+    interval: 60s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.postgres.ok == true"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+    alerts:
+      - type: ntfy
+
+  - name: "Redis"
+    group: "Internal"
+    url: "http://backend:8000/health/deep"
+    interval: 60s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.redis.ok == true"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+    alerts:
+      - type: ntfy
+
+  - name: "Gemini AI assistant"
+    group: "Internal"
+    url: "http://backend:8000/health/deep"
+    interval: 60s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.gemini.ok == true"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+    alerts:
+      # Network-flaky path (Moscow→relay→Google). Require 3 consecutive
+      # failures (~3 min real problem) so a single ~8s latency spike on the
+      # international hop doesn't false-page.
+      - type: ntfy
+        failure-threshold: 3
+        send-on-resolved: true
+
+  - name: "Telegram bot"
+    group: "Internal"
+    url: "http://backend:8000/health/deep"
+    interval: 60s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.telegram.ok == true"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+    alerts:
+      # Network-flaky path (Moscow→relay→api.telegram.org). 3 consecutive
+      # failures before paging — a single slow getMe must not page.
+      - type: ntfy
+        failure-threshold: 3
+        send-on-resolved: true
+
+  - name: "Disk space"
+    group: "Internal"
+    url: "http://backend:8000/health/deep"
+    interval: 120s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.disk.ok == true"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+    alerts:
+      - type: ntfy
+
+  - name: "TLS certificate"
+    group: "Internal"
+    url: "http://backend:8000/health/deep"
+    interval: 300s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.tls.ok == true"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+    alerts:
+      - type: ntfy
+
+  # ── Tier 3: informational — kiosk fleet. NO alerts (a tuman power-cut must
+  # not page anyone). Green while at least one kiosk is online. ──
+  - name: "Kiosk fleet"
+    group: "Kiosks"
+    url: "http://backend:8000/health/deep"
+    interval: 120s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.kiosks.online > 0"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+
+  # ── Backup freshness — pages if the nightly restic→R2 job stops running.
+  # The backend reads the last-success marker the cron writes to redis; stale
+  # >26h (a missed night) → red + ntfy. This closes the "silent failure" loop
+  # for the backup itself. ──
+  - name: "Nightly backup (R2)"
+    group: "Backup"
+    url: "http://backend:8000/health/deep"
+    interval: 300s
+    headers:
+      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].components.backup.ok == true"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-conditions: true
+    alerts:
+      - type: ntfy

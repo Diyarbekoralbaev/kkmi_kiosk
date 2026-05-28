@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:state="using:Kiosk.App.State"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="88"
+             x:Class="Kiosk.App.Controls.KioskFooter"
+             x:DataType="state:SessionStore"
+             Height="88">
+    <!-- Deep-blue footer band per 2026 mockup. Left: 3-button language
+         switcher (lifted out of the header). Right: per-org helpline
+         phone — hidden when SessionStore.HelplinePhone is empty. -->
+    <Border Background="{StaticResource KioskPrimaryDark}">
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="60,0,60,0">
+            <!-- Language toggle -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12"
+                        VerticalAlignment="Center">
+                <Button x:Name="LangKkBtn" Click="OnLangKk" Classes="lang"
+                        Content="{DynamicResource LangKk}" />
+                <Button x:Name="LangUzBtn" Click="OnLangUz" Classes="lang"
+                        Content="{DynamicResource LangUz}" />
+                <Button x:Name="LangRuBtn" Click="OnLangRu" Classes="lang"
+                        Content="{DynamicResource LangRu}" />
+            </StackPanel>
+
+            <!-- Help phone (hidden if backend didn't return one).
+                 Phone glyph: Lucide-style outline, white stroke to stay
+                 in the footer's white-text scale. Replaces the legacy
+                 Unicode ☎ emoji whose rendering didn't match the rest of
+                 the kiosk's stroke-based vector icons (HomePage tiles). -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding HelplinePhone, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <Viewbox Width="24" Height="24" VerticalAlignment="Center">
+                    <Canvas Width="24" Height="24">
+                        <Path Stroke="White"
+                              StrokeThickness="2"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"
+                              Fill="Transparent"
+                              Data="M22,16.92 V19.92 A2,2 0 0 1 19.82,21.92 A19.79,19.79 0 0 1 11.19,18.85 A19.5,19.5 0 0 1 5.19,12.85 A19.79,19.79 0 0 1 2.12,4.18 A2,2 0 0 1 4.11,2 H7.11 A2,2 0 0 1 9.11,3.72 A12.84,12.84 0 0 0 9.81,6.53 A2,2 0 0 1 9.36,8.64 L8.09,9.91 A16,16 0 0 0 14.09,15.91 L15.36,14.64 A2,2 0 0 1 17.47,14.19 A12.84,12.84 0 0 0 20.28,14.89 A2,2 0 0 1 22,16.92 Z" />
+                    </Canvas>
+                </Viewbox>
+                <TextBlock Text="{DynamicResource HelpLabel}"
+                           FontSize="20" Foreground="#cfd8e7"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="{Binding HelplinePhone}"
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{StaticResource KioskAccent}"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </Border>
+
+    <UserControl.Styles>
+        <Style Selector="Button.lang">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#3a5a82" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="Padding" Value="22,12" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="MinWidth" Value="140" />
+        </Style>
+        <Style Selector="Button.lang:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1a4d8c" />
+        </Style>
+        <Style Selector="Button.lang.active">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource KioskPrimaryDark}" />
+            <Setter Property="BorderBrush" Value="White" />
+        </Style>
+        <Style Selector="Button.lang.active:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="White" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

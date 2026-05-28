@@ -1,0 +1,584 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:net="using:Kiosk.App.Net"
+             xmlns:state="using:Kiosk.App.State"
+             xmlns:controls="using:Kiosk.App.Controls"
+             xmlns:loc="using:Kiosk.App.Localization"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1920"
+             x:Class="Kiosk.App.Pages.QabulPage"
+             x:DataType="state:SessionStore">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,80,56,180">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+            <TextBlock Grid.Column="0" x:Name="QabulTitleText"
+                       Text="{DynamicResource QabulPageTitle}"
+                       FontSize="40" FontWeight="Bold"
+                       Foreground="{StaticResource KioskPrimary}"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap" MaxWidth="640" />
+            <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,28,0,0">
+            <!-- A. Pick official — 2026 grid redesign:
+                 • Chiefs (Hokim) render as full-width HERO cards on top with
+                   a 220 px circular photo, large name + role text.
+                 • Deputies render below as a 2-column UniformGrid of compact
+                   cards (140 px photo, vertical layout).
+                 The kiosk's Home tiles pre-filter by role so a single view
+                 usually shows only one half — the StackPanel hides the empty
+                 ItemsControl via IsVisible on count > 0 (set in code-behind).
+                 -->
+            <Grid x:Name="SectionPickOfficial" RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" x:Name="QabulPickPromptText"
+                           Text="{DynamicResource QabulPickPrompt}"
+                           FontSize="24" Foreground="{StaticResource KioskText}"
+                           Margin="0,0,0,20" />
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel Spacing="22">
+                        <!-- Chief hero(es) -->
+                        <ItemsControl x:Name="ChiefList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="22" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="net:Official">
+                                    <Button Click="OnOfficialClicked" Classes="herotile"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                                            <controls:OfficialAvatar Grid.Column="0"
+                                                                     Official="{Binding .}"
+                                                                     Diameter="220" />
+                                            <StackPanel Grid.Column="1" Spacing="10"
+                                                        VerticalAlignment="Center"
+                                                        Margin="36,0,16,0">
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="34" FontWeight="Bold"
+                                                           Foreground="{StaticResource KioskText}"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Position}"
+                                                           FontSize="22"
+                                                           Foreground="{StaticResource KioskAccentDark}"
+                                                           FontWeight="SemiBold"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Responsibilities}"
+                                                           FontSize="16"
+                                                           Foreground="{StaticResource KioskTextMuted}"
+                                                           TextWrapping="Wrap"
+                                                           MaxLines="2" />
+                                                <StackPanel Orientation="Horizontal" Spacing="14"
+                                                            Margin="0,8,0,0">
+                                                    <TextBlock Text="{Binding ReceptionDay, Converter={x:Static loc:DayCodeConverter.Instance}}"
+                                                               FontSize="18"
+                                                               Foreground="{StaticResource KioskPrimary}"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding ReceptionTime}"
+                                                               FontSize="18"
+                                                               Foreground="{StaticResource KioskTextMuted}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Border Grid.Column="2" Width="80" Height="80"
+                                                    CornerRadius="40"
+                                                    Background="{StaticResource KioskAccentDark}"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="›" FontSize="44" FontWeight="Bold"
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center" />
+                                            </Border>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Deputies grid -->
+                        <ItemsControl x:Name="DeputyList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="net:Official">
+                                    <Button Click="OnOfficialClicked" Classes="gridtile"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Margin="6">
+                                        <StackPanel Spacing="14" HorizontalAlignment="Center"
+                                                    VerticalAlignment="Top">
+                                            <controls:OfficialAvatar Official="{Binding .}"
+                                                                     Diameter="140"
+                                                                     HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="22" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource KioskText}"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Position}"
+                                                       FontSize="16"
+                                                       Foreground="{StaticResource KioskPrimary}"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Responsibilities}"
+                                                       FontSize="14"
+                                                       Foreground="{StaticResource KioskTextMuted}"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap"
+                                                       MaxLines="2"
+                                                       Margin="6,0" />
+                                            <StackPanel Orientation="Horizontal" Spacing="10"
+                                                        HorizontalAlignment="Center"
+                                                        Margin="0,4,0,0">
+                                                <TextBlock Text="{Binding ReceptionDay, Converter={x:Static loc:DayCodeConverter.Instance}}"
+                                                           FontSize="14"
+                                                           Foreground="{StaticResource KioskPrimary}"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding ReceptionTime}"
+                                                           FontSize="14"
+                                                           Foreground="{StaticResource KioskTextMuted}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- A2. Enter topic (NEW — manual qabul issue summary).
+                 Visible after the visitor picks an official, before the
+                 phone keypad. Skipped automatically when AppointmentTopic
+                 is already populated (voice flow may have filled it). -->
+            <ScrollViewer x:Name="SectionEnterTopic" IsVisible="False">
+                <StackPanel Spacing="18">
+                    <!-- Small reminder of who was picked, plus a Back link. -->
+                    <Border Background="{StaticResource KioskCard}"
+                            BorderBrush="{StaticResource KioskBorder}"
+                            BorderThickness="1" CornerRadius="18" Padding="20">
+                        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                            <controls:OfficialAvatar Grid.Column="0"
+                                                     x:Name="TopicSelectedAvatar"
+                                                     Width="64" Height="64" />
+                            <StackPanel Grid.Column="1" Margin="20,0,0,0"
+                                        VerticalAlignment="Center">
+                                <TextBlock x:Name="TopicSelectedName"
+                                           FontSize="22" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskText}" />
+                                <TextBlock x:Name="TopicSelectedPosition"
+                                           FontSize="16"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                            </StackPanel>
+                            <Button Grid.Column="2"
+                                    Content="{DynamicResource QabulPickAnother}"
+                                    Click="OnPickAnother"
+                                    Background="Transparent"
+                                    Foreground="{StaticResource KioskPrimary}"
+                                    BorderThickness="0"
+                                    FontSize="16" Padding="14,10" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Topic prompt + text area -->
+                    <TextBlock Text="{DynamicResource QabulTopicLabel}"
+                               FontSize="22" FontWeight="SemiBold"
+                               Foreground="{StaticResource KioskText}" />
+                    <TextBlock Text="{DynamicResource QabulTopicHint}"
+                               FontSize="16"
+                               Foreground="{StaticResource KioskTextMuted}" />
+                    <TextBox x:Name="TopicBox"
+                             Text="{Binding AppointmentTopic, Mode=TwoWay}"
+                             AcceptsReturn="False"
+                             TextWrapping="Wrap"
+                             MaxLength="500"
+                             MinHeight="120"
+                             FontSize="26"
+                             Padding="18,14"
+                             Background="{StaticResource KioskCard}"
+                             BorderBrush="{StaticResource KioskBorder}"
+                             BorderThickness="1"
+                             CornerRadius="12" />
+
+                    <TextBlock x:Name="TopicStatus"
+                               Text="{DynamicResource QabulTopicErrorShort}"
+                               FontSize="16"
+                               Foreground="{StaticResource KioskError}"
+                               IsVisible="False" />
+
+                    <!-- Custom on-screen keyboard. TargetTextBox is wired
+                         to TopicBox in QabulPage.axaml.cs Loaded handler. -->
+                    <controls:OnScreenKeyboard x:Name="TopicKeyboard" />
+
+                    <Button Click="OnTopicContinue"
+                            Content="{DynamicResource QabulContinueButton}"
+                            Background="{StaticResource KioskPrimary}"
+                            Foreground="White"
+                            FontSize="22" FontWeight="SemiBold"
+                            Padding="28,18"
+                            CornerRadius="14"
+                            HorizontalAlignment="Stretch" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- B. Enter phone (keypad) -->
+            <ScrollViewer x:Name="SectionEnterPhone" IsVisible="False">
+                <StackPanel Spacing="16">
+                    <!-- Selected-official summary card with avatar so visitor knows
+                         exactly who they're booking with. -->
+                    <Border Background="{StaticResource KioskCard}"
+                            BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                            CornerRadius="14" Padding="22,18">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <controls:OfficialAvatar Grid.Column="0" x:Name="SelectedAvatar"
+                                                     Diameter="84" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Spacing="6" Margin="20,0,0,0"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{DynamicResource QabulSelectedLabel}"
+                                           FontSize="13" Foreground="{StaticResource KioskPrimary}" />
+                                <TextBlock Text="{Binding AppointmentOfficialName}"
+                                           FontSize="22" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskText}" />
+                                <TextBlock Text="{Binding AppointmentOfficialPosition}"
+                                           FontSize="15"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock Text="{Binding AppointmentScheduledDateHuman}"
+                                           FontSize="16"
+                                           Foreground="{StaticResource KioskPrimary}"
+                                           Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Button Click="OnPickAnother" Classes="ghost" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="←" FontSize="18" />
+                            <TextBlock Text="{DynamicResource QabulPickAnother}" FontSize="15" />
+                        </StackPanel>
+                    </Button>
+
+                    <TextBlock Text="{DynamicResource QabulPhoneLabel}"
+                               FontSize="16" Foreground="{StaticResource KioskPrimary}"
+                               Margin="0,12,0,0" />
+                    <TextBox x:Name="PhoneBox"
+                             FontSize="34" IsReadOnly="True"
+                             FontFamily="Consolas, Menlo, Courier New, monospace"
+                             Background="{StaticResource KioskCard}"
+                             Foreground="{StaticResource KioskText}"
+                             BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                             CornerRadius="10" Padding="18,16" />
+                    <controls:NumericKeypad x:Name="Keypad" />
+
+                    <TextBlock x:Name="ConfirmStatus"
+                               Foreground="{StaticResource KioskError}" FontSize="14"
+                               IsVisible="False" TextWrapping="Wrap" />
+
+                    <Button x:Name="PreviewButton" Click="OnGoToPhonePreview"
+                            Classes="primary" HorizontalAlignment="Stretch">
+                        <TextBlock Text="{DynamicResource QabulConfirmButton}"
+                                   FontSize="22" FontWeight="SemiBold" />
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- B2. Phone preview — confirm before submit. Catches typos
+                 before the appointment gets committed to the DB and the
+                 talon prints with the wrong number. -->
+            <ScrollViewer x:Name="SectionPhonePreview" IsVisible="False">
+                <StackPanel Spacing="22" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource QabulPhonePreviewTitle}"
+                               FontSize="28" FontWeight="SemiBold"
+                               Foreground="{StaticResource KioskText}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap" />
+                    <TextBlock Text="{DynamicResource QabulPhonePreviewHint}"
+                               FontSize="18"
+                               Foreground="{StaticResource KioskTextMuted}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap"
+                               MaxWidth="720" />
+                    <Border Background="{StaticResource KioskCard}"
+                            BorderBrush="{StaticResource KioskPrimary}" BorderThickness="2"
+                            CornerRadius="20" Padding="36,28"
+                            HorizontalAlignment="Center">
+                        <TextBlock x:Name="PhonePreviewText"
+                                   FontSize="48" FontWeight="Bold"
+                                   FontFamily="Consolas, Menlo, Courier New, monospace"
+                                   Foreground="{StaticResource KioskPrimary}"
+                                   HorizontalAlignment="Center" />
+                    </Border>
+                    <TextBlock x:Name="PhonePreviewStatus"
+                               Foreground="{StaticResource KioskError}" FontSize="14"
+                               IsVisible="False" TextWrapping="Wrap"
+                               HorizontalAlignment="Center" TextAlignment="Center" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="16" Margin="0,12,0,0">
+                        <Button Grid.Column="0" Click="OnPhoneEdit" Classes="ghost"
+                                HorizontalAlignment="Stretch">
+                            <TextBlock Text="{DynamicResource QabulPhonePreviewEdit}"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" />
+                        </Button>
+                        <Button Grid.Column="1" x:Name="ConfirmButton"
+                                Click="OnConfirmClicked" Classes="primary"
+                                HorizontalAlignment="Stretch">
+                            <TextBlock Text="{DynamicResource QabulPhonePreviewSend}"
+                                       FontSize="20" FontWeight="SemiBold" />
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- B3. Voice-flow preview — shown after the AI agent calls
+                 `preview_appointment`. Lets the visitor verify the captured
+                 fields (official, scheduled date+time, masked phone, topic)
+                 BEFORE the AI submits. Buttons forward to the backend as
+                 user_text envelopes so the agent reacts naturally. -->
+            <ScrollViewer x:Name="SectionVoicePreview" IsVisible="False">
+                <StackPanel Spacing="22" VerticalAlignment="Center" Margin="0,16,0,0">
+                    <TextBlock Text="{DynamicResource QabulVoicePreviewTitle}"
+                               FontSize="32" FontWeight="SemiBold"
+                               Foreground="{StaticResource KioskText}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap" />
+                    <Border Background="{StaticResource KioskCard}"
+                            BorderBrush="{StaticResource KioskPrimary}" BorderThickness="2"
+                            CornerRadius="20" Padding="36,28"
+                            MaxWidth="720" HorizontalAlignment="Center">
+                        <StackPanel Spacing="14">
+                            <!-- Official: bold name + grey position -->
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{DynamicResource QabulVoicePreviewOfficialLabel}"
+                                           FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock x:Name="VoicePreviewOfficialName"
+                                           FontSize="22" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskText}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock x:Name="VoicePreviewOfficialPosition"
+                                           FontSize="16"
+                                           Foreground="{StaticResource KioskTextMuted}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <!-- Date + Time + Phone + Topic, two columns -->
+                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto"
+                                  ColumnSpacing="20" RowSpacing="10">
+                                <TextBlock Grid.Row="0" Grid.Column="0"
+                                           Text="{DynamicResource QabulVoicePreviewDateLabel}"
+                                           FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           x:Name="VoicePreviewDate"
+                                           FontSize="18"
+                                           Foreground="{StaticResource KioskText}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="1" Grid.Column="0"
+                                           Text="{DynamicResource QabulVoicePreviewTimeLabel}"
+                                           FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           x:Name="VoicePreviewTime"
+                                           FontSize="18"
+                                           Foreground="{StaticResource KioskText}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0"
+                                           Text="{DynamicResource QabulVoicePreviewPhoneLabel}"
+                                           FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           x:Name="VoicePreviewPhone"
+                                           FontSize="20" FontWeight="SemiBold"
+                                           FontFamily="Consolas, Menlo, Courier New, monospace"
+                                           Foreground="{StaticResource KioskPrimary}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0"
+                                           Text="{DynamicResource QabulVoicePreviewTopicLabel}"
+                                           FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskTextMuted}"
+                                           VerticalAlignment="Top" />
+                                <TextBlock Grid.Row="3" Grid.Column="1"
+                                           x:Name="VoicePreviewTopic"
+                                           FontSize="18"
+                                           Foreground="{StaticResource KioskText}"
+                                           TextWrapping="Wrap" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <!-- Two-button row: confirm / reject. Forwards as
+                         user_text to backend so AI reacts the same way it
+                         would to a spoken "awa"/"yoq". -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="16" Margin="0,12,0,0"
+                          MaxWidth="720" HorizontalAlignment="Center">
+                        <Button Grid.Column="0" Click="OnVoicePreviewReject" Classes="ghost"
+                                HorizontalAlignment="Stretch" MinHeight="68">
+                            <TextBlock Text="{DynamicResource QabulVoicePreviewReject}"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" TextWrapping="Wrap"
+                                       TextAlignment="Center" />
+                        </Button>
+                        <Button Grid.Column="1" Click="OnVoicePreviewConfirm" Classes="primary"
+                                HorizontalAlignment="Stretch" MinHeight="68">
+                            <TextBlock Text="{DynamicResource QabulVoicePreviewConfirm}"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" />
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- C. Success — on-screen talon mirroring the printed receipt
+                 layout: bold label / regular value rows separated by tight
+                 dashed rules. Used by both voice and manual flows. -->
+            <ScrollViewer x:Name="SectionSuccess" IsVisible="False">
+                <Border Background="{StaticResource KioskCard}"
+                        BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                        CornerRadius="20" Padding="44,36"
+                        MaxWidth="780" HorizontalAlignment="Center">
+                    <StackPanel Spacing="0" HorizontalAlignment="Stretch">
+                        <!-- Org header (org name uppercased) + role-specific subtitle -->
+                        <TextBlock x:Name="TalonOrgName"
+                                   Text="{Binding OrgName}"
+                                   FontSize="34" FontWeight="Bold"
+                                   Foreground="{StaticResource KioskText}"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                        <TextBlock x:Name="TalonSubtitle"
+                                   FontSize="22"
+                                   Foreground="{StaticResource KioskText}"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   Margin="0,8,0,18" />
+
+                        <Path Stroke="{StaticResource KioskBorder}" StrokeThickness="1"
+                              StrokeDashArray="3,3" Data="M0,0 L1,0"
+                              Stretch="Fill" Height="1" Margin="0,0,0,16" />
+
+                        <!-- Chipta raqami (bold label + regular value).
+                             Labels are named (`x:Name="TalonLabelXxx"`) so
+                             code-behind can refresh them from
+                             LocalizationService when the language changes —
+                             Avalonia Run.Text doesn't observe DynamicResource
+                             re-lookups on its own, so we set them imperatively
+                             and re-set on LanguageChanged. -->
+                        <TextBlock FontSize="22" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Foreground="{StaticResource KioskText}">
+                            <Run x:Name="TalonLabelChipta" FontWeight="Bold" />
+                            <Run Text="{Binding AppointmentChiptaNumber}" />
+                        </TextBlock>
+                        <TextBlock FontSize="22" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Foreground="{StaticResource KioskText}">
+                            <Run x:Name="TalonLabelMansabdor" FontWeight="Bold" />
+                            <Run Text="{Binding AppointmentOfficialName}" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding AppointmentOfficialPosition}"
+                                   FontSize="20" FontStyle="Italic"
+                                   Foreground="{StaticResource KioskTextMuted}"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding AppointmentOfficialPosition,
+                                                       Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   Margin="0,0,0,8" />
+                        <TextBlock FontSize="22" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Foreground="{StaticResource KioskText}"
+                                   IsVisible="{Binding AppointmentTopic,
+                                                       Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <Run x:Name="TalonLabelMasala" FontWeight="Bold" />
+                            <Run Text="{Binding AppointmentTopic}" />
+                        </TextBlock>
+
+                        <Path Stroke="{StaticResource KioskBorder}" StrokeThickness="1"
+                              StrokeDashArray="3,3" Data="M0,0 L1,0"
+                              Stretch="Fill" Height="1" Margin="0,8,0,16" />
+
+                        <TextBlock FontSize="22" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Foreground="{StaticResource KioskText}">
+                            <Run x:Name="TalonLabelSana" FontWeight="Bold" />
+                            <Run Text="{Binding AppointmentScheduledDateHuman}" />
+                        </TextBlock>
+                        <TextBlock FontSize="22" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Foreground="{StaticResource KioskText}">
+                            <Run x:Name="TalonLabelVaqt" FontWeight="Bold" />
+                            <Run Text="{Binding AppointmentReceptionTime}" />
+                        </TextBlock>
+                        <TextBlock FontSize="22" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Foreground="{StaticResource KioskText}">
+                            <Run x:Name="TalonLabelNavbat" FontWeight="Bold" />
+                            <Run Text="{Binding AppointmentQueueNumber}" />
+                        </TextBlock>
+
+                        <Path Stroke="{StaticResource KioskBorder}" StrokeThickness="1"
+                              StrokeDashArray="3,3" Data="M0,0 L1,0"
+                              Stretch="Fill" Height="1" Margin="0,8,0,16" />
+
+                        <TextBlock FontSize="22" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Foreground="{StaticResource KioskText}">
+                            <Run x:Name="TalonLabelTelefon" FontWeight="Bold" />
+                            <Run Text="{Binding AppointmentPhoneMasked}" />
+                        </TextBlock>
+
+                        <Path Stroke="{StaticResource KioskBorder}" StrokeThickness="1"
+                              StrokeDashArray="3,3" Data="M0,0 L1,0"
+                              Stretch="Fill" Height="1" Margin="0,8,0,16" />
+
+                        <Image x:Name="QrImage" Width="280" Height="280"
+                               HorizontalAlignment="Center" Margin="0,8,0,16" />
+
+                        <TextBlock x:Name="TalonFooter"
+                                   Text="{DynamicResource QabulTalonScanHint}"
+                                   FontSize="18"
+                                   Foreground="{StaticResource KioskTextMuted}"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+
+    <UserControl.Styles>
+        <!-- Hero tile — used for the chief (full width, 220 px photo, big text). -->
+        <Style Selector="Button.herotile">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="28" />
+            <Setter Property="Padding" Value="32,28" />
+            <Setter Property="MinHeight" Value="280" />
+        </Style>
+        <Style Selector="Button.herotile:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+        <!-- Grid tile — used for deputies in the 2-column grid. -->
+        <Style Selector="Button.gridtile">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="22" />
+            <Setter Property="Padding" Value="22,28" />
+            <Setter Property="MinHeight" Value="340" />
+        </Style>
+        <Style Selector="Button.gridtile:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="20,18" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource KioskPrimaryDark}" />
+        </Style>
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource KioskTextMuted}" />
+            <Setter Property="Padding" Value="14,16" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>
