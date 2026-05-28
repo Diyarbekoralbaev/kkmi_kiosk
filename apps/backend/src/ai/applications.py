@@ -1,23 +1,20 @@
-"""Shared application (murajat / citizen request) insert logic.
+"""Shared application insert logic — murajaat (appeal) + feedback.
 
-Both the kiosk WS voice flow and the kiosk manual-submit HTTP endpoint
-land here so behavior (category_slug resolution, audit shape, default
-status) stays identical regardless of source. Mirrors the pattern in
-`ai/appointments.py` for qabul bookings.
+Both the kiosk WS voice flow and the kiosk manual-submit HTTP endpoints land
+here so behavior (audit shape, default status) stays identical regardless of
+source. Mirrors the pattern in `ai/appointments.py`.
 
-The voice flow previously inlined this insert in `api/kiosk_ws.py`;
-extracting it here is what lets the manual REST endpoint reuse it
-without duplicating SQL.
+For the Council there is no category picker: a murajaat is just topic + body +
+phone. Feedback rides on the same `applications` table via the `kind`
+discriminator + `feedback_type` (shaǵım / usınıs / minnetdarshılıq).
 """
 from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..domain.application import Application
-from ..domain.category import ApplicationCategory
+from ..domain.application import KIND_FEEDBACK, KIND_MURAJAAT, Application
 
 
 async def create_application(
@@ -27,34 +24,17 @@ async def create_application(
     topic: str,
     body: str,
     phone: str,
-    category_slug: str,
     source: str,
+    kind: str = KIND_MURAJAAT,
+    feedback_type: str | None = None,
     voice_session_id: uuid.UUID | None = None,
 ) -> Application:
-    """Insert a new Application row with category_slug → category_id
-    resolution.
+    """Insert a new Application row.
 
-    Unknown / soft-deleted slugs land as `category_id = NULL` so the
-    reviewer can correct the category later from the gov-panel without
-    blocking submission. Same lenient behavior the voice flow has
-    always had.
-
-    Caller owns the transaction — the function flushes but does not
-    commit. `source` is one of `"kiosk_voice"` / `"kiosk_manual"` /
-    similar; callers are responsible for `audit.record(...)` afterwards
-    so the audit row sits in the same transaction.
+    Caller owns the transaction — the function flushes but does not commit.
+    `source` (e.g. "kiosk_voice" / "kiosk_manual") is informational for the
+    caller's `audit.record(...)`; it is not stored on the row.
     """
-    category_id = None
-    if category_slug:
-        category_id = (
-            await session.execute(
-                select(ApplicationCategory.id).where(
-                    ApplicationCategory.slug == category_slug,
-                    ApplicationCategory.deleted_at.is_(None),
-                )
-            )
-        ).scalar_one_or_none()
-
     app = Application(
         id=uuid.uuid4(),
         org_id=org_id,
@@ -63,8 +43,35 @@ async def create_application(
         body=body.strip(),
         phone=phone,
         status="new",
-        category_id=category_id,
+        kind=kind,
+        feedback_type=feedback_type,
     )
     session.add(app)
     await session.flush()
     return app
+
+
+async def create_feedback(
+    session: AsyncSession,
+    *,
+    org_id: uuid.UUID,
+    feedback_type: str,
+    text: str,
+    phone: str,
+    source: str,
+    voice_session_id: uuid.UUID | None = None,
+) -> Application:
+    """Insert a feedback row (kind=feedback). `topic` stays empty; the free
+    text goes in `body`, the kind (shaǵım/usınıs/minnetdarshılıq) in
+    `feedback_type`."""
+    return await create_application(
+        session,
+        org_id=org_id,
+        topic="",
+        body=text,
+        phone=phone,
+        source=source,
+        kind=KIND_FEEDBACK,
+        feedback_type=feedback_type,
+        voice_session_id=voice_session_id,
+    )

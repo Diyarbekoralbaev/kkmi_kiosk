@@ -24,6 +24,10 @@ public enum KioskPage
     /// page owns the keyboard-based topic + body + phone entry path.
     /// </summary>
     ManualSubmit,
+    /// <summary>Touch-driven feedback flow (shaǵım / usınıs /
+    /// minnetdarshılıq). Reached by tapping the Home Fikr tile, or by the
+    /// voice agent navigating to "feedback".</summary>
+    Feedback,
 }
 
 public enum SubmitStep
@@ -40,7 +44,20 @@ public enum AppointmentStep
 {
     Idle,
     Topic,
-    ConfirmOfficial,
+    Phone,
+    Preview,
+    Done,
+}
+
+/// <summary>State machine for the manual feedback page (touch flow, no
+/// voice). Visitor: pick type → type text → enter phone → preview →
+/// success. Kept separate from the submit/appointment steps so the
+/// three flows can't drive each other's visibility.</summary>
+public enum ManualFeedbackStep
+{
+    Idle,
+    Type,
+    Text,
     Phone,
     Preview,
     Done,
@@ -74,6 +91,7 @@ public partial class SessionStore : ObservableObject
     private ContactsPage? _contacts;
     private QabulPage? _qabul;
     private ManualSubmitPage? _manualSubmit;
+    private ManualFeedbackPage? _manualFeedback;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentView))]
@@ -109,30 +127,30 @@ public partial class SessionStore : ObservableObject
     [ObservableProperty] private string _submittedId = "";
     [ObservableProperty] private bool _showSubmitSuccess;
 
-    // ── Qabul (appointment) state, mirrors Submit but with queue + receipt ──
+    // ── Qabul (reception registration) state ───────────────────────────────
+    // The Joqarı Keńes flow has NO official and NO scheduled date — the
+    // citizen registers + leaves a phone (and optional topic) and the
+    // Council calls them back. The talon shows a reference number + QR.
     [ObservableProperty] private AppointmentStep _appointmentStep = AppointmentStep.Idle;
     [ObservableProperty] private string _appointmentTopic = "";
-    [ObservableProperty] private string _appointmentOfficialId = "";
-    [ObservableProperty] private string _appointmentOfficialName = "";
-    [ObservableProperty] private string _appointmentOfficialPosition = "";
-    [ObservableProperty] private string _appointmentScheduledDate = "";
-    [ObservableProperty] private string _appointmentScheduledDateHuman = "";
-    [ObservableProperty] private string _appointmentReceptionTime = "";
     [ObservableProperty] private string _appointmentPhoneMasked = "";
     [ObservableProperty] private string _appointmentVerificationUrl = "";
     [ObservableProperty] private string _appointmentId = "";
-    [ObservableProperty] private int _appointmentQueueNumber;
+    /// <summary>Human-readable reference number for the registration, e.g.
+    /// "KK-20260528-0042". Shown on the on-screen talon and printed receipt.</summary>
+    [ObservableProperty] private string _appointmentReferenceNo = "";
     [ObservableProperty] private byte[]? _appointmentQrPng;
     [ObservableProperty] private byte[]? _appointmentReceiptPdf;
     [ObservableProperty] private bool _showAppointmentSuccess;
-    /// <summary>Role of the booked official ("chief" | "deputy"). Used to pick
-    /// the success-talon subtitle ("Shaxsiy qabul chiptasi" vs "O'rinbosar
-    /// qabul chiptasi") so the on-screen talon mirrors the printed receipt.</summary>
-    [ObservableProperty] private string _appointmentOfficialRole = "";
-    /// <summary>Pre-formatted chipta number, e.g. "O-20260518-003". Built
-    /// client-side from ScheduledDate (ISO) + QueueNumber so the on-screen
-    /// talon shows the same string the receipt PDF prints.</summary>
-    [ObservableProperty] private string _appointmentChiptaNumber = "";
+
+    // ── Feedback (shaǵım / usınıs / minnetdarshılıq) state ──────────────────
+    [ObservableProperty] private ManualFeedbackStep _manualFeedbackStep = ManualFeedbackStep.Idle;
+    /// <summary>One of: "complaint", "suggestion", "gratitude".</summary>
+    [ObservableProperty] private string _feedbackType = "";
+    [ObservableProperty] private string _feedbackText = "";
+    [ObservableProperty] private string _feedbackPhone = "";
+    [ObservableProperty] private string _feedbackSubmittedId = "";
+    [ObservableProperty] private bool _showFeedbackSuccess;
 
     [ObservableProperty] private string _liveTranscript = "";
 
@@ -292,13 +310,6 @@ public partial class SessionStore : ObservableObject
         return "";
     }
 
-    /// <summary>Role filter applied to the QabulPage officials list. Set
-    /// by HomePage when the visitor taps "Hokim jeke" (→ "chief") or
-    /// "Hokim orinbosari" (→ "deputy") before navigating to Qabul; reset
-    /// to "" on QabulPage.Unloaded and any other entry path (e.g. agent
-    /// navigation) so the agent flow still sees the full officials KB.</summary>
-    [ObservableProperty] private string _qabulRoleFilter = "";
-
     public ObservableCollection<string> TranscriptLog { get; } = new();
 
     public Control CurrentView => CurrentPage switch
@@ -308,6 +319,7 @@ public partial class SessionStore : ObservableObject
         KioskPage.Contacts => _contacts ??= new ContactsPage(),
         KioskPage.Qabul => _qabul ??= new QabulPage(),
         KioskPage.ManualSubmit => _manualSubmit ??= new ManualSubmitPage(),
+        KioskPage.Feedback => _manualFeedback ??= new ManualFeedbackPage(),
         // Don't cache the AI page — its Loaded/Unloaded handlers manage the
         // voice runtime lifecycle, and a cached instance would skip Loaded
         // on re-entry, leaving the runtime in whatever state Unloaded left
@@ -337,19 +349,20 @@ public partial class SessionStore : ObservableObject
 
         AppointmentStep = AppointmentStep.Idle;
         AppointmentTopic = "";
-        AppointmentOfficialId = "";
-        AppointmentOfficialName = "";
-        AppointmentOfficialPosition = "";
-        AppointmentScheduledDate = "";
-        AppointmentScheduledDateHuman = "";
-        AppointmentReceptionTime = "";
         AppointmentPhoneMasked = "";
         AppointmentVerificationUrl = "";
         AppointmentId = "";
-        AppointmentQueueNumber = 0;
+        AppointmentReferenceNo = "";
         AppointmentQrPng = null;
         AppointmentReceiptPdf = null;
         ShowAppointmentSuccess = false;
+
+        ManualFeedbackStep = ManualFeedbackStep.Idle;
+        FeedbackType = "";
+        FeedbackText = "";
+        FeedbackPhone = "";
+        FeedbackSubmittedId = "";
+        ShowFeedbackSuccess = false;
 
         LiveTranscript = "";
         Navigate(KioskPage.Home);
@@ -383,6 +396,7 @@ public partial class SessionStore : ObservableObject
             // qabul flow — there's no separate reception page anymore.
             case "reception":
             case "qabul": Navigate(KioskPage.Qabul); break;
+            case "feedback": Navigate(KioskPage.Feedback); break;
             case "ai": Navigate(KioskPage.Ai); break;
             default: Navigate(KioskPage.Home); break;
         }
@@ -419,23 +433,14 @@ public partial class SessionStore : ObservableObject
     public void OnAppointmentProgress(AppointmentProgressMessage p)
     {
         // Stepper-only: advance the highlight + populate just the field that
-        // was captured by THIS user reply. Nothing about the appointment is
-        // committed yet; the AI will call preview_appointment with the full
-        // set once all three pieces are in.
+        // was captured by THIS user reply. Nothing is committed yet; the AI
+        // will call preview_appointment with topic + phone once both are in.
+        // The Council flow has only two stages — no official.
         switch (p.Stage)
         {
             case "topic":
                 if (!string.IsNullOrEmpty(p.Topic)) AppointmentTopic = p.Topic;
                 if (AppointmentStep < AppointmentStep.Topic) AppointmentStep = AppointmentStep.Topic;
-                Navigate(KioskPage.Qabul);
-                break;
-            case "official":
-                if (!string.IsNullOrEmpty(p.OfficialId)) AppointmentOfficialId = p.OfficialId;
-                if (!string.IsNullOrEmpty(p.OfficialName)) AppointmentOfficialName = p.OfficialName;
-                if (!string.IsNullOrEmpty(p.OfficialPosition)) AppointmentOfficialPosition = p.OfficialPosition;
-                if (!string.IsNullOrEmpty(p.ScheduledDateHuman)) AppointmentScheduledDateHuman = p.ScheduledDateHuman;
-                if (!string.IsNullOrEmpty(p.ReceptionTime)) AppointmentReceptionTime = p.ReceptionTime;
-                if (AppointmentStep < AppointmentStep.ConfirmOfficial) AppointmentStep = AppointmentStep.ConfirmOfficial;
                 Navigate(KioskPage.Qabul);
                 break;
             case "phone":
@@ -448,12 +453,6 @@ public partial class SessionStore : ObservableObject
 
     public void OnAppointmentPreview(AppointmentPreviewMessage p)
     {
-        AppointmentOfficialId = p.OfficialId;
-        AppointmentOfficialName = p.OfficialName;
-        AppointmentOfficialPosition = p.OfficialPosition;
-        AppointmentScheduledDate = p.ScheduledDate;
-        AppointmentScheduledDateHuman = p.ScheduledDateHuman;
-        AppointmentReceptionTime = p.ReceptionTime;
         AppointmentPhoneMasked = p.PhoneMasked;
         AppointmentTopic = p.Topic;
         AppointmentStep = AppointmentStep.Preview;
@@ -463,31 +462,10 @@ public partial class SessionStore : ObservableObject
     public void OnAppointmentSubmitted(AppointmentSubmittedMessage s)
     {
         AppointmentId = s.AppointmentId;
-        AppointmentOfficialName = s.OfficialName;
-        AppointmentOfficialPosition = s.OfficialPosition;
-        // Without this, the voice flow's success talon would render the
-        // wrong subtitle (always "O'rinbosar qabul chiptasi") because
-        // AppointmentOfficialRole was only being set by the manual flow's
-        // OnOfficialClicked handler — the voice flow skips that step.
-        if (!string.IsNullOrEmpty(s.OfficialRole))
-            AppointmentOfficialRole = s.OfficialRole;
-        AppointmentScheduledDate = s.ScheduledDate;
-        // Backend's `scheduled_date_human` is always Kk-formatted. Re-render
-        // from the ISO `scheduled_date` in the kiosk's current language so
-        // Uz / Ru users don't see Cyrillic month names. Fall back to the
-        // backend string if the ISO field is missing.
-        AppointmentScheduledDateHuman = DateTime.TryParse(s.ScheduledDate, out var d)
-            ? Localization.LocalizationService.FormatDate(d, Localization.LocalizationService.Current)
-            : s.ScheduledDateHuman;
-        // Chipta raqami in the same shape the printed receipt uses.
-        AppointmentChiptaNumber = DateTime.TryParse(s.ScheduledDate, out var dd)
-            ? $"O-{dd:yyyyMMdd}-{s.QueueNumber:000}"
-            : "";
-        AppointmentReceptionTime = s.ReceptionTime;
+        AppointmentReferenceNo = s.ReferenceNo;
         AppointmentPhoneMasked = s.PhoneMasked;
         AppointmentTopic = s.Topic;
         AppointmentVerificationUrl = s.VerificationUrl;
-        AppointmentQueueNumber = s.QueueNumber;
         // Decode QR + receipt PDF bytes. We log decode failures explicitly
         // because a silent catch here used to mask a real production bug
         // (the visitor sees a blank talon — no QR, no receipt — and there's
@@ -529,7 +507,7 @@ public partial class SessionStore : ObservableObject
         Navigate(KioskPage.Qabul);
 
         // Auto-print the receipt if the settings allow it. Fire-and-forget —
-        // a printer failure must not block the UI from showing the queue
+        // a printer failure must not block the UI from showing the reference
         // number; the visitor can still read the on-screen QR.
         if (AppointmentReceiptPdf is not null && KioskSettings.Current.AutoPrintReceipts)
         {
@@ -538,9 +516,34 @@ public partial class SessionStore : ObservableObject
             _ = Task.Run(() => ReceiptPrinter.PrintAsync(pdf, printerName));
         }
 
-        // Auto-return to home after 12s — visitor needs time to read the queue
-        // number / scan the QR before the screen resets for the next person.
+        // Auto-return to home after 12s — visitor needs time to read the
+        // reference number / scan the QR before the screen resets.
         DispatcherTimer.RunOnce(() => { ShowAppointmentSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(12));
+    }
+
+    public void OnFeedbackPreview(FeedbackPreviewMessage p)
+    {
+        // Voice agent called preview_feedback — mirror the murajaat
+        // OnPreview pattern: stash the captured fields and bring the
+        // feedback page up to its review step.
+        FeedbackType = p.FeedbackType;
+        FeedbackText = p.Text;
+        FeedbackPhone = p.Phone;
+        ManualFeedbackStep = ManualFeedbackStep.Preview;
+        Navigate(KioskPage.Feedback);
+    }
+
+    public void OnFeedbackSubmitted(FeedbackSubmittedMessage s)
+    {
+        FeedbackSubmittedId = s.Id;
+        if (!string.IsNullOrEmpty(s.FeedbackType)) FeedbackType = s.FeedbackType;
+        if (!string.IsNullOrEmpty(s.Text)) FeedbackText = s.Text;
+        if (!string.IsNullOrEmpty(s.Phone)) FeedbackPhone = s.Phone;
+        ManualFeedbackStep = ManualFeedbackStep.Done;
+        ShowFeedbackSuccess = true;
+        Navigate(KioskPage.Feedback);
+        // Auto-return to home after 4 s so the screen resets for the next visitor.
+        DispatcherTimer.RunOnce(() => { ShowFeedbackSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(4));
     }
 
     public void OnAudioDone()

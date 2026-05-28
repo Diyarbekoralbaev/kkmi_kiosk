@@ -90,7 +90,7 @@ export function StaffPage() {
     <Layout>
       <PageHeader
         title="Сотрудники"
-        description="Учётные записи сотрудников, имеющих доступ к панели хокимията."
+        description="Учётные записи сотрудников, имеющих доступ к панели Кенеса."
         actions={
           <Button
             onClick={() => setShowCreate(true)}

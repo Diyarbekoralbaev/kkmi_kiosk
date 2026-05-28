@@ -209,7 +209,7 @@ function NameTranslationsEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={uz}
             onChange={(e) => setUz(e.target.value)}
-            placeholder="Nukus shahar hokimiyati"
+            placeholder="Joqarı Keńes"
           />
         </Field>
         <Field label="Karakalpak (kk-Cyrl)">
@@ -217,7 +217,7 @@ function NameTranslationsEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={kk}
             onChange={(e) => setKk(e.target.value)}
-            placeholder="Нөкис қаласы ҳәкимияты"
+            placeholder="Жоқарғы Кеңес"
           />
         </Field>
         <Field label="Russian (ru)">
@@ -225,7 +225,7 @@ function NameTranslationsEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={ru}
             onChange={(e) => setRu(e.target.value)}
-            placeholder="Хакимият города Нукуса"
+            placeholder="Жокаргы Кенес"
           />
         </Field>
       </div>
@@ -298,13 +298,13 @@ function ContactInfoEditor({ org }: { org: OrgDetail }) {
       <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Manzil</div>
       <div className="space-y-3 mb-5">
         <Field label="Uzbek (uz)">
-          <input className="input" value={addrUz} onChange={(e) => setAddrUz(e.target.value)} placeholder="Nukus sh., Berdaq ko'chasi 1" />
+          <input className="input" value={addrUz} onChange={(e) => setAddrUz(e.target.value)} placeholder="Nukus sh., ... koʻchasi 1" />
         </Field>
         <Field label="Karakalpak (kk-Cyrl)">
-          <input className="input" value={addrKk} onChange={(e) => setAddrKk(e.target.value)} placeholder="Нөкис қ., Бердақ гүзәри, 1-үй" />
+          <input className="input" value={addrKk} onChange={(e) => setAddrKk(e.target.value)} placeholder="Нөкис қ., ... гүзәри, 1-үй" />
         </Field>
         <Field label="Russian (ru)">
-          <input className="input" value={addrRu} onChange={(e) => setAddrRu(e.target.value)} placeholder="г. Нукус, ул. Бердака 1" />
+          <input className="input" value={addrRu} onChange={(e) => setAddrRu(e.target.value)} placeholder="г. Нукус, ул. ... 1" />
         </Field>
       </div>
 
@@ -328,7 +328,7 @@ function ContactInfoEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="info@nukushokimiyat.uz"
+            placeholder="info@kenes.uz"
           />
         </Field>
         <Field label="Yordam telefon raqami">

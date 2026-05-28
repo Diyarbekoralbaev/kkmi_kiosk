@@ -22,7 +22,12 @@ from sqlalchemy import select
 
 import base64
 
-from ..ai.appointments import create_appointment, mask_phone, render_appointment_artifacts
+from ..ai.appointments import (
+    create_appointment,
+    mask_phone,
+    reference_no,
+    render_appointment_artifacts,
+)
 from ..ai.audio_pipeline import (
     AudioPipelineState,
     is_output_suppressed,
@@ -40,16 +45,11 @@ from ..ai.gemini_live import (
     Transcript,
 )
 from ..ai.prompt_builder import load_agent_config
-from ..ai.receipt import format_date_kk
-from ..core import audit, telegram
+from ..core import audit
 from ..core.connection_registry import registry
 from ..core.db import AsyncSessionLocal
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
 from ..core.errors import AppError, ProviderError
-from ..domain.ai_config import OrgKbOfficial
-# Application row insert + category_slug resolution moved to
-# ai/applications.create_application() so voice + manual flows share
-# the same helper. Imports removed here.
 from ..domain.device import Device
 from ..domain.organization import Organization, name_translations_for_response
 from ..domain.session import VoiceSession
@@ -125,10 +125,10 @@ async def kiosk_voice(ws: WebSocket) -> None:
     # re-asks or invents one" failure mode after long sessions.
     appt_state: dict[str, str | None] = {
         "topic": None,
-        "official_id": None,
-        "official_name": None,
         "phone": None,
     }
+    # Last previewed feedback (type/text/phone) — mirrors last_preview.
+    last_feedback: dict[str, str] = {}
     audio_state = AudioPipelineState()
 
     # Track the kiosk's current UI language for receipt rendering. Defaults
@@ -208,7 +208,7 @@ async def kiosk_voice(ws: WebSocket) -> None:
     # for. The tool's JSON-schema enum is already the source of truth, but we
     # keep a server-side allow-list as a small belt-and-suspenders against a
     # model misfire. "home" is the safe fallback.
-    _VALID_SCREENS = {"home", "reception", "qabul", "submit", "contacts", "ai"}
+    _VALID_SCREENS = {"home", "qabul", "submit", "feedback", "contacts", "ai"}
 
     async def _dispatch_tool(ev: ToolCallEvent) -> None:
         if ev.name == "navigate_to_screen":
@@ -224,10 +224,7 @@ async def kiosk_voice(ws: WebSocket) -> None:
             topic = str(ev.args.get("topic", "")).strip()
             body = str(ev.args.get("body", "")).strip()
             phone = str(ev.args.get("phone", "")).strip()
-            category_slug = str(ev.args.get("category_slug", "other")).strip() or "other"
-            last_preview.update(
-                {"topic": topic, "body": body, "phone": phone, "category_slug": category_slug}
-            )
+            last_preview.update({"topic": topic, "body": body, "phone": phone})
             with contextlib_suppress():
                 await ws.send_json(
                     {
@@ -235,7 +232,6 @@ async def kiosk_voice(ws: WebSocket) -> None:
                         "topic": topic,
                         "body": body,
                         "phone": phone,
-                        "category_slug": category_slug,
                     }
                 )
             await gemini.send_tool_response(
@@ -246,13 +242,12 @@ async def kiosk_voice(ws: WebSocket) -> None:
                     "next_step": (
                         "card is now on screen — ask «Мәтин дурыс па?» "
                         "and on visitor affirmation call "
-                        "submit_application with the SAME 4 values"
+                        "submit_application with the SAME 3 values"
                     ),
                     "preview_args": {
                         "topic": topic,
                         "body_chars": len(body),
                         "phone": phone,
-                        "category_slug": category_slug,
                     },
                 },
             )
@@ -260,15 +255,12 @@ async def kiosk_voice(ws: WebSocket) -> None:
             topic = str(ev.args.get("topic", "")).strip()
             body = str(ev.args.get("body", "")).strip()
             phone = str(ev.args.get("phone", "")).strip()
-            category_slug = str(ev.args.get("category_slug", "other")).strip() or "other"
             new_id: uuid.UUID | None = None
             try:
                 async with AsyncSessionLocal() as s:
                     async with s.begin():
-                        # Delegate to the shared helper so voice + manual
-                        # flows produce identical Application rows. The
-                        # helper assigns the UUID + handles category_slug
-                        # resolution (unknown slug → NULL fallback).
+                        # Shared helper so voice + manual flows produce
+                        # identical Application rows (kind=murajaat).
                         from ..ai.applications import create_application
                         app = await create_application(
                             s,
@@ -276,14 +268,10 @@ async def kiosk_voice(ws: WebSocket) -> None:
                             topic=topic,
                             body=body,
                             phone=phone,
-                            category_slug=category_slug,
                             source="kiosk_voice",
                             voice_session_id=session_pk,
                         )
                         new_id = app.id
-                        # Per CLAUDE.md: all write endpoints record audit.
-                        # Phone goes through the no-op mask_phone for
-                        # call-site consistency.
                         await audit.record(
                             s,
                             actor_user_id=None,
@@ -294,8 +282,7 @@ async def kiosk_voice(ws: WebSocket) -> None:
                             after={
                                 "topic": topic,
                                 "phone_masked": mask_phone(phone),
-                                "category_slug": category_slug,
-                                "category_resolved": app.category_id is not None,
+                                "kind": "murajaat",
                                 "source": "kiosk_voice",
                                 "session_id": str(session_pk),
                             },
@@ -308,16 +295,8 @@ async def kiosk_voice(ws: WebSocket) -> None:
                             "topic": topic,
                             "body": body,
                             "phone": phone,
-                            "category_slug": category_slug,
                         }
                     )
-                # Fan out to the operator's Telegram murajat channel.
-                # Fire-and-forget; `app` is detached at this point but
-                # SQLAlchemy keeps its already-loaded attributes
-                # readable. _org_row was loaded at WS open and is fine
-                # for the post header (org name doesn't change often).
-                if _org_row is not None:
-                    telegram.post_murajaat_async(app, category_slug, _org_row)
                 # Successful submission completes the murajat flow —
                 # clear last_preview so a fresh request in the same
                 # session starts from a clean slate.
@@ -334,7 +313,7 @@ async def kiosk_voice(ws: WebSocket) -> None:
                         ),
                     },
                 )
-            except Exception as e:
+            except Exception:
                 logger.exception("submit_application_failed")
                 await gemini.send_tool_response(
                     ev.call_id, ev.name, {"status": "error", "code": "E_DB_001"}
@@ -349,66 +328,32 @@ async def kiosk_voice(ws: WebSocket) -> None:
             await _dispatch_preview_appointment(ev)
         elif ev.name == "submit_appointment":
             await _dispatch_submit_appointment(ev)
+        elif ev.name == "preview_feedback":
+            await _dispatch_preview_feedback(ev)
+        elif ev.name == "submit_feedback":
+            await _dispatch_submit_feedback(ev)
         else:
             logger.warning("unknown_tool_call", name=ev.name)
             await gemini.send_tool_response(
                 ev.call_id, ev.name, {"status": "error", "code": "unknown_tool"}
             )
 
-    async def _resolve_official(
-        s, official_id_raw: str
-    ) -> tuple[OrgKbOfficial, Organization] | None:
-        """Look up the official by id, scoped to the current device's org.
-
-        Returns None if the id is malformed or the official belongs to another
-        org — we never want a kiosk to address an official it can't see.
-        """
-        try:
-            ofc_uuid = uuid.UUID(official_id_raw)
-        except (ValueError, TypeError):
-            return None
-        ofc = (
-            await s.execute(
-                select(OrgKbOfficial).where(
-                    OrgKbOfficial.id == ofc_uuid,
-                    OrgKbOfficial.org_id == org_id,
-                )
-            )
-        ).scalar_one_or_none()
-        if ofc is None:
-            return None
-        org = (
-            await s.execute(select(Organization).where(Organization.id == org_id))
-        ).scalar_one()
-        return ofc, org
-
     def _appt_state_echo() -> dict[str, object]:
-        """Snapshot of qabul flow collected state for the tool-response
-        echo. The agent reads this from the function result, so it never
-        has to recall earlier-in-session values from audio context.
-        `next_required` is the most-useful field: it tells the agent
-        exactly what to ask for next without the agent inferring it from
-        prose rules. None of the values here are PII — phone is stored
-        un-masked since the agent already had it."""
-        next_required = None
-        if appt_state.get("topic") is None:
-            next_required = "topic"
-        elif appt_state.get("official_id") is None:
-            next_required = "official_id"
-        elif appt_state.get("phone") is None:
-            next_required = "phone"
+        """Snapshot of qabul flow collected state for the tool-response echo,
+        so the agent never has to recall earlier-in-session values from audio
+        context. Phone is the only required field; topic (reason) is
+        optional."""
+        next_required = "phone" if appt_state.get("phone") is None else None
         return {
             "collected_so_far": dict(appt_state),
             "next_required": next_required,
         }
 
     async def _dispatch_appointment_progress(ev: ToolCallEvent) -> None:
-        """Stepper-only signal — emit a JSON envelope so the kiosk can light
-        the next step without waiting for the full preview. Doesn't write to
-        the DB; if the AI mis-fires, nothing breaks. Also updates `appt_state`
-        and echoes it back to Gemini in the tool response."""
+        """Stepper-only signal — emit a JSON envelope so the kiosk lights the
+        next step. No DB write. Updates `appt_state` and echoes it back."""
         stage = str(ev.args.get("stage", "")).strip()
-        if stage not in ("topic", "official", "phone"):
+        if stage not in ("topic", "phone"):
             await gemini.send_tool_response(
                 ev.call_id, ev.name,
                 {"status": "error", "code": "bad_stage", **_appt_state_echo()},
@@ -421,47 +366,6 @@ async def kiosk_voice(ws: WebSocket) -> None:
             envelope["topic"] = topic_val
             if topic_val:
                 appt_state["topic"] = topic_val
-        elif stage == "official":
-            official_id = str(ev.args.get("official_id", "")).strip()
-            resolved = None
-            scheduled = None
-            try:
-                async with AsyncSessionLocal() as s:
-                    resolved = await _resolve_official(s, official_id)
-                    if resolved is not None:
-                        ofc, _ = resolved
-                        # Cap-aware scheduling: if the next reception day
-                        # already has 25 active appointments, this rolls
-                        # forward by 7 days until a free day is found, so
-                        # the date we tell the visitor matches what
-                        # submit_appointment will eventually book.
-                        from ..ai.appointments import (
-                            compute_next_available_reception_date,
-                        )
-                        scheduled = await compute_next_available_reception_date(
-                            s, ofc
-                        )
-            except Exception:
-                logger.exception("appointment_progress_lookup_failed")
-                resolved = None
-            if resolved is None or scheduled is None:
-                await gemini.send_tool_response(
-                    ev.call_id, ev.name,
-                    {
-                        "status": "error",
-                        "code": "official_not_found",
-                        **_appt_state_echo(),
-                    },
-                )
-                return
-            ofc, _ = resolved
-            envelope["official_id"] = str(ofc.id)
-            envelope["official_name"] = ofc.name
-            envelope["official_position"] = ofc.position
-            envelope["scheduled_date_human"] = format_date_kk(scheduled)
-            envelope["reception_time"] = ofc.reception_time
-            appt_state["official_id"] = str(ofc.id)
-            appt_state["official_name"] = ofc.name
         elif stage == "phone":
             phone_raw = str(ev.args.get("phone", "")).strip()
             envelope["phone_masked"] = mask_phone(phone_raw)
@@ -476,63 +380,18 @@ async def kiosk_voice(ws: WebSocket) -> None:
         )
 
     async def _dispatch_preview_appointment(ev: ToolCallEvent) -> None:
-        official_id = str(ev.args.get("official_id", "")).strip()
         topic = str(ev.args.get("topic", "")).strip()
         phone = str(ev.args.get("phone", "")).strip()
-        resolved = None
-        scheduled = None
-        try:
-            async with AsyncSessionLocal() as s:
-                resolved = await _resolve_official(s, official_id)
-                if resolved is not None:
-                    ofc, _ = resolved
-                    # Cap-aware: roll forward to the next day with < 25
-                    # active appointments. The on-screen card the visitor
-                    # is about to confirm must match the day
-                    # submit_appointment will actually book.
-                    from ..ai.appointments import (
-                        compute_next_available_reception_date,
-                    )
-                    scheduled = await compute_next_available_reception_date(
-                        s, ofc
-                    )
-        except Exception:
-            logger.exception("preview_appointment_lookup_failed")
-            resolved = None
-        if resolved is None or scheduled is None:
-            await gemini.send_tool_response(
-                ev.call_id, ev.name,
-                {
-                    "status": "error",
-                    "code": "official_not_found",
-                    **_appt_state_echo(),
-                },
-            )
-            return
-        ofc, _ = resolved
-        # Sync appt_state with the values that just came through preview —
-        # the agent may have skipped appointment_progress for one or more
-        # stages, but the preview tool carries the full triple. Treat
-        # preview as the canonical state.
         if topic:
             appt_state["topic"] = topic
-        appt_state["official_id"] = str(ofc.id)
-        appt_state["official_name"] = ofc.name
         if phone:
             appt_state["phone"] = phone
-        scheduled_human = format_date_kk(scheduled)
         with contextlib_suppress():
             await ws.send_json(
                 {
                     "type": "appointment_preview",
-                    "official_id": str(ofc.id),
-                    "official_name": ofc.name,
-                    "official_position": ofc.position,
-                    "scheduled_date": scheduled.isoformat(),
-                    "scheduled_date_human": scheduled_human,
-                    "reception_time": ofc.reception_time,
-                    "phone_masked": mask_phone(phone),
                     "topic": topic,
+                    "phone_masked": mask_phone(phone),
                 }
             )
         await gemini.send_tool_response(
@@ -545,56 +404,36 @@ async def kiosk_voice(ws: WebSocket) -> None:
                     "дурыс па?» and on visitor affirmation call "
                     "submit_appointment with the same values"
                 ),
-                "official_name": ofc.name,
-                "official_position": ofc.position,
-                "scheduled_date_human": scheduled_human,
-                "reception_time": ofc.reception_time,
                 "phone_masked": mask_phone(phone),
                 **_appt_state_echo(),
             },
         )
 
     async def _dispatch_submit_appointment(ev: ToolCallEvent) -> None:
-        official_id = str(ev.args.get("official_id", "")).strip()
         topic = str(ev.args.get("topic", "")).strip()
         phone = str(ev.args.get("phone", "")).strip()
-        if not topic or not phone:
+        if not phone:
             await gemini.send_tool_response(
                 ev.call_id, ev.name,
-                {
-                    "status": "error",
-                    "code": "missing_fields",
-                    **_appt_state_echo(),
-                },
+                {"status": "error", "code": "missing_fields", **_appt_state_echo()},
             )
             return
         try:
             async with AsyncSessionLocal() as s:
                 async with s.begin():
-                    resolved = await _resolve_official(s, official_id)
-                    if resolved is None:
-                        await gemini.send_tool_response(
-                            ev.call_id, ev.name,
-                            {
-                                "status": "error",
-                                "code": "official_not_found",
-                                **_appt_state_echo(),
-                            },
+                    org = (
+                        await s.execute(
+                            select(Organization).where(Organization.id == org_id)
                         )
-                        return
-                    ofc, org = resolved
+                    ).scalar_one()
                     created = await create_appointment(
                         s,
                         org=org,
-                        official=ofc,
                         visitor_phone=phone,
                         topic_summary=topic,
                         source="kiosk",
                         voice_session_id=session_pk,
                     )
-                    # Per CLAUDE.md: writes must call audit.record. The kiosk
-                    # WS path was skipping this for appointments created via
-                    # the AI tool flow. Phone goes in masked.
                     await audit.record(
                         s,
                         actor_user_id=None,
@@ -603,10 +442,6 @@ async def kiosk_voice(ws: WebSocket) -> None:
                         entity_type="appointment",
                         entity_id=created.appointment.id,
                         after={
-                            "official_id": str(ofc.id),
-                            "official_name": ofc.name,
-                            "queue_number": created.appointment.queue_number,
-                            "scheduled_date": created.appointment.scheduled_date.isoformat(),
                             "phone_masked": mask_phone(phone),
                             "topic": topic,
                             "source": "kiosk_voice",
@@ -626,69 +461,139 @@ async def kiosk_voice(ws: WebSocket) -> None:
             return
 
         appt = created.appointment
-        # PDF + QR are CPU-bound (~120 ms). Render OUTSIDE the DB transaction
-        # we just exited so the row lock on (official_id, scheduled_date) is
-        # released first. render_appointment_artifacts returns empty bytes on
-        # internal failure — the kiosk's silent base64 catch (now logged in
-        # SessionStore.cs) handles the missing-artifact case gracefully.
-        # `locale` follows whatever language the kiosk last announced via
-        # `ui_language`; falls back to org.locale.
+        # PDF + QR are CPU-bound; render OUTSIDE the committed transaction.
+        # render_appointment_artifacts returns empty bytes on failure — the
+        # kiosk handles the missing-artifact case gracefully. `locale` follows
+        # the kiosk's last `ui_language`; falls back to org.locale.
         pdf_bytes, qr_bytes = render_appointment_artifacts(
-            appt, created.official, created.org, created.verify_url,
-            locale=ui_language,
+            appt, created.org, created.verify_url, locale=ui_language,
         )
         with contextlib_suppress():
             await ws.send_json(
                 {
                     "type": "appointment_submitted",
                     "appointment_id": str(appt.id),
-                    "queue_number": appt.queue_number,
-                    "scheduled_date": appt.scheduled_date.isoformat(),
-                    "scheduled_date_human": format_date_kk(appt.scheduled_date),
-                    "reception_time": created.official.reception_time,
-                    "official_name": created.official.name,
-                    "official_position": created.official.position,
-                    "official_role": created.official.role or "",
+                    "reference_no": reference_no(appt),
                     "phone_masked": mask_phone(appt.visitor_phone),
                     "topic": appt.topic_summary,
                     "verification_url": created.verify_url,
                     "qr_png_base64": base64.b64encode(qr_bytes).decode("ascii"),
                     "receipt_pdf_base64": base64.b64encode(pdf_bytes).decode("ascii"),
-                    # Localized org name so the kiosk talon header
-                    # ("HOKIMIYAT") swaps language without a round-trip.
                     "org_name_translations": name_translations_for_response(
                         created.org
                     ),
                 }
             )
-        # Fan out to the operator's Telegram qabul channel — uses the
-        # backend-rendered Karakalpak Cyrillic date string so the post
-        # matches what's printed on the talon. Fire-and-forget; tracks
-        # any failure in the structured log.
-        telegram.post_qabul_async(
-            appt, created.official, created.org,
-            format_date_kk(appt.scheduled_date),
-        )
-        # Successful submission completes the qabul flow — reset
-        # appt_state so the same session can start a fresh booking
-        # without leaking previous values into the next flow's state echo.
+        # Reset qabul state so the same session can start a fresh registration.
         appt_state["topic"] = None
-        appt_state["official_id"] = None
-        appt_state["official_name"] = None
         appt_state["phone"] = None
         await gemini.send_tool_response(
             ev.call_id, ev.name,
             {
                 "status": "ok",
                 "submitted": True,
-                "queue_number": appt.queue_number,
-                "scheduled_date_human": format_date_kk(appt.scheduled_date),
+                "reference_no": reference_no(appt),
                 "next_step": (
-                    "qabul booked. read the queue number to the visitor "
-                    "and say a brief farewell"
+                    "qabul registration saved. tell the visitor the Council "
+                    "will call them back, then a brief farewell"
                 ),
             },
         )
+
+    async def _dispatch_preview_feedback(ev: ToolCallEvent) -> None:
+        ftype = str(ev.args.get("feedback_type", "")).strip()
+        text = str(ev.args.get("text", "")).strip()
+        phone = str(ev.args.get("phone", "")).strip()
+        last_feedback.update({"feedback_type": ftype, "text": text, "phone": phone})
+        with contextlib_suppress():
+            await ws.send_json(
+                {
+                    "type": "feedback_preview",
+                    "feedback_type": ftype,
+                    "text": text,
+                    "phone": phone,
+                }
+            )
+        await gemini.send_tool_response(
+            ev.call_id, ev.name,
+            {
+                "status": "ok",
+                "shown": True,
+                "next_step": (
+                    "card on screen — ask «Дурыс па?» and on affirmation "
+                    "call submit_feedback with the same values"
+                ),
+            },
+        )
+
+    async def _dispatch_submit_feedback(ev: ToolCallEvent) -> None:
+        ftype = str(ev.args.get("feedback_type", "")).strip()
+        text = str(ev.args.get("text", "")).strip()
+        phone = str(ev.args.get("phone", "")).strip()
+        if ftype not in ("complaint", "suggestion", "gratitude") or not text:
+            await gemini.send_tool_response(
+                ev.call_id, ev.name, {"status": "error", "code": "missing_fields"}
+            )
+            return
+        new_id: uuid.UUID | None = None
+        try:
+            async with AsyncSessionLocal() as s:
+                async with s.begin():
+                    from ..ai.applications import create_feedback
+                    fb = await create_feedback(
+                        s,
+                        org_id=org_id,
+                        feedback_type=ftype,
+                        text=text,
+                        phone=phone,
+                        source="kiosk_voice",
+                        voice_session_id=session_pk,
+                    )
+                    new_id = fb.id
+                    await audit.record(
+                        s,
+                        actor_user_id=None,
+                        actor_org_id=org_id,
+                        action="feedback.create",
+                        entity_type="application",
+                        entity_id=new_id,
+                        after={
+                            "feedback_type": ftype,
+                            "phone_masked": mask_phone(phone),
+                            "kind": "feedback",
+                            "source": "kiosk_voice",
+                            "session_id": str(session_pk),
+                        },
+                    )
+            with contextlib_suppress():
+                await ws.send_json(
+                    {
+                        "type": "feedback_submitted",
+                        "id": str(new_id),
+                        "feedback_type": ftype,
+                        "text": text,
+                        "phone": phone,
+                    }
+                )
+            last_feedback.clear()
+            await gemini.send_tool_response(
+                ev.call_id, ev.name,
+                {
+                    "status": "ok",
+                    "submitted": True,
+                    "id": str(new_id),
+                    "next_step": "feedback saved. brief thanks, then end the turn",
+                },
+            )
+        except Exception:
+            logger.exception("submit_feedback_failed")
+            await gemini.send_tool_response(
+                ev.call_id, ev.name, {"status": "error", "code": "E_DB_001"}
+            )
+            with contextlib_suppress():
+                await ws.send_json(
+                    {"type": "error", "code": "E_DB_001", "message": "save_failed"}
+                )
 
     async def _consume_events() -> None:
         # CRITICAL: a single handler exception MUST NOT kill this task —

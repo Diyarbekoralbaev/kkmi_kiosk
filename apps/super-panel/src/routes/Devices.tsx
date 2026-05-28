@@ -84,7 +84,7 @@ export function DevicesPage() {
     <Layout>
       <PageHeader
         title="Devices"
-        description="Hokimiyatlardagi C# kiosk client'lari. Yangi kiosk qo'shish: device yarating, 10 daqiqalik enrollment kodini kiosk'ga kirgazing."
+        description="Tashkilotlardagi C# kiosk client'lari. Yangi kiosk qo'shish: device yarating, 10 daqiqalik enrollment kodini kiosk'ga kirgazing."
         actions={
           <button
             onClick={() => setShowCreate(true)}
@@ -230,7 +230,7 @@ function CreateDeviceModal({
   return (
     <ModalShell onClose={onClose} title="Yangi device yaratish">
       <div className="space-y-4">
-        <Field label="Hokimiyat (org)">
+        <Field label="Tashkilot (org)">
           <select
             value={orgId}
             onChange={(e) => setOrgId(e.target.value)}

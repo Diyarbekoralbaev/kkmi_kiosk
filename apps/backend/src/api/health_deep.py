@@ -36,7 +36,7 @@ router = APIRouter(tags=["health"])
 # A kiosk counts as "online" if it checked in within this window.
 _KIOSK_ONLINE_WINDOW_MIN = 5
 # Public host whose leaf cert expiry we sample for the TLS check.
-_TLS_HOST = "api.kioska.dbc.uz"
+_TLS_HOST = "kenes-api.kioska.dbc.uz"
 # Disk fullness above this fraction trips the disk check.
 _DISK_WARN_PCT = 85.0
 # Direct (no-relay) Gemini Live endpoint — mirrors ai/gemini_live.py.

@@ -52,6 +52,8 @@ class ApplicationOut(BaseModel):
     body: str
     phone: str
     status: str
+    kind: str
+    feedback_type: str | None
     session_id: str | None
     category_id: str | None
     category_slug: str | None
@@ -90,6 +92,8 @@ def _to_out(a: Application, slug_lookup: dict[uuid.UUID, str]) -> ApplicationOut
         body=a.body,
         phone=a.phone,
         status=a.status,
+        kind=a.kind,
+        feedback_type=a.feedback_type,
         session_id=str(a.session_id) if a.session_id else None,
         category_id=str(a.category_id) if a.category_id else None,
         category_slug=slug_lookup.get(a.category_id) if a.category_id else None,
@@ -118,6 +122,7 @@ async def list_applications(
     user: OrgMember,
     org: CurrentOrgAnyMember,
     status_filter: str | None = Query(default=None, alias="status"),
+    kind: str | None = Query(default=None),
     search: str | None = Query(default=None, max_length=255),
     since: datetime | None = Query(default=None),
     until: datetime | None = Query(default=None),
@@ -140,6 +145,9 @@ async def list_applications(
     if status_filter:
         stmt = stmt.where(Application.status == status_filter)
         cstmt = cstmt.where(Application.status == status_filter)
+    if kind:
+        stmt = stmt.where(Application.kind == kind)
+        cstmt = cstmt.where(Application.kind == kind)
     if search:
         like = f"%{search.lower()}%"
         cond = or_(

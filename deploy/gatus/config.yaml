@@ -19,8 +19,8 @@ storage:
   path: /data/data.db
 
 ui:
-  title: "Nókis hákimligi — sistema halaty"
-  header: "Kiosk platforma — status"
+  title: "Joqarı Keńes — sistema halaty"
+  header: "Joqarı Keńes — status"
   logo: ""
 
 alerting:
@@ -36,7 +36,7 @@ alerting:
 endpoints:
   - name: "Backend API"
     group: "Core"
-    url: "https://api.kioska.dbc.uz/health"
+    url: "https://kenes-api.kioska.dbc.uz/health"
     interval: 60s
     conditions:
       - "[STATUS] == 200"
@@ -45,7 +45,7 @@ endpoints:
 
   - name: "Gov panel"
     group: "Core"
-    url: "https://gov.kioska.dbc.uz"
+    url: "https://kenes-gov.kioska.dbc.uz"
     interval: 60s
     conditions:
       - "[STATUS] == 200"
@@ -54,7 +54,7 @@ endpoints:
 
   - name: "Super panel"
     group: "Core"
-    url: "https://super.kioska.dbc.uz"
+    url: "https://kenes-super.kioska.dbc.uz"
     interval: 120s
     conditions:
       - "[STATUS] == 200"

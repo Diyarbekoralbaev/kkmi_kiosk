@@ -16,15 +16,15 @@
     <x:String x:Key="HomeGreetingChip">Хош келдиңиз!</x:String>
     <x:String x:Key="HomeQuestion">Сизге қандай жәрдем бере аламыз?</x:String>
     <x:String x:Key="HomeQuestionHighlight">жәрдем</x:String>
-    <x:String x:Key="HomeSubtitle">Төмендеги хызметлердиң бирин сайлаң. Мүрәжатыңызды қалдырың, AI жәрдемши менен сөйлесиң ямаса қабыллаўға жазылың.</x:String>
-    <x:String x:Key="HomeTileSubmitTitle">Мүрәжат жибериў</x:String>
-    <x:String x:Key="HomeTileSubmitSubtitle">Арзыңызды ямаса усынысыңызды электрон түрде рәсмийлестириң</x:String>
-    <x:String x:Key="HomeTileAiTitle">AI жәрдемши менен сөйлесиў</x:String>
+    <x:String x:Key="HomeSubtitle">Төмендеги хызметлердиң бирин сайлаң. Жоқарғы Кеңеске мүрәжат қалдырың, AI жәрдемши менен сөйлесиң ямаса қабыллаўға жазылың.</x:String>
+    <x:String x:Key="HomeTileAiTitle">AI менен сөйлесиў</x:String>
     <x:String x:Key="HomeTileAiSubtitle">Сораўларыңызға жасалма интеллекттен тез арада жуўап алың</x:String>
-    <x:String x:Key="HomeTileDeputyTitle">Ҳәким орынбасары қабыллаўы</x:String>
-    <x:String x:Key="HomeTileDeputySubtitle">Тийисли тараўдағы орынбасар қабыллаўына жазылыў</x:String>
-    <x:String x:Key="HomeTileMayorTitle">Ҳәкимниң жеке қабыллаўы</x:String>
-    <x:String x:Key="HomeTileMayorSubtitle">Қала ҳәкиминиң жеке қабыллаўына жазылыў</x:String>
+    <x:String x:Key="HomeTileSubmitTitle">Жоқарғы Кеңеске мүрәжат</x:String>
+    <x:String x:Key="HomeTileSubmitSubtitle">Арзыңызды ямаса усынысыңызды электрон түрде жибериң</x:String>
+    <x:String x:Key="HomeTileQabulTitle">Жеке қабылға жазылыў</x:String>
+    <x:String x:Key="HomeTileQabulSubtitle">Телефон номериңизди қалдырың — Кеңес сиз бенен байланысады</x:String>
+    <x:String x:Key="HomeTileFeedbackTitle">Шағым / усыныс / миннетдаршылық</x:String>
+    <x:String x:Key="HomeTileFeedbackSubtitle">Пикириңизди қалдырың — шағым, усыныс ямаса миннетдаршылық</x:String>
 
     <!-- ===== NavBar ===== -->
     <x:String x:Key="NavBack">Артқа</x:String>
@@ -46,20 +46,17 @@
     <x:String x:Key="MicStarting">Баслап атыр...</x:String>
     <x:String x:Key="MicError">Қәтелик</x:String>
 
-    <!-- ===== Qabul page ===== -->
-    <x:String x:Key="QabulPageTitle">Қабыллаўға жазылыў</x:String>
-    <x:String x:Key="QabulPageTitleChief">Ҳәкимниң жеке қабыллаўына жазылыў</x:String>
-    <x:String x:Key="QabulPageTitleDeputy">Ҳәким орынбасары қабыллаўына жазылыў</x:String>
-    <x:String x:Key="QabulPickPrompt">Кимниң қабыллаўына жазылмақшысыз?</x:String>
-    <x:String x:Key="QabulPickPromptChief">Ҳәкимниң жеке қабыллаўы:</x:String>
-    <x:String x:Key="QabulPickPromptDeputy">Ҳәкимниң орынбасарын сайлаң:</x:String>
+    <!-- ===== Qabul page (reception registration — no official, no date) ===== -->
+    <x:String x:Key="QabulPageTitle">Жеке қабылға жазылыў</x:String>
+    <x:String x:Key="QabulRegisterIntro">Телефон номериңизди қалдырың — Кеңес сиз бенен байланысады.</x:String>
+    <x:String x:Key="QabulTopicSkip">Өткизип жибериў</x:String>
+    <x:String x:Key="QabulEditTopic">Мәселени өзгертиў</x:String>
     <x:String x:Key="QabulPhonePreviewTitle">Телефон номериңизди тексериң</x:String>
     <x:String x:Key="QabulPhonePreviewHint">Жуўмақламастан алдын номериңиздиң дурыслығына көз жеткизиң. Қәте болса «Дүзетиў» түймесин басың.</x:String>
     <x:String x:Key="QabulPhonePreviewEdit">Дүзетиў</x:String>
     <x:String x:Key="QabulPhonePreviewSend">Аўа, жибериў</x:String>
-    <x:String x:Key="QabulSelectedLabel">Сайланған лаўазымлы шахс</x:String>
-    <x:String x:Key="QabulPickAnother">Басқа лаўазымлы шахсты сайлаў</x:String>
     <x:String x:Key="QabulPhoneLabel">Телефон номериңиз</x:String>
+    <x:String x:Key="QabulPhoneHint">Телефон номериңизди киритиң</x:String>
     <x:String x:Key="QabulConfirmButton">Тастыйықлаў</x:String>
     <x:String x:Key="QabulConfirmErrorPhoneShort">Телефон номери толық емес (кеминде 9 сан)</x:String>
     <x:String x:Key="QabulConfirmSending">Жиберилип атыр...</x:String>
@@ -68,30 +65,19 @@
     <!-- Voice-flow preview card — shown after AI agent calls preview_appointment.
          "Яқ" is the proper Karakalpak "no" — DO NOT replace with Kazakh "Жоқ". -->
     <x:String x:Key="QabulVoicePreviewTitle">Тастыйықлаў</x:String>
-    <x:String x:Key="QabulVoicePreviewOfficialLabel">Лаўазымлы шахс</x:String>
-    <x:String x:Key="QabulVoicePreviewDateLabel">Сәне</x:String>
-    <x:String x:Key="QabulVoicePreviewTimeLabel">Уақыт</x:String>
     <x:String x:Key="QabulVoicePreviewPhoneLabel">Телефон</x:String>
     <x:String x:Key="QabulVoicePreviewTopicLabel">Мәселе</x:String>
     <x:String x:Key="QabulVoicePreviewConfirm">Тастыйықлайман</x:String>
     <x:String x:Key="QabulVoicePreviewReject">Яқ, қайтарың</x:String>
 
-    <x:String x:Key="QabulTalonTitle">ҚАБЫЛЛАЎ НАЎБЕТИ</x:String>
-    <x:String x:Key="QabulTalonSubtitleChief">Жеке қабыллаў наўбети</x:String>
-    <x:String x:Key="QabulTalonSubtitleDeputy">Орынбасар қабыллаў наўбети</x:String>
-    <x:String x:Key="QabulTalonQueuePrefix">НАЎБЕТ</x:String>
+    <!-- Success talon (no official, no date, no queue). -->
+    <x:String x:Key="QabulTalonSubtitle">Қабылға жазылыў талоны</x:String>
+    <x:String x:Key="QabulTalonCallback">Кеңес сиз бенен байланысады.</x:String>
     <x:String x:Key="QabulTalonScanHint">QR-кодты телефонда сканерлең.</x:String>
-    <!-- On-screen talon labels (must match the printed receipt's
-         RECEIPT_STRINGS in backend/src/ai/receipt.py). Trailing space is
-         intentional — these are bold "Label: " runs followed by a value run.
-         Standardized glossary: Official=Лаўазымлы шахс, Topic=Мәселе,
-         Ticket=Наўбет. -->
-    <x:String x:Key="QabulTalonChipta">Наўбет номери: </x:String>
-    <x:String x:Key="QabulTalonMansabdor">Лаўазымлы шахс: </x:String>
+    <!-- On-screen talon labels. Trailing space is intentional — bold
+         "Label: " runs followed by a value run. -->
+    <x:String x:Key="QabulTalonReference">Мүрәжат номери: </x:String>
     <x:String x:Key="QabulTalonMasala">Мәселеси: </x:String>
-    <x:String x:Key="QabulTalonSana">Сәне: </x:String>
-    <x:String x:Key="QabulTalonVaqt">Ўақты: </x:String>
-    <x:String x:Key="QabulTalonNavbat">Наўбети: </x:String>
     <x:String x:Key="QabulTalonTelefon">Телефон: </x:String>
 
     <!-- ===== Submit page ===== -->
@@ -107,11 +93,11 @@
     <!-- ===== Contacts page (kept for back-compat; not on Home anymore) ===== -->
     <x:String x:Key="ContactsPageTitle">Байланыс</x:String>
     <x:String x:Key="ContactsAddressLabel">📍 Мәнзил</x:String>
-    <x:String x:Key="ContactsAddressValue">Нөкис қ., Бердақ гүзәри, 1-үй</x:String>
+    <x:String x:Key="ContactsAddressValue">—</x:String>
     <x:String x:Key="ContactsPhoneIconLabel">☎ Телефон</x:String>
     <x:String x:Key="ContactsPhoneValue">(+998 61) 222 12 34</x:String>
     <x:String x:Key="ContactsEmailLabel">✉ Электрон почта</x:String>
-    <x:String x:Key="ContactsEmailValue">info@nukushokimiyat.uz</x:String>
+    <x:String x:Key="ContactsEmailValue">—</x:String>
     <x:String x:Key="ContactsHoursLabel">🕐 Жумыс ўақты</x:String>
     <x:String x:Key="ContactsHoursValue">Дү–Жу 09:00 – 18:00</x:String>
 
@@ -126,7 +112,7 @@
 
     <!-- ===== Submit success overlay ===== -->
     <x:String x:Key="SubmitSuccessTitle">Мүрәжатыңыз қабыл етилди</x:String>
-    <x:String x:Key="SubmitSuccessBody">Ҳәкимият хызметкерлери сиздиң мүрәжатыңызды көрип шығады.</x:String>
+    <x:String x:Key="SubmitSuccessBody">Кеңес хызметкерлери сиздиң мүрәжатыңызды көрип шығады.</x:String>
     <x:String x:Key="SubmitSuccessTopicLabel">Мәселе:</x:String>
     <x:String x:Key="SubmitSuccessIdLabel">Номер:</x:String>
 
@@ -195,10 +181,23 @@
     <x:String x:Key="ManualMurajatPreviewTitle">Мағлыўматларды тексериң</x:String>
     <x:String x:Key="ManualMurajatSuccessTitle">Мүрәжатыңыз қабыл етилди</x:String>
     <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
-    <x:String x:Key="ManualMurajatSuccessHint">Ҳәкимият хызметкерлери мүрәжатыңызды көрип шығады.</x:String>
+    <x:String x:Key="ManualMurajatSuccessHint">Кеңес хызметкерлери мүрәжатыңызды көрип шығады.</x:String>
     <x:String x:Key="ManualMurajatSubmitting">Жиберилмекте...</x:String>
     <x:String x:Key="ManualMurajatSubmitError">Жибериў мүмкин болмады. Қайтадан сынап көриң.</x:String>
     <x:String x:Key="ManualBackButton">Артқа</x:String>
     <x:String x:Key="ManualConfirmButton">Тастыйықлаў ҳәм жибериў</x:String>
     <x:String x:Key="ManualEditButton">Өзгертиў</x:String>
+
+    <!-- ===== Feedback flow (ManualFeedbackPage) ===== -->
+    <x:String x:Key="FeedbackPageTitle">Пикир қалдырыў</x:String>
+    <x:String x:Key="FeedbackTypePrompt">Пикириңиздиң түрин сайлаң</x:String>
+    <x:String x:Key="FeedbackTypeComplaint">Шағым</x:String>
+    <x:String x:Key="FeedbackTypeSuggestion">Усыныс</x:String>
+    <x:String x:Key="FeedbackTypeGratitude">Миннетдаршылық</x:String>
+    <x:String x:Key="FeedbackTextTitle">Пикириңизди жазың</x:String>
+    <x:String x:Key="FeedbackTextHint">Не айтпақшысыз — толық жазың</x:String>
+    <x:String x:Key="FeedbackTextErrorShort">Кеминде 5 ҳәрип жазың</x:String>
+    <x:String x:Key="FeedbackPhoneTitle">Байланыс телефоны</x:String>
+    <x:String x:Key="FeedbackSuccessTitle">Пикириңиз қабыл етилди</x:String>
+    <x:String x:Key="FeedbackSuccessHint">Кеңес хызметкерлери пикириңизди көрип шығады.</x:String>
 </ResourceDictionary>

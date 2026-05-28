@@ -28,17 +28,19 @@ namespace Kiosk.App.Net;
 [JsonSerializable(typeof(AppointmentProgressMessage))]
 [JsonSerializable(typeof(AppointmentPreviewMessage))]
 [JsonSerializable(typeof(AppointmentSubmittedMessage))]
+[JsonSerializable(typeof(FeedbackPreviewMessage))]
+[JsonSerializable(typeof(FeedbackSubmittedMessage))]
 [JsonSerializable(typeof(ServerErrorMessage))]
 [JsonSerializable(typeof(ApiError))]
 [JsonSerializable(typeof(HeartbeatResponse))]
 [JsonSerializable(typeof(KioskSettings))]
 [JsonSerializable(typeof(DeviceCredentials))]
-[JsonSerializable(typeof(Official))]
-[JsonSerializable(typeof(System.Collections.Generic.List<Official>))]
 [JsonSerializable(typeof(CreateAppointmentRequest))]
 [JsonSerializable(typeof(CreateAppointmentResponse))]
 [JsonSerializable(typeof(CreateApplicationRequest))]
 [JsonSerializable(typeof(CreateApplicationResponse))]
+[JsonSerializable(typeof(CreateFeedbackRequest))]
+[JsonSerializable(typeof(CreateFeedbackResponse))]
 // Org name translations land as a nested dictionary inside multiple DTOs
 // (EnrollResponse, HeartbeatResponse, AppointmentSubmittedMessage,
 // CreateAppointmentResponse, DeviceCredentials). Registering the concrete

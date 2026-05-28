@@ -5,7 +5,6 @@ import {
   Inbox,
   Headphones,
   Users,
-  UserCog,
   User,
   LogOut,
   CalendarCheck,
@@ -22,7 +21,6 @@ const ADMIN_NAV = [
   { to: '/applications', label: 'Обращения', icon: Inbox },
   { to: '/appointments', label: 'Приёмы', icon: CalendarCheck },
   { to: '/sessions', label: 'Сессии', icon: Headphones },
-  { to: '/officials', label: 'Хокимы / заместители', icon: UserCog },
   { to: '/staff', label: 'Сотрудники', icon: Users },
   { to: '/profile', label: 'Профиль', icon: User },
 ]
@@ -50,7 +48,7 @@ export function Layout({ children }: Props) {
           />
           <div className="min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
-              Хокимият
+              Кеңес
             </div>
             <div className="truncate text-base font-semibold text-brand">
               {isReviewer(me) ? 'Кабинет ответственного' : 'Панель управления'}

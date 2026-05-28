@@ -13,32 +13,27 @@ public partial class HomePage : UserControl
 
     private void OnTileAi(object? sender, RoutedEventArgs e)
     {
-        // AI assistant — opens the dedicated robot page. Clear any leftover
-        // qabul role filter from a prior session.
-        SessionStore.Current.QabulRoleFilter = "";
+        // AI menen sóylesiw — opens the dedicated robot/voice page.
         SessionStore.Current.Navigate(KioskPage.Ai);
     }
 
     private void OnTileSubmit(object? sender, RoutedEventArgs e)
     {
-        // Manual murajaat flow — touch-driven, on-screen keyboard. The
-        // AI voice path stays accessible via the AI Yordamchi tile.
-        SessionStore.Current.QabulRoleFilter = "";
+        // Joqarı Keńeske murajat — touch-driven appeal flow (topic + body +
+        // phone, no category). The AI voice path stays on the AI tile.
         SessionStore.Current.Navigate(KioskPage.ManualSubmit);
     }
 
-    private void OnTileDeputy(object? sender, RoutedEventArgs e)
+    private void OnTileQabul(object? sender, RoutedEventArgs e)
     {
-        // "Hokim orinbosari qabili" — QabulPage will show only role=deputy.
-        SessionStore.Current.QabulRoleFilter = "deputy";
+        // Jeke qabılǵa jazılıw — reception registration. No official, no
+        // date; the citizen leaves a phone and the Council calls back.
         SessionStore.Current.Navigate(KioskPage.Qabul);
     }
 
-    private void OnTileMayor(object? sender, RoutedEventArgs e)
+    private void OnTileFeedback(object? sender, RoutedEventArgs e)
     {
-        // "Hokim jeke qabili" — QabulPage will show only role=chief
-        // (single official in the default seed).
-        SessionStore.Current.QabulRoleFilter = "chief";
-        SessionStore.Current.Navigate(KioskPage.Qabul);
+        // Shaǵım / usınıs / minnetdarshılıq — feedback flow.
+        SessionStore.Current.Navigate(KioskPage.Feedback);
     }
 }

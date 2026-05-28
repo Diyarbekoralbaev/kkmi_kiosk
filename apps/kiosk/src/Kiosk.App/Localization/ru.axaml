@@ -15,15 +15,15 @@
     <x:String x:Key="HomeGreetingChip">Добро пожаловать!</x:String>
     <x:String x:Key="HomeQuestion">Чем мы можем вам помочь?</x:String>
     <x:String x:Key="HomeQuestionHighlight">помочь</x:String>
-    <x:String x:Key="HomeSubtitle">Выберите одну из услуг ниже. Оставьте обращение, поговорите с AI-ассистентом или запишитесь на приём.</x:String>
-    <x:String x:Key="HomeTileSubmitTitle">Подать обращение</x:String>
-    <x:String x:Key="HomeTileSubmitSubtitle">Оформите жалобу или предложение в электронном виде</x:String>
-    <x:String x:Key="HomeTileAiTitle">Поговорить с AI ассистентом</x:String>
+    <x:String x:Key="HomeSubtitle">Выберите одну из услуг ниже. Оставьте обращение в Кенгаш, поговорите с AI-ассистентом или запишитесь на приём.</x:String>
+    <x:String x:Key="HomeTileAiTitle">Поговорить с AI</x:String>
     <x:String x:Key="HomeTileAiSubtitle">Получите быстрые ответы от искусственного интеллекта</x:String>
-    <x:String x:Key="HomeTileDeputyTitle">Приём заместителя хокима</x:String>
-    <x:String x:Key="HomeTileDeputySubtitle">Запись на встречу с заместителем по нужному направлению</x:String>
-    <x:String x:Key="HomeTileMayorTitle">Личный приём хокима</x:String>
-    <x:String x:Key="HomeTileMayorSubtitle">Запись на личный приём к хокиму города</x:String>
+    <x:String x:Key="HomeTileSubmitTitle">Обращение в Кенгаш</x:String>
+    <x:String x:Key="HomeTileSubmitSubtitle">Оформите жалобу или предложение в электронном виде</x:String>
+    <x:String x:Key="HomeTileQabulTitle">Запись на личный приём</x:String>
+    <x:String x:Key="HomeTileQabulSubtitle">Оставьте номер телефона — Кенгаш свяжется с вами</x:String>
+    <x:String x:Key="HomeTileFeedbackTitle">Жалоба / предложение / благодарность</x:String>
+    <x:String x:Key="HomeTileFeedbackSubtitle">Оставьте отзыв — жалоба, предложение или благодарность</x:String>
 
     <!-- NavBar -->
     <x:String x:Key="NavBack">Назад</x:String>
@@ -45,20 +45,17 @@
     <x:String x:Key="MicStarting">Запускается...</x:String>
     <x:String x:Key="MicError">Ошибка</x:String>
 
-    <!-- Qabul page -->
-    <x:String x:Key="QabulPageTitle">Запись на приём</x:String>
-    <x:String x:Key="QabulPageTitleChief">Запись на личный приём хокима</x:String>
-    <x:String x:Key="QabulPageTitleDeputy">Запись на приём заместителя</x:String>
-    <x:String x:Key="QabulPickPrompt">С кем хотите встретиться?</x:String>
-    <x:String x:Key="QabulPickPromptChief">Личный приём хокима:</x:String>
-    <x:String x:Key="QabulPickPromptDeputy">Выберите заместителя хокима:</x:String>
+    <!-- Qabul page (reception registration — no official, no date) -->
+    <x:String x:Key="QabulPageTitle">Запись на личный приём</x:String>
+    <x:String x:Key="QabulRegisterIntro">Оставьте номер телефона — Кенгаш свяжется с вами.</x:String>
+    <x:String x:Key="QabulTopicSkip">Пропустить</x:String>
+    <x:String x:Key="QabulEditTopic">Изменить тему</x:String>
     <x:String x:Key="QabulPhonePreviewTitle">Проверьте ваш номер телефона</x:String>
     <x:String x:Key="QabulPhonePreviewHint">Перед отправкой убедитесь, что номер указан верно. Если ошибка — нажмите «Исправить».</x:String>
     <x:String x:Key="QabulPhonePreviewEdit">Исправить</x:String>
     <x:String x:Key="QabulPhonePreviewSend">Да, отправить</x:String>
-    <x:String x:Key="QabulSelectedLabel">Выбранное должностное лицо</x:String>
-    <x:String x:Key="QabulPickAnother">Выбрать другое должностное лицо</x:String>
     <x:String x:Key="QabulPhoneLabel">Номер телефона</x:String>
+    <x:String x:Key="QabulPhoneHint">Введите ваш номер телефона</x:String>
     <x:String x:Key="QabulConfirmButton">Подтвердить</x:String>
     <x:String x:Key="QabulConfirmErrorPhoneShort">Номер телефона неполный (минимум 9 цифр)</x:String>
     <x:String x:Key="QabulConfirmSending">Отправляется...</x:String>
@@ -66,28 +63,19 @@
 
     <!-- Voice-flow preview card — shown after AI agent calls preview_appointment -->
     <x:String x:Key="QabulVoicePreviewTitle">Подтверждение</x:String>
-    <x:String x:Key="QabulVoicePreviewOfficialLabel">Должностное лицо</x:String>
-    <x:String x:Key="QabulVoicePreviewDateLabel">Дата</x:String>
-    <x:String x:Key="QabulVoicePreviewTimeLabel">Время</x:String>
     <x:String x:Key="QabulVoicePreviewPhoneLabel">Телефон</x:String>
-    <x:String x:Key="QabulVoicePreviewTopicLabel">Направление</x:String>
+    <x:String x:Key="QabulVoicePreviewTopicLabel">Тема</x:String>
     <x:String x:Key="QabulVoicePreviewConfirm">Подтверждаю</x:String>
     <x:String x:Key="QabulVoicePreviewReject">Нет, вернуть</x:String>
 
-    <x:String x:Key="QabulTalonTitle">НОМЕР ПРИЁМА</x:String>
-    <x:String x:Key="QabulTalonSubtitleChief">Номер на личный приём</x:String>
-    <x:String x:Key="QabulTalonSubtitleDeputy">Номер на приём заместителя</x:String>
-    <x:String x:Key="QabulTalonQueuePrefix">НОМЕР</x:String>
+    <!-- Success talon (no official, no date, no queue). -->
+    <x:String x:Key="QabulTalonSubtitle">Талон записи на приём</x:String>
+    <x:String x:Key="QabulTalonCallback">Кенгаш свяжется с вами.</x:String>
     <x:String x:Key="QabulTalonScanHint">Отсканируйте QR на телефоне.</x:String>
-    <!-- On-screen talon labels (must match the printed receipt's
-         RECEIPT_STRINGS in backend/src/ai/receipt.py). Standardized glossary:
-         Official=Должностное лицо, Topic=Направление, Ticket=Номер. -->
-    <x:String x:Key="QabulTalonChipta">Номер приёма: </x:String>
-    <x:String x:Key="QabulTalonMansabdor">Должностное лицо: </x:String>
-    <x:String x:Key="QabulTalonMasala">Направление: </x:String>
-    <x:String x:Key="QabulTalonSana">Дата: </x:String>
-    <x:String x:Key="QabulTalonVaqt">Время: </x:String>
-    <x:String x:Key="QabulTalonNavbat">Номер: </x:String>
+    <!-- On-screen talon labels. Trailing space is intentional — bold
+         "Label: " runs followed by a value run. -->
+    <x:String x:Key="QabulTalonReference">Номер обращения: </x:String>
+    <x:String x:Key="QabulTalonMasala">Тема: </x:String>
     <x:String x:Key="QabulTalonTelefon">Телефон: </x:String>
 
     <!-- Submit page -->
@@ -103,11 +91,11 @@
     <!-- Contacts page -->
     <x:String x:Key="ContactsPageTitle">Контакты</x:String>
     <x:String x:Key="ContactsAddressLabel">📍  Адрес</x:String>
-    <x:String x:Key="ContactsAddressValue">г. Нукус, ул. Бердака 1</x:String>
+    <x:String x:Key="ContactsAddressValue">—</x:String>
     <x:String x:Key="ContactsPhoneIconLabel">☎  Телефон</x:String>
     <x:String x:Key="ContactsPhoneValue">(+998 61) 222 12 34</x:String>
     <x:String x:Key="ContactsEmailLabel">✉  Эл. почта</x:String>
-    <x:String x:Key="ContactsEmailValue">info@nukushokimiyat.uz</x:String>
+    <x:String x:Key="ContactsEmailValue">—</x:String>
     <x:String x:Key="ContactsHoursLabel">🕐  Часы работы</x:String>
     <x:String x:Key="ContactsHoursValue">Пн–Пт  09:00 – 18:00</x:String>
 
@@ -122,7 +110,7 @@
 
     <!-- Submit success overlay -->
     <x:String x:Key="SubmitSuccessTitle">Ваше обращение принято</x:String>
-    <x:String x:Key="SubmitSuccessBody">Сотрудники хокимията рассмотрят ваше обращение.</x:String>
+    <x:String x:Key="SubmitSuccessBody">Сотрудники Кенгаша рассмотрят ваше обращение.</x:String>
     <x:String x:Key="SubmitSuccessTopicLabel">Тема:</x:String>
     <x:String x:Key="SubmitSuccessIdLabel">Номер:</x:String>
 
@@ -191,10 +179,23 @@
     <x:String x:Key="ManualMurajatPreviewTitle">Проверьте данные</x:String>
     <x:String x:Key="ManualMurajatSuccessTitle">Обращение принято</x:String>
     <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
-    <x:String x:Key="ManualMurajatSuccessHint">Сотрудники хокимията рассмотрят ваше обращение.</x:String>
+    <x:String x:Key="ManualMurajatSuccessHint">Сотрудники Кенгаша рассмотрят ваше обращение.</x:String>
     <x:String x:Key="ManualMurajatSubmitting">Отправка...</x:String>
     <x:String x:Key="ManualMurajatSubmitError">Не удалось отправить. Попробуйте ещё раз.</x:String>
     <x:String x:Key="ManualBackButton">Назад</x:String>
     <x:String x:Key="ManualConfirmButton">Подтвердить и отправить</x:String>
     <x:String x:Key="ManualEditButton">Изменить</x:String>
+
+    <!-- Feedback flow (ManualFeedbackPage) -->
+    <x:String x:Key="FeedbackPageTitle">Оставить отзыв</x:String>
+    <x:String x:Key="FeedbackTypePrompt">Выберите тип отзыва</x:String>
+    <x:String x:Key="FeedbackTypeComplaint">Жалоба</x:String>
+    <x:String x:Key="FeedbackTypeSuggestion">Предложение</x:String>
+    <x:String x:Key="FeedbackTypeGratitude">Благодарность</x:String>
+    <x:String x:Key="FeedbackTextTitle">Напишите ваш отзыв</x:String>
+    <x:String x:Key="FeedbackTextHint">Что вы хотите сказать — изложите подробно</x:String>
+    <x:String x:Key="FeedbackTextErrorShort">Введите минимум 5 символов</x:String>
+    <x:String x:Key="FeedbackPhoneTitle">Контактный номер</x:String>
+    <x:String x:Key="FeedbackSuccessTitle">Ваш отзыв принят</x:String>
+    <x:String x:Key="FeedbackSuccessHint">Сотрудники Кенгаша рассмотрят ваш отзыв.</x:String>
 </ResourceDictionary>

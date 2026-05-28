@@ -22,7 +22,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
-from ..domain.ai_config import OrgKbOfficial
 from ..domain.appointment import Appointment
 from ..domain.organization import Organization
 
@@ -115,50 +114,32 @@ def format_date(d: date, locale: str) -> str:
 # Karakalpak grammar on a printed government receipt would be a public-
 # facing embarrassment. Keep these exactly as supplied unless re-reviewed.
 RECEIPT_STRINGS: dict[str, dict[str, str]] = {
-    # Standardized glossary across kiosk + receipt + public per operator
-    # sign-off (2026-05-14). Same words everywhere — no synonyms drift.
-    #   Official: Mansabdor shaxs / Лаўазымлы шахс / Должностное лицо
-    #   Ticket:   Navbat          / Наўбет          / Номер
-    #   Topic:    Masala          / Мәселе          / Направление
-    # Karakalpak (kk) is Karakalpak, NOT Kazakh — "Яқ" (no), "шахс" (person).
+    # Council talon glossary. No date / official / queue — the citizen
+    # registers and staff call them back. Karakalpak (kk) is Karakalpak,
+    # NOT Kazakh.
     "uz": {
-        "subtitle_chief": "Shaxsiy qabul navbati",
-        "subtitle_deputy": "O'rinbosar qabul navbati",
-        "chipta_label": "Navbat raqami:",
-        "mansabdor_label": "Mansabdor shaxs:",
+        "subtitle": "Qabulga yozilish",
+        "ref_label": "Raqam:",
         "masala_label": "Masalasi:",
-        "sana_label": "Sana:",
-        "vaqt_label": "Vaqti:",
-        "navbat_label": "Navbati:",
         "telefon_label": "Telefon:",
-        "footer": "Iltimos, belgilangan vaqtda kelishingizni so'raymiz.",
-        "org_fallback": "HOKIMIYAT",
+        "footer": "Kengash xodimlari siz bilan bog'lanadi.",
+        "org_fallback": "KENGASH",
     },
     "kk": {
-        "subtitle_chief": "Жеке қабыллаў наўбети",
-        "subtitle_deputy": "Орынбасар қабыллаў наўбети",
-        "chipta_label": "Наўбет номери:",
-        "mansabdor_label": "Лаўазымлы шахс:",
+        "subtitle": "Қабыллаўға жазылыў",
+        "ref_label": "Нөмери:",
         "masala_label": "Мәселеси:",
-        "sana_label": "Сәне:",
-        "vaqt_label": "Ўақты:",
-        "navbat_label": "Наўбети:",
         "telefon_label": "Телефон:",
-        "footer": "Илтимас, белгиленген ўақытта келиўиңизди сораймыз.",
-        "org_fallback": "ҲӘКИМИЯТ",
+        "footer": "Кеңес хызметкерлери сиз бенен байланысады.",
+        "org_fallback": "КЕҢЕС",
     },
     "ru": {
-        "subtitle_chief": "Номер на личный приём",
-        "subtitle_deputy": "Номер на приём заместителя",
-        "chipta_label": "Номер приёма:",
-        "mansabdor_label": "Должностное лицо:",
-        "masala_label": "Направление:",
-        "sana_label": "Дата:",
-        "vaqt_label": "Время:",
-        "navbat_label": "Номер:",
+        "subtitle": "Запись на приём",
+        "ref_label": "Номер:",
+        "masala_label": "Вопрос:",
         "telefon_label": "Телефон:",
-        "footer": "Просим вас прийти в назначенное время.",
-        "org_fallback": "ХОКИМИЯТ",
+        "footer": "Сотрудники Кенгаша свяжутся с вами.",
+        "org_fallback": "КЕНГАШ",
     },
 }
 
@@ -278,7 +259,6 @@ def _wrap_to_width(text: str, font_style: str, size: int) -> list[str]:
 
 def _build_ops(
     appointment: Appointment,
-    official: OrgKbOfficial,
     org: Organization,
     verify_url: str,
     locale: str,
@@ -423,30 +403,13 @@ def _build_ops(
              dy=header_size * 1.15)
     gap(0.5 * mm)
 
-    subtitle = L["subtitle_chief"] if (official.role or "").lower() == "chief" \
-        else L["subtitle_deputy"]
-    line(subtitle, style="regular", size=10, align="center", dy=4.5 * mm)
+    line(L["subtitle"], style="regular", size=10, align="center", dy=4.5 * mm)
 
     hrule()
 
-    # ── 2) Body — chipta / mansabdor / position / masala ──────────────────
-    # Reference receipt style: bold label, regular value.
-    chipta_no = f"O-{appointment.scheduled_date.strftime('%Y%m%d')}-{appointment.queue_number:03d}"
-    label_value(L["chipta_label"], chipta_no, size=10, dy=4.5 * mm)
-
-    mansabdor = (official.name or "—").strip()
-    label_value(L["mansabdor_label"], mansabdor, size=10, dy=4.5 * mm)
-
-    # Position descriptor in italic — small breathing room first.
-    pos_parts = []
-    if official.position:
-        pos_parts.append(official.position.strip())
-    if official.responsibilities:
-        pos_parts.append(official.responsibilities.strip())
-    pos = " — ".join(pos_parts)
-    if pos:
-        for chunk in _wrap_to_width(pos, "italic", 9):
-            line(chunk, style="italic", size=9, dy=4 * mm)
+    # ── 2) Body — reference number / masala ───────────────────────────────
+    ref_no = f"Q-{appointment.id.hex[:8].upper()}"
+    label_value(L["ref_label"], ref_no, size=10, dy=4.5 * mm)
 
     topic = (appointment.topic_summary or "").strip()
     if topic:
@@ -454,23 +417,7 @@ def _build_ops(
 
     hrule()
 
-    # ── 3) Date / time / queue ────────────────────────────────────────────
-    label_value(L["sana_label"], format_date(appointment.scheduled_date, locale),
-                size=10, dy=4.5 * mm)
-
-    rt = (official.reception_time or "").strip()
-    start = rt.split("-")[0].strip() if "-" in rt else rt
-    if ":" in start and start.count(":") == 1:
-        start = f"{start}:00"
-    if start:
-        label_value(L["vaqt_label"], start, size=10, dy=4.5 * mm)
-
-    label_value(L["navbat_label"], str(appointment.queue_number),
-                size=10, dy=4.5 * mm)
-
-    hrule()
-
-    # ── 4) Phone (own section, matches operator's reference) ──────────────
+    # ── 3) Phone ──────────────────────────────────────────────────────────
     label_value(L["telefon_label"], _format_phone_pretty(appointment.visitor_phone),
                 size=10, dy=4.5 * mm)
 
@@ -489,7 +436,6 @@ def _build_ops(
 
 def render_receipt_pdf(
     appointment: Appointment,
-    official: OrgKbOfficial,
     org: Organization,
     verify_url: str,
     *,
@@ -503,7 +449,7 @@ def render_receipt_pdf(
     """
     _ensure_fonts()
 
-    ops = _build_ops(appointment, official, org, verify_url, locale)
+    ops = _build_ops(appointment, org, verify_url, locale)
 
     # Pass 1: measure. y decreases; total content = -y_final.
     y = 0.0

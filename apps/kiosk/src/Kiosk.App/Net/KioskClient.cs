@@ -51,6 +51,8 @@ public sealed class KioskClient : IAsyncDisposable
     public event Action<AppointmentProgressMessage>? AppointmentProgressReceived;
     public event Action<AppointmentPreviewMessage>? AppointmentPreviewReceived;
     public event Action<AppointmentSubmittedMessage>? AppointmentSubmittedReceived;
+    public event Action<FeedbackPreviewMessage>? FeedbackPreviewReceived;
+    public event Action<FeedbackSubmittedMessage>? FeedbackSubmittedReceived;
     public event Action? AudioDoneReceived;
     public event Action<ServerErrorMessage>? ErrorReceived;
     public event Action<ConnectionState>? StateChanged;
@@ -292,6 +294,14 @@ public sealed class KioskClient : IAsyncDisposable
                 case "appointment_submitted":
                     var asm = JsonSerializer.Deserialize(json, KioskJsonContext.Default.AppointmentSubmittedMessage);
                     if (asm is not null) AppointmentSubmittedReceived?.Invoke(asm);
+                    break;
+                case "feedback_preview":
+                    var fp = JsonSerializer.Deserialize(json, KioskJsonContext.Default.FeedbackPreviewMessage);
+                    if (fp is not null) FeedbackPreviewReceived?.Invoke(fp);
+                    break;
+                case "feedback_submitted":
+                    var fs = JsonSerializer.Deserialize(json, KioskJsonContext.Default.FeedbackSubmittedMessage);
+                    if (fs is not null) FeedbackSubmittedReceived?.Invoke(fs);
                     break;
                 case "audio_done":
                     AudioDoneReceived?.Invoke();

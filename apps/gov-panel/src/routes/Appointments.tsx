@@ -35,17 +35,14 @@ const STATUS_LABEL_RU: Record<Status, string> = {
   no_show: 'Не явился',
 }
 
+// Callback-reception model: a citizen registers and the Council calls them
+// back. No official, no scheduled date, no queue number anymore.
 interface AppointmentRow {
   id: string
-  official_id: string
-  official_name: string
-  official_position: string
   visitor_phone: string
   visitor_phone_masked: string
   topic_summary: string
-  scheduled_date: string
-  scheduled_date_human: string
-  queue_number: number
+  reference_no: string
   status: Status
   source: 'kiosk' | 'online'
   session_id: string | null
@@ -90,8 +87,8 @@ export function AppointmentsPage() {
         title={reviewer ? 'Мои приёмы' : 'Приёмы'}
         description={
           reviewer
-            ? 'Приёмы, назначенные на вас. Внесите результат и обновите статус.'
-            : 'Все приёмы, записанные через киоск и онлайн (в порядке очереди).'
+            ? 'Заявки на обратный звонок, назначенные на вас. Внесите результат и обновите статус.'
+            : 'Заявки граждан на обратный звонок (Кенес перезвонит).'
         }
         actions={
           <div className="flex items-center gap-2">
@@ -129,13 +126,12 @@ export function AppointmentsPage() {
           <Table>
             <THead>
               <tr>
-                <TH>Очередь</TH>
-                <TH>Дата</TH>
-                <TH>Должностное лицо</TH>
-                <TH>Тема</TH>
+                <TH>№</TH>
                 <TH>Телефон</TH>
+                <TH>Мәселе</TH>
                 <TH>Источник</TH>
                 <TH>Статус</TH>
+                <TH>Создан</TH>
               </tr>
             </THead>
             <TBody>
@@ -146,22 +142,13 @@ export function AppointmentsPage() {
                       to={`/appointments/${a.id}`}
                       className="font-semibold text-brand hover:text-brand-dark"
                     >
-                      #{String(a.queue_number).padStart(3, '0')}
+                      {a.reference_no}
                     </Link>
                   </TD>
-                  <TD className="whitespace-nowrap text-ink">
-                    {a.scheduled_date_human}
-                  </TD>
-                  <TD className="text-ink">
-                    <div>{a.official_name}</div>
-                    <div className="text-xs text-ink-muted">
-                      {a.official_position}
-                    </div>
-                  </TD>
+                  <TD className="font-mono text-ink-muted">{a.visitor_phone}</TD>
                   <TD className="max-w-xs truncate text-ink-muted">
                     {a.topic_summary}
                   </TD>
-                  <TD className="font-mono text-ink-muted">{a.visitor_phone}</TD>
                   <TD>
                     <Badge tone={a.source === 'kiosk' ? 'info' : 'brand'}>
                       {a.source === 'kiosk' ? 'Киоск' : 'Онлайн'}
@@ -169,6 +156,9 @@ export function AppointmentsPage() {
                   </TD>
                   <TD>
                     <StatusBadge status={a.status} />
+                  </TD>
+                  <TD className="whitespace-nowrap text-ink-muted">
+                    {new Date(a.created_at).toLocaleString('ru-RU')}
                   </TD>
                 </TR>
               ))}
@@ -233,8 +223,8 @@ export function AppointmentDetailPage() {
   return (
     <Layout>
       <PageHeader
-        title={`Очередь #${String(data.queue_number).padStart(3, '0')}`}
-        description={`${data.scheduled_date_human} · ${data.official_name}`}
+        title={`Приём ${data.reference_no}`}
+        description={`${data.visitor_phone} · ${new Date(data.created_at).toLocaleString('ru-RU')}`}
         actions={
           <Link to="/appointments">
             <Button variant="ghost" leftIcon={<ArrowLeft className="h-4 w-4" />}>
@@ -244,18 +234,14 @@ export function AppointmentDetailPage() {
         }
       />
       <div className="max-w-3xl space-y-6 px-8 py-6">
-        <Card title="Тема">
+        <Card title="Мәселе">
           <div className="whitespace-pre-wrap leading-relaxed text-ink">
             {data.topic_summary || 'Не указано'}
           </div>
         </Card>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field
-            label="Должностное лицо"
-            value={`${data.official_name} (${data.official_position})`}
-          />
-          <Field label="Дата" value={data.scheduled_date_human} />
+          <Field label="Номер" value={data.reference_no} mono />
           <Field label="Телефон" value={data.visitor_phone} mono />
           <Field
             label="Источник"
@@ -296,7 +282,7 @@ export function AppointmentDetailPage() {
             rows={4}
             placeholder={
               reviewer
-                ? 'Опишите результат приёма (что обсуждалось, какое решение принято).'
+                ? 'Опишите результат обратного звонка (что обсуждалось, какое решение принято).'
                 : 'Запись приёма (для администратора — обычно заполняет ответственный).'
             }
             value={resultDraft || data.result_note}

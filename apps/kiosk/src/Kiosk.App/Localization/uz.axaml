@@ -20,15 +20,15 @@
     <x:String x:Key="HomeGreetingChip">Xush kelibsiz!</x:String>
     <x:String x:Key="HomeQuestion">Sizga qanday yordam bera olamiz?</x:String>
     <x:String x:Key="HomeQuestionHighlight">yordam</x:String>
-    <x:String x:Key="HomeSubtitle">Quyidagi xizmatlardan birini tanlang. Murojaatingizni qoldiring, AI yordamchi bilan suhbatlashing yoki qabulga yozilung.</x:String>
-    <x:String x:Key="HomeTileSubmitTitle">Murojaat yuborish</x:String>
-    <x:String x:Key="HomeTileSubmitSubtitle">Arzingizni yoki taklifingizni elektron shaklda rasmiylashtiring</x:String>
-    <x:String x:Key="HomeTileAiTitle">AI yordamchi bilan suhbatlashish</x:String>
+    <x:String x:Key="HomeSubtitle">Quyidagi xizmatlardan birini tanlang. Kengashga murojaat qoldiring, AI yordamchi bilan suhbatlashing yoki qabulga yoziling.</x:String>
+    <x:String x:Key="HomeTileAiTitle">AI bilan suhbatlashish</x:String>
     <x:String x:Key="HomeTileAiSubtitle">Savollaringizga sun'iy intellektdan tezda javob oling</x:String>
-    <x:String x:Key="HomeTileDeputyTitle">Hokim o'rinbosari qabuli</x:String>
-    <x:String x:Key="HomeTileDeputySubtitle">Tegishli yo'nalishdagi o'rinbosar bilan uchrashishga yozilish</x:String>
-    <x:String x:Key="HomeTileMayorTitle">Hokim shaxsiy qabuli</x:String>
-    <x:String x:Key="HomeTileMayorSubtitle">Shahar hokimi bilan shaxsiy qabulga yozilish</x:String>
+    <x:String x:Key="HomeTileSubmitTitle">Kengashga murojaat</x:String>
+    <x:String x:Key="HomeTileSubmitSubtitle">Arzingizni yoki taklifingizni elektron shaklda yuboring</x:String>
+    <x:String x:Key="HomeTileQabulTitle">Shaxsiy qabulga yozilish</x:String>
+    <x:String x:Key="HomeTileQabulSubtitle">Telefon raqamingizni qoldiring — Kengash siz bilan bog'lanadi</x:String>
+    <x:String x:Key="HomeTileFeedbackTitle">Shikoyat / taklif / minnatdorchilik</x:String>
+    <x:String x:Key="HomeTileFeedbackSubtitle">Fikringizni qoldiring — shikoyat, taklif yoki minnatdorchilik</x:String>
 
     <!-- NavBar -->
     <x:String x:Key="NavBack">Orqaga</x:String>
@@ -50,20 +50,17 @@
     <x:String x:Key="MicStarting">Boshlanmoqda...</x:String>
     <x:String x:Key="MicError">Xatolik</x:String>
 
-    <!-- Qabul page -->
-    <x:String x:Key="QabulPageTitle">Qabulga yozilish</x:String>
-    <x:String x:Key="QabulPageTitleChief">Hokim shaxsiy qabuliga yozilish</x:String>
-    <x:String x:Key="QabulPageTitleDeputy">Hokim o'rinbosari qabuliga yozilish</x:String>
-    <x:String x:Key="QabulPickPrompt">Kim bilan uchrashish kerak?</x:String>
-    <x:String x:Key="QabulPickPromptChief">Hokim shaxsiy qabuli:</x:String>
-    <x:String x:Key="QabulPickPromptDeputy">Hokim o'rinbosarini tanlang:</x:String>
+    <!-- Qabul page (reception registration — no official, no date) -->
+    <x:String x:Key="QabulPageTitle">Shaxsiy qabulga yozilish</x:String>
+    <x:String x:Key="QabulRegisterIntro">Telefon raqamingizni qoldiring — Kengash siz bilan bog'lanadi.</x:String>
+    <x:String x:Key="QabulTopicSkip">O'tkazib yuborish</x:String>
+    <x:String x:Key="QabulEditTopic">Masalani o'zgartirish</x:String>
     <x:String x:Key="QabulPhonePreviewTitle">Telefon raqamingizni tekshiring</x:String>
     <x:String x:Key="QabulPhonePreviewHint">Yakunlashdan oldin raqamingiz to'g'riligini tasdiqlang. Xato bo'lsa "Tuzatish" tugmasini bosing.</x:String>
     <x:String x:Key="QabulPhonePreviewEdit">Tuzatish</x:String>
     <x:String x:Key="QabulPhonePreviewSend">Ha, yuborish</x:String>
-    <x:String x:Key="QabulSelectedLabel">Tanlangan mansabdor shaxs</x:String>
-    <x:String x:Key="QabulPickAnother">Boshqa mansabdor shaxsni tanlash</x:String>
     <x:String x:Key="QabulPhoneLabel">Telefon raqami</x:String>
+    <x:String x:Key="QabulPhoneHint">Telefon raqamingizni kiriting</x:String>
     <x:String x:Key="QabulConfirmButton">Tasdiqlash</x:String>
     <x:String x:Key="QabulConfirmErrorPhoneShort">Telefon raqami to'liq emas (kamida 9 raqam)</x:String>
     <x:String x:Key="QabulConfirmSending">Yuborilmoqda...</x:String>
@@ -71,29 +68,19 @@
 
     <!-- Voice-flow preview card — shown after AI agent calls preview_appointment -->
     <x:String x:Key="QabulVoicePreviewTitle">Tasdiqlash</x:String>
-    <x:String x:Key="QabulVoicePreviewOfficialLabel">Mansabdor shaxs</x:String>
-    <x:String x:Key="QabulVoicePreviewDateLabel">Sana</x:String>
-    <x:String x:Key="QabulVoicePreviewTimeLabel">Vaqt</x:String>
     <x:String x:Key="QabulVoicePreviewPhoneLabel">Telefon</x:String>
     <x:String x:Key="QabulVoicePreviewTopicLabel">Masala</x:String>
     <x:String x:Key="QabulVoicePreviewConfirm">Tasdiqlayman</x:String>
     <x:String x:Key="QabulVoicePreviewReject">Yo'q, qaytaring</x:String>
 
-    <x:String x:Key="QabulTalonTitle">QABUL NAVBATI</x:String>
-    <x:String x:Key="QabulTalonSubtitleChief">Shaxsiy qabul navbati</x:String>
-    <x:String x:Key="QabulTalonSubtitleDeputy">O'rinbosar qabul navbati</x:String>
-    <x:String x:Key="QabulTalonQueuePrefix">NAVBAT</x:String>
+    <!-- Success talon (no official, no date, no queue). -->
+    <x:String x:Key="QabulTalonSubtitle">Qabulga yozilish taloni</x:String>
+    <x:String x:Key="QabulTalonCallback">Kengash siz bilan bog'lanadi.</x:String>
     <x:String x:Key="QabulTalonScanHint">QR ni telefonda skanerlang.</x:String>
-    <!-- On-screen talon labels (must match the printed receipt's
-         RECEIPT_STRINGS in backend/src/ai/receipt.py). Standardized glossary:
-         Official=Mansabdor shaxs, Topic=Masala, Ticket=Navbat (singular).
-         Possessive suffix kept (Vaqti/Masalasi/Navbati) for natural read. -->
-    <x:String x:Key="QabulTalonChipta">Navbat raqami: </x:String>
-    <x:String x:Key="QabulTalonMansabdor">Mansabdor shaxs: </x:String>
+    <!-- On-screen talon labels. Trailing space is intentional — bold
+         "Label: " runs followed by a value run. -->
+    <x:String x:Key="QabulTalonReference">Murojaat raqami: </x:String>
     <x:String x:Key="QabulTalonMasala">Masalasi: </x:String>
-    <x:String x:Key="QabulTalonSana">Sana: </x:String>
-    <x:String x:Key="QabulTalonVaqt">Vaqti: </x:String>
-    <x:String x:Key="QabulTalonNavbat">Navbati: </x:String>
     <x:String x:Key="QabulTalonTelefon">Telefon: </x:String>
 
     <!-- Submit page -->
@@ -109,11 +96,11 @@
     <!-- Contacts page -->
     <x:String x:Key="ContactsPageTitle">Aloqa</x:String>
     <x:String x:Key="ContactsAddressLabel">📍  Manzil</x:String>
-    <x:String x:Key="ContactsAddressValue">Nukus sh., Berdaq ko'chasi 1</x:String>
+    <x:String x:Key="ContactsAddressValue">—</x:String>
     <x:String x:Key="ContactsPhoneIconLabel">☎  Telefon</x:String>
     <x:String x:Key="ContactsPhoneValue">(+998 61) 222 12 34</x:String>
     <x:String x:Key="ContactsEmailLabel">✉  Elektron pochta</x:String>
-    <x:String x:Key="ContactsEmailValue">info@nukushokimiyat.uz</x:String>
+    <x:String x:Key="ContactsEmailValue">—</x:String>
     <x:String x:Key="ContactsHoursLabel">🕐  Ish vaqti</x:String>
     <x:String x:Key="ContactsHoursValue">Du–Ju  09:00 – 18:00</x:String>
 
@@ -128,7 +115,7 @@
 
     <!-- Submit success overlay -->
     <x:String x:Key="SubmitSuccessTitle">Murojaatingiz qabul qilindi</x:String>
-    <x:String x:Key="SubmitSuccessBody">Hokimiyat xodimlari murojaatingizni ko'rib chiqadi.</x:String>
+    <x:String x:Key="SubmitSuccessBody">Kengash xodimlari murojaatingizni ko'rib chiqadi.</x:String>
     <x:String x:Key="SubmitSuccessTopicLabel">Mavzu:</x:String>
     <x:String x:Key="SubmitSuccessIdLabel">Raqam:</x:String>
 
@@ -197,10 +184,23 @@
     <x:String x:Key="ManualMurajatPreviewTitle">Ma'lumotlarni tekshiring</x:String>
     <x:String x:Key="ManualMurajatSuccessTitle">Murojaatingiz qabul qilindi</x:String>
     <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
-    <x:String x:Key="ManualMurajatSuccessHint">Hokimiyat xodimlari murojaatingizni ko'rib chiqishadi.</x:String>
+    <x:String x:Key="ManualMurajatSuccessHint">Kengash xodimlari murojaatingizni ko'rib chiqishadi.</x:String>
     <x:String x:Key="ManualMurajatSubmitting">Yuborilmoqda...</x:String>
     <x:String x:Key="ManualMurajatSubmitError">Yuborib bo'lmadi. Qayta urinib ko'ring.</x:String>
     <x:String x:Key="ManualBackButton">Orqaga</x:String>
     <x:String x:Key="ManualConfirmButton">Tasdiqlash va yuborish</x:String>
     <x:String x:Key="ManualEditButton">O'zgartirish</x:String>
+
+    <!-- Feedback flow (ManualFeedbackPage) -->
+    <x:String x:Key="FeedbackPageTitle">Fikr qoldirish</x:String>
+    <x:String x:Key="FeedbackTypePrompt">Fikringiz turini tanlang</x:String>
+    <x:String x:Key="FeedbackTypeComplaint">Shikoyat</x:String>
+    <x:String x:Key="FeedbackTypeSuggestion">Taklif</x:String>
+    <x:String x:Key="FeedbackTypeGratitude">Minnatdorchilik</x:String>
+    <x:String x:Key="FeedbackTextTitle">Fikringizni yozing</x:String>
+    <x:String x:Key="FeedbackTextHint">Nima demoqchisiz — batafsil yozing</x:String>
+    <x:String x:Key="FeedbackTextErrorShort">Kamida 5 ta harf kiriting</x:String>
+    <x:String x:Key="FeedbackPhoneTitle">Aloqa telefon raqami</x:String>
+    <x:String x:Key="FeedbackSuccessTitle">Fikringiz qabul qilindi</x:String>
+    <x:String x:Key="FeedbackSuccessHint">Kengash xodimlari fikringizni ko'rib chiqishadi.</x:String>
 </ResourceDictionary>

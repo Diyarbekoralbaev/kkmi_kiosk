@@ -261,7 +261,7 @@ public partial class ManualSubmitPage : UserControl
         PreviewStatus.Text = LocalizationService.Get("ManualMurajatSubmitting");
         PreviewStatus.IsVisible = true;
 
-        var result = await KioskApi.CreateApplicationAsync(topic, body, phone, "other");
+        var result = await KioskApi.CreateApplicationAsync(topic, body, phone);
         if (result is null)
         {
             PreviewStatus.Foreground = Avalonia.Media.Brush.Parse("#dc2626");

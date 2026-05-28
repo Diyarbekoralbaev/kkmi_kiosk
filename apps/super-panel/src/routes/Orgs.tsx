@@ -42,7 +42,7 @@ export function OrgsPage() {
     <Layout>
       <PageHeader
         title="Organizations"
-        description="Hokimiyatlar (orgs). Yangi yarating, kredentsiallarni boshqaring."
+        description="Tashkilotlar (orgs). Yangi yarating, kredentsiallarni boshqaring."
         actions={
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
             <Plus className="w-4 h-4" /> Yangi org
@@ -181,7 +181,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input"
             value={nameUz}
             onChange={(e) => setNameUz(e.target.value)}
-            placeholder="Nukus shahar hokimiyati"
+            placeholder="Joqarı Keńes"
             required
           />
         </div>
@@ -191,7 +191,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input"
             value={nameKk}
             onChange={(e) => setNameKk(e.target.value)}
-            placeholder="Нөкис қаласы ҳәкимияты"
+            placeholder="Жоқарғы Кеңес"
             required
           />
         </div>
@@ -201,7 +201,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input"
             value={nameRu}
             onChange={(e) => setNameRu(e.target.value)}
-            placeholder="Хакимият города Нукуса"
+            placeholder="Жокаргы Кенес"
             required
           />
         </div>
@@ -223,7 +223,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input font-mono"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="tashkent-hokimiyat"
+            placeholder="joqari-kenes"
           />
         </div>
         <div>
@@ -247,15 +247,15 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </div>
         <div>
           <Label>Manzil — Uzbek</Label>
-          <input className="input" value={addrUz} onChange={(e) => setAddrUz(e.target.value)} placeholder="Nukus sh., Berdaq ko'chasi 1" />
+          <input className="input" value={addrUz} onChange={(e) => setAddrUz(e.target.value)} placeholder="Nukus sh., ... koʻchasi 1" />
         </div>
         <div>
           <Label>Manzil — Karakalpak</Label>
-          <input className="input" value={addrKk} onChange={(e) => setAddrKk(e.target.value)} placeholder="Нөкис қ., Бердақ гүзәри, 1-үй" />
+          <input className="input" value={addrKk} onChange={(e) => setAddrKk(e.target.value)} placeholder="Нөкис қ., ... гүзәри, 1-үй" />
         </div>
         <div>
           <Label>Manzil — Russian</Label>
-          <input className="input" value={addrRu} onChange={(e) => setAddrRu(e.target.value)} placeholder="г. Нукус, ул. Бердака 1" />
+          <input className="input" value={addrRu} onChange={(e) => setAddrRu(e.target.value)} placeholder="г. Нукус, ул. ... 1" />
         </div>
         <div>
           <Label>Ish vaqti — Uzbek</Label>
@@ -271,7 +271,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </div>
         <div>
           <Label>Email</Label>
-          <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@nukushokimiyat.uz" />
+          <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@kenes.uz" />
         </div>
         <div>
           <Label>Yordam telefon raqami</Label>
@@ -283,7 +283,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             checked={includeOfficials}
             onChange={(e) => setIncludeOfficials(e.target.checked)}
           />
-          Default Nukus officials seedini ham qo'shish (test uchun)
+          Default seed ma'lumotlarini ham qo'shish (test uchun)
         </label>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="btn-secondary">

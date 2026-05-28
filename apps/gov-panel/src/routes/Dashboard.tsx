@@ -2,12 +2,9 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   CartesianGrid,
-  Cell,
   Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -29,18 +26,11 @@ interface DailyPoint {
   applications: number
   appointments: number
 }
-interface CategoryPoint {
-  id: string
-  slug: string
-  name_translations: { uz: string; kk: string; ru: string }
-  count: number
-}
 interface MonthlyOut {
   year: number
   month: number
   totals: MonthlyTotals
   daily: DailyPoint[]
-  categories: CategoryPoint[]
 }
 
 // KPI tile titles intentionally in Karakalpak Cyrillic per operator
@@ -59,21 +49,6 @@ const KPI_COLORS = {
   resolved: 'text-emerald-600',
   returned: 'text-rose-600',
 } as const
-
-// Recharts category palette — picked to read clearly on light cards.
-const CATEGORY_COLORS = [
-  '#0a4d8c', // brand
-  '#f5b932', // accent
-  '#10b981', // emerald
-  '#3b82f6', // blue
-  '#a855f7', // purple
-  '#f97316', // orange
-  '#06b6d4', // cyan
-  '#84cc16', // lime
-  '#ef4444', // red
-  '#94a3b8', // slate
-  '#d97706', // amber-dark
-]
 
 function monthOptions(now: Date): { value: string; label: string }[] {
   // Last 12 months including current.
@@ -216,56 +191,6 @@ export function DashboardPage() {
                 </ResponsiveContainer>
               </div>
             </Card>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Card title="Категории обращений">
-                {data.categories.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-ink-muted">
-                    Обращений в этом месяце пока нет.
-                  </div>
-                ) : (
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Tooltip
-                          contentStyle={{
-                            background: '#fff',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: 8,
-                            fontSize: 12,
-                          }}
-                          formatter={(value: number) => [value, 'Обращений']}
-                        />
-                        <Pie
-                          data={data.categories.map((c) => ({
-                            name: c.name_translations.ru || c.slug,
-                            value: c.count,
-                          }))}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={90}
-                          innerRadius={45}
-                          paddingAngle={2}
-                        >
-                          {data.categories.map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]}
-                            />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </Card>
-
-              <Card title="Топ-5 направлений">
-                <CategoryRanking categories={data.categories} />
-              </Card>
-            </div>
           </>
         )}
       </div>
@@ -291,44 +216,5 @@ function Kpi({
         {value}
       </div>
     </div>
-  )
-}
-
-function CategoryRanking({ categories }: { categories: CategoryPoint[] }) {
-  const total = categories.reduce((sum, c) => sum + c.count, 0)
-  const top5 = [...categories]
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
-  if (total === 0) {
-    return (
-      <div className="py-8 text-center text-sm text-ink-muted">
-        Нет данных за этот месяц.
-      </div>
-    )
-  }
-  return (
-    <ul className="space-y-3">
-      {top5.map((c, i) => {
-        const pct = total ? Math.round((c.count / total) * 100) : 0
-        return (
-          <li key={c.id || c.slug} className="space-y-1">
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="font-medium text-ink">
-                {i + 1}. {c.name_translations.ru || c.slug}
-              </span>
-              <span className="text-ink-muted">
-                {c.count} ({pct}%)
-              </span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
-              <div
-                className="h-full rounded-full bg-brand"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </li>
-        )
-      })}
-    </ul>
   )
 }

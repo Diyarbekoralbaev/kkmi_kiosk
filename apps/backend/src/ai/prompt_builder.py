@@ -13,7 +13,7 @@ default_sections, since they change per session/org):
     weekday, so the agent computes "ертең / индин" against real time
     instead of guessing. ("сана" is a Kazakh/Latin borrowing and not
     used in Karakalpak — "ўақыт" is the operator-approved term.)
-  - "ҲӘКИМИЯТ БАЙЛАНЫС" before the officials block: the current org's
+  - "КЕҢЕС БАЙЛАНЫС" before the officials block: the current org's
     helpline phone, email, address (per-locale → kk picked) so the
     agent stops hallucinating phone numbers like the cross-government
     1242 hotline.
@@ -32,7 +32,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.seed import ensure_system_ai_defaults
-from ..domain.ai_config import OrgKbOfficial
 from ..domain.organization import (
     Organization,
     address_translations_for_response,
@@ -53,21 +52,7 @@ class AgentConfig:
     enabled_tools: list[str]
 
 
-# Karakalpak Cyrillic weekday names. Used by both the officials block
-# ("Қабыллаў: пийшемби 10:00") and the runtime-injected HOZIRGI SANA
-# block. Kept in lockstep with the `language` section's example list in
-# seed.py — diverging would teach the agent two different spellings.
-_DAY_TO_KK_CYRILLIC = {
-    "mon": "дүйшемби",
-    "tue": "сейшемби",
-    "wed": "сәршемби",
-    "thu": "пийшемби",
-    "fri": "жума",
-    "sat": "шемби",
-    "sun": "жексенби",
-}
-
-# weekday() returns 0=Mon..6=Sun, matched to the same Cyrillic names above
+# weekday() returns 0=Mon..6=Sun, matched to the Karakalpak Cyrillic names
 # so the runtime date block reads identical to anything the static prompt
 # already mentions.
 _WEEKDAY_INDEX_TO_KK = [
@@ -79,25 +64,6 @@ _WEEKDAY_INDEX_TO_KK = [
     "шемби",
     "жексенби",
 ]
-
-
-def _format_officials(officials: list[OrgKbOfficial]) -> str:
-    if not officials:
-        return ""
-    lines: list[str] = ["===== ҲӘКИМ ҲӘМ ОРЫНБАСАРЛАР ====="]
-    for o in officials:
-        # `id:` line is read by the appointment tools — agent passes this UUID
-        # back to preview_appointment / submit_appointment.
-        block = [f"{o.order}. {o.position} — {o.name}", f"   id: {o.id}"]
-        if o.responsibilities:
-            block.append(f"   {o.responsibilities}")
-        if o.reception_day or o.reception_time:
-            day = _DAY_TO_KK_CYRILLIC.get(o.reception_day, o.reception_day)
-            sched = " ".join(filter(None, [day, o.reception_time]))
-            if sched:
-                block.append(f"   Қабыллаў: {sched}")
-        lines.append("\n".join(block))
-    return "\n\n".join(lines)
 
 
 def _format_today_block(now: datetime | None = None) -> str:
@@ -147,14 +113,14 @@ def _format_org_contact_block(org: Organization) -> str:
     phone = (org.helpline_phone or "").strip() or "—"
     email = (org.email or "").strip() or "—"
     return (
-        "===== ҲӘКИМИЯТ БАЙЛАНЫС =====\n"
+        "===== КЕҢЕС БАЙЛАНЫС =====\n"
         f"Жәрдем телефоны: {phone}\n"
         f"Email: {email}\n"
         f"Мәнзил: {address}\n"
         f"Жумыс ўақты: {hours}\n"
         "Тек усы реквизитлерди айтың. 1242 (улыўма мәмлекетлик "
-        "хызметлер орайы) ҳәкимият номери ЕМЕС — ҳәкимият байланысы "
-        "сапатында айтпаң. Ҳәкимият телефонын сорағанда жоқарыдағы "
+        "хызметлер орайы) Кеңес номери ЕМЕС — Кеңес байланысы "
+        "сапатында айтпаң. Кеңес телефонын сорағанда жоқарыдағы "
         "«Жәрдем телефоны»ды ғана айтың; ол бос болса «бизде жария "
         "етилген жәрдем телефоны жоқ, орынлы келиң» деп жуўап бер."
     )
@@ -184,17 +150,6 @@ async def load_agent_config(session: AsyncSession, org_id: uuid.UUID) -> AgentCo
     ).scalar_one_or_none()
     if org is not None:
         pieces.append(_format_org_contact_block(org))
-
-    officials = (
-        await session.execute(
-            select(OrgKbOfficial)
-            .where(OrgKbOfficial.org_id == org_id)
-            .order_by(OrgKbOfficial.order)
-        )
-    ).scalars().all()
-    officials_block = _format_officials(list(officials))
-    if officials_block:
-        pieces.append(officials_block)
 
     system_prompt = "\n\n".join(pieces)
     enabled_tools = [

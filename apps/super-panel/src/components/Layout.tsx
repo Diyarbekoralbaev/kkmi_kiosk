@@ -24,7 +24,7 @@ export function Layout({ children }: Props) {
       <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col">
         <div className="px-6 py-6 border-b border-slate-800">
           <Link to="/" className="block">
-            <div className="text-xs uppercase tracking-widest text-slate-500">Kiosk Gov</div>
+            <div className="text-xs uppercase tracking-widest text-slate-500">Joqarı Keńes</div>
             <div className="text-lg font-semibold text-slate-100">Super Admin</div>
           </Link>
         </div>

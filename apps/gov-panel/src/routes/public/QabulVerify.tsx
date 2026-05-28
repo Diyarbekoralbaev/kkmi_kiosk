@@ -9,12 +9,7 @@ import { LangSwitcher } from './LangSwitcher'
 interface VerifyResponse {
   org_name: string
   org_name_translations?: Record<string, string>
-  official_name: string
-  official_position: string
-  scheduled_date: string
-  scheduled_date_human: string
-  reception_time: string
-  queue_number: number
+  reference_no: string
   status: 'pending' | 'completed' | 'cancelled' | 'no_show'
   topic: string
   phone_masked: string
@@ -75,8 +70,8 @@ export default function QabulVerifyPage() {
             <div className="text-xs font-semibold uppercase tracking-widest text-white/70">
               {t('talonHeader')}
             </div>
-            <div className="mt-2 text-6xl font-bold tabular-nums tracking-wide">
-              #{String(data.queue_number).padStart(3, '0')}
+            <div className="mt-2 text-4xl font-bold tracking-wide">
+              {data.reference_no}
             </div>
             <div className="mt-1 text-xs font-medium uppercase tracking-widest text-white/70">
               {t('queueLabel')}
@@ -84,10 +79,6 @@ export default function QabulVerifyPage() {
           </div>
 
           <div className="space-y-1 px-8 py-6">
-            <Row label={t('rowOfficial')} value={data.official_name} />
-            <Row label={t('rowPosition')} value={data.official_position} />
-            <Row label={t('rowDate')} value={data.scheduled_date_human} />
-            <Row label={t('rowTime')} value={data.reception_time} />
             <Row label={t('rowPhone')} value={data.phone_masked} mono />
             <Row label={t('rowTopic')} value={data.topic} />
             <Row

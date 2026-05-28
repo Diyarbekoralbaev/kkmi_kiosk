@@ -6,14 +6,14 @@
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1572"
              x:Class="Kiosk.App.Pages.HomePage"
              x:DataType="state:SessionStore">
-    <!-- 2026 redesign v4: 4 tiles in order — AI Yordamchi (amber accent),
-         Hokim jeke qabuli (chief), Hokim orinbosari qabili (deputy), and
-         Murajaat (Submit) at the bottom. Operator-driven order so qabul
-         booking is more prominent than complaint submission. Submit tile
-         is a second entry point into the AI flow (both AI + Submit click
-         handlers navigate to KioskPage.Ai); the two reception tiles set
-         SessionStore.QabulRoleFilter before navigating to KioskPage.Qabul.
-         Icons are direct ports of infokiosk.html SVG glyphs. -->
+    <!-- Joqarı Keńes (Supreme Council) home: 4 tiles in order —
+         1. AI assistant (amber accent) → KioskPage.Ai
+         2. Murajat to the Council     → KioskPage.ManualSubmit
+         3. Reception registration     → KioskPage.Qabul
+         4. Feedback (shaǵım/usınıs/    → KioskPage.Feedback
+            minnetdarshılıq)
+         No officials, no categories. Icons are ports of infokiosk.html
+         SVG glyphs. -->
     <Grid Background="{StaticResource KioskBg}">
         <Grid RowDefinitions="Auto,*" Margin="60,32,60,32">
             <!-- ── Hero ─────────────────────────────────────────────── -->
@@ -96,97 +96,7 @@
                     </Grid>
                 </Button>
 
-                <!-- 2. Hokim jeke qabili (chief reception, primary) -->
-                <Button x:Name="TileMayor" Click="OnTileMayor" Classes="tile">
-                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
-                                Background="{StaticResource KioskTileTint}"
-                                VerticalAlignment="Center">
-                            <!-- Building/column glyph from infokiosk.html:
-                                 ground line + roofline + door + window dot. -->
-                            <Viewbox Width="72" Height="72"
-                                     HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Canvas Width="24" Height="24">
-                                    <Path Stroke="{StaticResource KioskPrimary}"
-                                          StrokeThickness="2"
-                                          StrokeLineCap="Round"
-                                          StrokeJoin="Round"
-                                          Fill="Transparent"
-                                          Data="M3,21 H21 M5,21 V10 L12,5 L19,10 V21 M9,21 V15 H15 V21" />
-                                    <Ellipse Canvas.Left="11" Canvas.Top="7"
-                                             Width="2" Height="2"
-                                             Fill="{StaticResource KioskPrimary}" />
-                                </Canvas>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
-                                    Margin="28,0,16,0">
-                            <TextBlock Text="{DynamicResource HomeTileMayorTitle}"
-                                       FontSize="32" FontWeight="Bold"
-                                       Foreground="{StaticResource KioskText}"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Text="{DynamicResource HomeTileMayorSubtitle}"
-                                       FontSize="18"
-                                       Foreground="{StaticResource KioskTextMuted}"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
-                                Background="{StaticResource KioskPrimary}"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                    </Grid>
-                </Button>
-
-                <!-- 3. Hokim orinbosari qabili (deputy reception) -->
-                <Button x:Name="TileDeputy" Click="OnTileDeputy" Classes="tile">
-                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
-                                Background="{StaticResource KioskTileTint}"
-                                VerticalAlignment="Center">
-                            <!-- 2-user group glyph from infokiosk.html:
-                                 user-1 body+head + user-2 body+head behind right. -->
-                            <Viewbox Width="72" Height="72"
-                                     HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Canvas Width="24" Height="24">
-                                    <Path Stroke="{StaticResource KioskPrimary}"
-                                          StrokeThickness="2"
-                                          StrokeLineCap="Round"
-                                          StrokeJoin="Round"
-                                          Fill="Transparent"
-                                          Data="M17,21 V19 A4,4 0 0 0 13,15 H5 A4,4 0 0 0 1,19 V21 M23,21 V19 A4,4 0 0 0 20,15.13 M16,3.13 A4,4 0 0 1 16,10.88" />
-                                    <Ellipse Canvas.Left="5" Canvas.Top="3"
-                                             Width="8" Height="8"
-                                             Stroke="{StaticResource KioskPrimary}"
-                                             StrokeThickness="2"
-                                             Fill="Transparent" />
-                                </Canvas>
-                            </Viewbox>
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
-                                    Margin="28,0,16,0">
-                            <TextBlock Text="{DynamicResource HomeTileDeputyTitle}"
-                                       FontSize="32" FontWeight="Bold"
-                                       Foreground="{StaticResource KioskText}"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Text="{DynamicResource HomeTileDeputySubtitle}"
-                                       FontSize="18"
-                                       Foreground="{StaticResource KioskTextMuted}"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
-                                Background="{StaticResource KioskPrimary}"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                    </Grid>
-                </Button>
-
-                <!-- 4. Murojaat (Submit) — second entry into AI flow.
+                <!-- 2. Joqarı Keńeske murajat (appeal) → ManualSubmit.
                      Document/file-text glyph from infokiosk.html. -->
                 <Button x:Name="TileSubmit" Click="OnTileSubmit" Classes="tile">
                     <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
@@ -223,6 +133,96 @@
                                        Foreground="{StaticResource KioskText}"
                                        TextWrapping="Wrap" />
                             <TextBlock Text="{DynamicResource HomeTileSubmitSubtitle}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource KioskTextMuted}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
+                                Background="{StaticResource KioskPrimary}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </Button>
+
+                <!-- 3. Jeke qabılǵa jazılıw (reception registration) → Qabul.
+                     Building/column glyph from infokiosk.html. -->
+                <Button x:Name="TileQabul" Click="OnTileQabul" Classes="tile">
+                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
+                                Background="{StaticResource KioskTileTint}"
+                                VerticalAlignment="Center">
+                            <Viewbox Width="72" Height="72"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <Path Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          StrokeJoin="Round"
+                                          Fill="Transparent"
+                                          Data="M3,21 H21 M5,21 V10 L12,5 L19,10 V21 M9,21 V15 H15 V21" />
+                                    <Ellipse Canvas.Left="11" Canvas.Top="7"
+                                             Width="2" Height="2"
+                                             Fill="{StaticResource KioskPrimary}" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
+                                    Margin="28,0,16,0">
+                            <TextBlock Text="{DynamicResource HomeTileQabulTitle}"
+                                       FontSize="32" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{DynamicResource HomeTileQabulSubtitle}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource KioskTextMuted}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="2" Width="68" Height="68" CornerRadius="34"
+                                Background="{StaticResource KioskPrimary}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="›" FontSize="36" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </Button>
+
+                <!-- 4. Shaǵım / usınıs / minnetdarshılıq (feedback) → Feedback.
+                     Chat-bubble glyph. -->
+                <Button x:Name="TileFeedback" Click="OnTileFeedback" Classes="tile">
+                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <Border Grid.Column="0" Width="118" Height="118" CornerRadius="22"
+                                Background="{StaticResource KioskTileTint}"
+                                VerticalAlignment="Center">
+                            <Viewbox Width="72" Height="72"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <!-- Speech-bubble outline with tail -->
+                                    <Path Stroke="{StaticResource KioskPrimary}"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          StrokeJoin="Round"
+                                          Fill="Transparent"
+                                          Data="M21,11.5 A8.38,8.38 0 0 1 12.5,19.5 A8.5,8.5 0 0 1 8,18.5 L3,20 L4.5,15 A8.5,8.5 0 0 1 3.5,11 A8.38,8.38 0 0 1 11.5,3 A8.5,8.5 0 0 1 21,11.5 Z" />
+                                    <Ellipse Canvas.Left="8" Canvas.Top="10.5"
+                                             Width="2" Height="2"
+                                             Fill="{StaticResource KioskPrimary}" />
+                                    <Ellipse Canvas.Left="14" Canvas.Top="10.5"
+                                             Width="2" Height="2"
+                                             Fill="{StaticResource KioskPrimary}" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center"
+                                    Margin="28,0,16,0">
+                            <TextBlock Text="{DynamicResource HomeTileFeedbackTitle}"
+                                       FontSize="32" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{DynamicResource HomeTileFeedbackSubtitle}"
                                        FontSize="18"
                                        Foreground="{StaticResource KioskTextMuted}"
                                        TextWrapping="Wrap" />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Search } from 'lucide-react'
@@ -23,6 +23,7 @@ import {
   THead,
   Textarea,
   TR,
+  cn,
 } from '../components/ui'
 
 // Status enum extended with `returned`. Reviewer can only transition to
@@ -38,25 +39,41 @@ const STATUS_LABEL_RU: Record<Status, string> = {
   archived: 'Архив',
 }
 
+// `kind` splits the inbox into citizen appeals (murajaat) and feedback
+// (complaint / suggestion / gratitude). Backend filters via ?kind=.
+type Kind = 'murajaat' | 'feedback'
+type FeedbackType = 'complaint' | 'suggestion' | 'gratitude'
+
+const KIND_TABS: { value: Kind; label: string }[] = [
+  { value: 'murajaat', label: 'Мүражатлар' },
+  { value: 'feedback', label: 'Фикрлер' },
+]
+
+// Feedback type labels — Karakalpak Cyrillic / Russian, matching the
+// bilingual operational vocabulary used elsewhere in the panel.
+const FEEDBACK_TYPE_META: Record<
+  FeedbackType,
+  { label: string; tone: 'danger' | 'info' | 'success' }
+> = {
+  complaint: { label: 'Шағым / Жалоба', tone: 'danger' },
+  suggestion: { label: 'Усыныс / Предложение', tone: 'info' },
+  gratitude: { label: 'Миннетдаршылық / Благодарность', tone: 'success' },
+}
+
 interface AppRow {
   id: string
   topic: string
   body: string
   phone: string
   status: Status
+  kind: Kind
+  feedback_type: FeedbackType | null
   category_id: string | null
   category_slug: string | null
   assigned_user_id: string | null
   resolution_note: string
   created_at: string
   resolved_at: string | null
-}
-
-interface Category {
-  id: string
-  slug: string
-  name_translations: { uz: string; kk: string; ru: string }
-  order: number
 }
 
 interface StaffMember {
@@ -66,21 +83,25 @@ interface StaffMember {
   role: string
 }
 
-function categoryLabel(cat: Category | undefined): string {
-  if (!cat) return ''
-  return cat.name_translations.ru || cat.name_translations.kk || cat.slug
+function FeedbackTypeBadge({ type }: { type: FeedbackType | null }) {
+  if (!type) return <span className="text-xs text-ink-muted/60">—</span>
+  const meta = FEEDBACK_TYPE_META[type]
+  if (!meta) return <Badge tone="neutral">{type}</Badge>
+  return <Badge tone={meta.tone}>{meta.label}</Badge>
 }
 
 export function ApplicationsPage() {
   const { me } = useAuth()
   const reviewer = isReviewer(me)
+  const [kind, setKind] = useState<Kind>('murajaat')
   const [statusFilter, setStatusFilter] = useState<Status | ''>('')
   const [search, setSearch] = useState('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['gov-apps', statusFilter, search],
+    queryKey: ['gov-apps', kind, statusFilter, search],
     queryFn: async () => {
       const params = new URLSearchParams()
+      params.set('kind', kind)
       if (statusFilter) params.set('status', statusFilter)
       if (search) params.set('search', search)
       params.set('limit', '100')
@@ -91,17 +112,7 @@ export function ApplicationsPage() {
     },
   })
 
-  const categoriesQ = useQuery({
-    queryKey: ['gov-categories'],
-    queryFn: async () =>
-      (await api.get<{ items: Category[] }>('/api/gov/application-categories'))
-        .data.items,
-  })
-  const catById = useMemo(() => {
-    const map: Record<string, Category> = {}
-    for (const c of categoriesQ.data ?? []) map[c.id] = c
-    return map
-  }, [categoriesQ.data])
+  const isFeedback = kind === 'feedback'
 
   return (
     <Layout>
@@ -139,6 +150,23 @@ export function ApplicationsPage() {
         }
       />
       <div className="px-8 py-6">
+        <div className="mb-5 inline-flex rounded-lg border border-line bg-card p-1">
+          {KIND_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => setKind(tab.value)}
+              className={cn(
+                'rounded-md px-4 py-1.5 text-sm font-medium transition',
+                kind === tab.value
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'text-ink-muted hover:text-ink',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         {isLoading ? (
           <LoadingState />
         ) : !data || data.items.length === 0 ? (
@@ -151,7 +179,7 @@ export function ApplicationsPage() {
             <THead>
               <tr>
                 <TH>Тема</TH>
-                <TH>Категория</TH>
+                {isFeedback && <TH>Тип</TH>}
                 <TH>Телефон</TH>
                 <TH>Статус</TH>
                 <TH>Дата</TH>
@@ -168,17 +196,11 @@ export function ApplicationsPage() {
                       {a.topic}
                     </Link>
                   </TD>
-                  <TD className="text-ink-muted">
-                    {a.category_id ? (
-                      <Badge tone="neutral">
-                        {categoryLabel(catById[a.category_id])}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-ink-muted/60">
-                        Без категории
-                      </span>
-                    )}
-                  </TD>
+                  {isFeedback && (
+                    <TD>
+                      <FeedbackTypeBadge type={a.feedback_type} />
+                    </TD>
+                  )}
                   <TD className="font-mono text-ink-muted">{a.phone}</TD>
                   <TD>
                     <StatusBadge status={a.status} />
@@ -208,13 +230,6 @@ export function ApplicationDetailPage() {
     enabled: !!id,
   })
 
-  const categoriesQ = useQuery({
-    queryKey: ['gov-categories'],
-    queryFn: async () =>
-      (await api.get<{ items: Category[] }>('/api/gov/application-categories'))
-        .data.items,
-  })
-
   const reviewersQ = useQuery({
     queryKey: ['gov-staff', 'reviewers+admins'],
     enabled: !reviewer,
@@ -234,7 +249,6 @@ export function ApplicationDetailPage() {
     mutationFn: async (payload: {
       status?: Status
       assigned_user_id?: string | null
-      category_id?: string | null
       resolution_note?: string
     }) => api.patch(`/api/gov/applications/${id}`, payload),
     onSuccess: () => {
@@ -268,6 +282,15 @@ export function ApplicationDetailPage() {
         }
       />
       <div className="max-w-3xl space-y-6 px-8 py-6">
+        {data.kind === 'feedback' && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+              Тип отзыва:
+            </span>
+            <FeedbackTypeBadge type={data.feedback_type} />
+          </div>
+        )}
+
         <Card title="Текст обращения">
           <div className="whitespace-pre-wrap leading-relaxed text-ink">
             {data.body}
@@ -275,47 +298,22 @@ export function ApplicationDetailPage() {
         </Card>
 
         {!reviewer && (
-          <Card title="Назначение и категория">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-ink-muted">
-                  Ответственный
-                </label>
-                <Select
-                  value={data.assigned_user_id ?? ''}
-                  onChange={(e) =>
-                    update.mutate({
-                      assigned_user_id: e.target.value || null,
-                    })
-                  }
-                >
-                  <option value="">— Не назначен —</option>
-                  {(reviewersQ.data ?? []).map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.full_name || s.email} ({s.role === 'reviewer' ? 'Ответственный' : 'Админ'})
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-ink-muted">
-                  Категория
-                </label>
-                <Select
-                  value={data.category_id ?? ''}
-                  onChange={(e) =>
-                    update.mutate({ category_id: e.target.value || null })
-                  }
-                >
-                  <option value="">— Без категории —</option>
-                  {(categoriesQ.data ?? []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {categoryLabel(c)}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            </div>
+          <Card title="Назначение ответственного">
+            <Select
+              value={data.assigned_user_id ?? ''}
+              onChange={(e) =>
+                update.mutate({
+                  assigned_user_id: e.target.value || null,
+                })
+              }
+            >
+              <option value="">— Не назначен —</option>
+              {(reviewersQ.data ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.full_name || s.email} ({s.role === 'reviewer' ? 'Ответственный' : 'Админ'})
+                </option>
+              ))}
+            </Select>
           </Card>
         )}
 

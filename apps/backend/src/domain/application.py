@@ -40,6 +40,21 @@ ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     STATUS_ARCHIVED: set(),
 }
 
+# Discriminator: a row is either a citizen appeal ("murajaat") or a feedback
+# entry ("feedback"). Feedback rows additionally carry `feedback_type`.
+KIND_MURAJAAT = "murajaat"
+KIND_FEEDBACK = "feedback"
+ALL_KINDS = (KIND_MURAJAAT, KIND_FEEDBACK)
+
+# feedback_type values (only set when kind == feedback):
+#   complaint   = shaǵım  / шағым
+#   suggestion  = usınıs  / усыныс
+#   gratitude   = minnetdarshılıq / миннетдаршылық
+FEEDBACK_COMPLAINT = "complaint"
+FEEDBACK_SUGGESTION = "suggestion"
+FEEDBACK_GRATITUDE = "gratitude"
+ALL_FEEDBACK_TYPES = (FEEDBACK_COMPLAINT, FEEDBACK_SUGGESTION, FEEDBACK_GRATITUDE)
+
 
 class Application(Base, TimestampMixin):
     __tablename__ = "applications"
@@ -65,6 +80,12 @@ class Application(Base, TimestampMixin):
     body: Mapped[str] = mapped_column(Text, nullable=False)
     phone: Mapped[str] = mapped_column(String(32), default="", nullable=False)
     status: Mapped[str] = mapped_column(String(32), default=STATUS_NEW, nullable=False)
+    kind: Mapped[str] = mapped_column(
+        String(16), default=KIND_MURAJAAT, server_default=KIND_MURAJAAT, nullable=False
+    )
+    """murajaat (appeal to the Council) | feedback (shaǵım/usınıs/minnetdarshılıq)."""
+    feedback_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    """Only set when kind == feedback. One of ALL_FEEDBACK_TYPES."""
     category_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("application_categories.id", ondelete="SET NULL"),

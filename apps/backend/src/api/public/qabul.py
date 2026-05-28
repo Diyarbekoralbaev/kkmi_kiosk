@@ -19,16 +19,11 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
-from ...ai.appointments import (
-    build_verify_url,
-    create_appointment,
-    mask_phone,
-    normalize_phone,
-)
-from ...ai.receipt import format_date_kk, render_qr_png, render_receipt_pdf
+from ...ai.appointments import build_verify_url, mask_phone, reference_no
+from ...ai.receipt import render_qr_png, render_receipt_pdf
 from ...core.config import get_settings
 from ...core.deps import DbSession
-from ...core.errors import AppError, NotFoundError, ValidationError
+from ...core.errors import AppError, NotFoundError
 from ...core.rate_limit import client_ip, limiter
 from ...domain.ai_config import OrgKbOfficial
 from ...domain.appointment import Appointment
@@ -100,12 +95,7 @@ class CreatedBookingOut(BaseModel):
 class VerifyOut(BaseModel):
     org_name: str
     org_name_translations: dict[str, str] = {}
-    official_name: str
-    official_position: str
-    scheduled_date: str
-    scheduled_date_human: str
-    reception_time: str
-    queue_number: int
+    reference_no: str
     status: str
     topic: str
     phone_masked: str
@@ -224,23 +214,13 @@ async def verify_appointment(
     ).scalar_one_or_none()
     if a is None:
         raise NotFoundError()
-    ofc = (
-        await session.execute(
-            select(OrgKbOfficial).where(OrgKbOfficial.id == a.official_id)
-        )
-    ).scalar_one()
     org = (
         await session.execute(select(Organization).where(Organization.id == a.org_id))
     ).scalar_one()
     return VerifyOut(
         org_name=org.name,
         org_name_translations=name_translations_for_response(org),
-        official_name=ofc.name,
-        official_position=ofc.position,
-        scheduled_date=a.scheduled_date.isoformat(),
-        scheduled_date_human=format_date_kk(a.scheduled_date),
-        reception_time=ofc.reception_time,
-        queue_number=a.queue_number,
+        reference_no=reference_no(a),
         status=a.status,
         topic=a.topic_summary,
         phone_masked=mask_phone(a.visitor_phone),
@@ -295,22 +275,17 @@ async def receipt_pdf(
     ).scalar_one_or_none()
     if a is None:
         raise NotFoundError()
-    ofc = (
-        await session.execute(
-            select(OrgKbOfficial).where(OrgKbOfficial.id == a.official_id)
-        )
-    ).scalar_one()
     org = (
         await session.execute(select(Organization).where(Organization.id == a.org_id))
     ).scalar_one()
     pdf = render_receipt_pdf(
-        a, ofc, org, build_verify_url(a.verification_token), locale=locale,
+        a, org, build_verify_url(a.verification_token), locale=locale,
     )
     return Response(
         content=pdf,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'inline; filename="qabul-{a.queue_number:03d}.pdf"',
+            "Content-Disposition": f'inline; filename="qabul-{reference_no(a)}.pdf"',
             "Cache-Control": "private, max-age=60",
         },
     )

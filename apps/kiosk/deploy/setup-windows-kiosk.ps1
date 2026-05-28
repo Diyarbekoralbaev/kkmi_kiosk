@@ -48,7 +48,7 @@ Write-Host "[1/5] Creating local user '$KioskUser'..."
 if (-not (Get-LocalUser -Name $KioskUser -ErrorAction SilentlyContinue)) {
     $blank = ConvertTo-SecureString " " -AsPlainText -Force
     New-LocalUser -Name $KioskUser -Password $blank -PasswordNeverExpires -UserMayNotChangePassword `
-        -Description "Kiosk Gov kiosk shell account" | Out-Null
+        -Description "Joqari Kenes kiosk shell account" | Out-Null
 } else {
     Write-Host "  exists — skipping"
 }
@@ -71,7 +71,7 @@ Set-ItemProperty -Path $winLogonKey -Name DefaultDomainName -Value $env:COMPUTER
 
 Write-Host "[5/5] Creating watchdog scheduled task..."
 # Re-launches the kiosk if Task Manager / a crash kills it. Runs every minute.
-$taskName = "KioskGov-Watchdog"
+$taskName = "JoqariKenes-Watchdog"
 Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
 $action  = New-ScheduledTaskAction -Execute $exePath
 $trigger = New-ScheduledTaskTrigger -AtStartup

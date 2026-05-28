@@ -1,43 +1,51 @@
-"""Smoke test for prompt formatting — no DB needed."""
+"""Smoke test for prompt formatting — no DB needed.
+
+Officials were removed for the Council, so the old `_format_officials` block is
+gone. These cover the surviving runtime blocks: the today/date header and the
+КЕҢЕС contact block (which must NOT leak the old hokimiyat branding).
+"""
 from __future__ import annotations
 
-from src.ai.prompt_builder import _format_officials
-from src.domain.ai_config import OrgKbOfficial
+from src.ai.prompt_builder import _format_org_contact_block, _format_today_block
+from src.domain.organization import Organization
 
 
-def _o(**kw: object) -> OrgKbOfficial:
-    o = OrgKbOfficial()
+def test_today_block_has_header_and_karakalpak_weekday() -> None:
+    out = _format_today_block()
+    assert "ҲӘЗИРГИ ЎАҚЫТ" in out
+    days = ["дүйшемби", "сейшемби", "сәршемби", "пийшемби", "жума", "шемби", "жексенби"]
+    assert any(d in out for d in days)
+
+
+def _org(**kw: object) -> Organization:
+    o = Organization()
     for k, v in kw.items():
         setattr(o, k, v)
     return o
 
 
-def test_format_officials_empty_returns_empty_string() -> None:
-    assert _format_officials([]) == ""
+def test_contact_block_council_header_and_fields() -> None:
+    org = _org(
+        helpline_phone="+998 61 222-00-00",
+        email="info@kenes.uz",
+        address_translations={"kk": "Нөкис қ."},
+        work_hours_translations={"kk": "Дү–Жу 09:00–18:00"},
+    )
+    out = _format_org_contact_block(org)
+    assert "КЕҢЕС БАЙЛАНЫС" in out
+    assert "+998 61 222-00-00" in out
+    assert "info@kenes.uz" in out
+    # The old executive branding must not leak into the Council contact block.
+    assert "ҲӘКИМИЯТ" not in out
 
 
-def test_format_officials_renders_full_block() -> None:
-    officials = [
-        _o(
-            order=1,
-            position="HÁKIM",
-            name="Daniyarov A. S.",
-            responsibilities="",
-            reception_day="fri",
-            reception_time="10:00-12:00",
-        ),
-        _o(
-            order=2,
-            position="Birinshi orinbasar",
-            name="Kannazarov M. A.",
-            responsibilities="Finans, ekonomika",
-            reception_day="wed",
-            reception_time="10:00-12:00",
-        ),
-    ]
-    out = _format_officials(officials)
-    assert "HOKIM HÁM ORINBASARLAR" in out
-    assert "Daniyarov A. S." in out
-    assert "Kannazarov M. A." in out
-    assert "juma 10:00-12:00" in out  # Karakalpak day translation
-    assert "sárshembi 10:00-12:00" in out
+def test_contact_block_empty_fields_render_dash() -> None:
+    org = _org(
+        helpline_phone=None,
+        email="",
+        address_translations={},
+        work_hours_translations={},
+    )
+    out = _format_org_contact_block(org)
+    assert "КЕҢЕС БАЙЛАНЫС" in out
+    assert "—" in out

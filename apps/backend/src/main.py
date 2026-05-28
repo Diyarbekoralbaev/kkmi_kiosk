@@ -136,6 +136,7 @@ def create_app() -> FastAPI:
     app.include_router(kiosk_enrollment_router.router)
     app.include_router(kiosk_appointments_router.router)
     app.include_router(kiosk_applications_router.router)
+    app.include_router(kiosk_applications_router.feedback_router)
     app.include_router(kiosk_updates_router.router)
     app.include_router(kiosk_ws_router.router)
     app.include_router(public_qabul_router.router)

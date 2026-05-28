@@ -1,10 +1,25 @@
-"""Kiosk tool declarations + dispatcher that maps tool calls to events."""
+"""Kiosk tool declarations + dispatcher that maps tool calls to events.
+
+Council flows (no categories, no officials, no fixed dates):
+  - murajaat: preview_application → submit_application  (topic + body + phone)
+  - qabul:    appointment_progress → preview_appointment → submit_appointment
+              (optional reason + phone; staff call the citizen back)
+  - feedback: preview_feedback → submit_feedback  (type + text + phone)
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
 
-# JSON Schema declarations for the three kiosk tools we expose to Gemini Live.
+_PHONE_DESC = (
+    "Exactly 9 digits, no spaces or separators. The visitor MUST have spoken "
+    "this number aloud in the current session. Do not pass a placeholder, do "
+    "not pass example digits like 998912345678 or 901234567, do not copy a "
+    "number from any other source. If the visitor has not yet spoken a phone, "
+    "do not call this tool — ask for the phone first."
+)
+
+# JSON Schema declarations for the kiosk tools we expose to Gemini Live.
 # Only the tools listed in `enabled_tools` (from prompt_builder) are sent.
 TOOL_DECLS: dict[str, dict[str, Any]] = {
     "navigate_to_screen": {
@@ -19,7 +34,7 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
             "properties": {
                 "screen": {
                     "type": "string",
-                    "enum": ["home", "reception", "submit", "contacts", "ai"],
+                    "enum": ["home", "qabul", "submit", "feedback", "contacts", "ai"],
                     "description": "Screen to navigate to.",
                 }
             },
@@ -29,18 +44,16 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
     "preview_application": {
         "name": "preview_application",
         "description": (
-            "Show the visitor a draft formal application (murajaat) on the "
-            "kiosk screen for review. This call renders the card visitors "
-            "see — it is the ONLY way to put the draft on screen.\n\n"
+            "Show the visitor a draft formal appeal (murajaat) to the Council "
+            "on the kiosk screen for review. This call renders the card the "
+            "visitor sees — it is the ONLY way to put the draft on screen.\n\n"
             "INVOCATION CONDITION — only call when ALL of these are true:\n"
             "  (1) The visitor stated a topic in their own words.\n"
-            "  (2) The visitor stated the full body of their request in "
-            "their own words (what happened, what they want).\n"
-            "  (3) The visitor spoke a 9-digit phone number aloud in this "
-            "session. Heard, not inferred, not assumed, not a placeholder.\n"
-            "If any of the three is missing, ask for it first. "
-            "Do NOT ask the visitor «Мәтин дурыс па?» before this call — "
-            "the visitor needs to see the rendered card first."
+            "  (2) The visitor stated the full body of their appeal (what "
+            "happened, what they want).\n"
+            "  (3) The visitor spoke a 9-digit phone aloud in this session.\n"
+            "If any is missing, ask for it first. Do NOT ask «Мәтин дурыс па?» "
+            "before this call — the visitor needs to see the rendered card."
         ),
         "parameters": {
             "type": "object",
@@ -48,143 +61,63 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
                 "topic": {
                     "type": "string",
                     "description": (
-                        "1-2 word subject of the visitor's request, in "
-                        "their own words. Do not invent a topic the "
-                        "visitor did not state."
+                        "1-2 word subject of the appeal, in the visitor's own "
+                        "words. Do not invent a topic the visitor did not state."
                     ),
                 },
                 "body": {
                     "type": "string",
                     "description": (
                         "2-3 sentence formal body in Karakalpak Cyrillic, "
-                        "composed only from facts the visitor stated. "
-                        "Do not infer details, names, dates, or events "
-                        "the visitor did not say."
+                        "composed only from facts the visitor stated. Do not "
+                        "infer details, names, dates, or events not said."
                     ),
                 },
-                "phone": {
-                    "type": "string",
-                    "description": (
-                        "Exactly 9 digits, no spaces or separators. The "
-                        "visitor MUST have spoken this number aloud in "
-                        "the current session. Do not pass a placeholder, "
-                        "do not pass example digits like 998912345678 or "
-                        "901234567, do not copy a number from any other "
-                        "source. If the visitor has not yet spoken a "
-                        "phone, do not call this tool — ask for the "
-                        "phone first."
-                    ),
-                },
-                "category_slug": {
-                    "type": "string",
-                    "enum": [
-                        "housing",
-                        "land",
-                        "construction",
-                        "utilities",
-                        "employment",
-                        "education",
-                        "health",
-                        "social",
-                        "business",
-                        "other",
-                    ],
-                    "description": (
-                        "Exactly one of the 10 enum values. Pick the "
-                        "closest match to the visitor's stated issue. "
-                        "If unsure or the topic is not on the list "
-                        "(bank, credit, other agency, private person), "
-                        "use 'other'. Do not invent a slug outside the "
-                        "enum."
-                    ),
-                },
+                "phone": {"type": "string", "description": _PHONE_DESC},
             },
-            "required": ["topic", "body", "phone", "category_slug"],
+            "required": ["topic", "body", "phone"],
         },
     },
     "submit_application": {
         "name": "submit_application",
         "description": (
-            "Submit the previously-previewed application to the back "
-            "office.\n\n"
+            "Submit the previously-previewed appeal (murajaat) to the "
+            "Council back office.\n\n"
             "INVOCATION CONDITION — only call when BOTH are true:\n"
-            "  (1) preview_application was already called in this "
-            "session with the same topic / body / phone / category_slug.\n"
-            "  (2) The visitor explicitly affirmed with «Ха», «Дурыс», or "
-            "an equivalent in reply to «Мәтин дурыс па?».\n"
-            "Pass the same topic, body, phone, and category_slug verbatim "
-            "as you sent to preview_application. Do not re-compose the "
-            "body, do not re-categorize, do not 'tidy up' the text "
-            "between preview and submit."
+            "  (1) preview_application was already called in this session with "
+            "the same topic / body / phone.\n"
+            "  (2) The visitor explicitly affirmed («Ха», «Дурыс», ...) in "
+            "reply to «Мәтин дурыс па?».\n"
+            "Pass the same topic, body, and phone verbatim — do not re-compose "
+            "or 'tidy up' the text between preview and submit."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "topic": {
-                    "type": "string",
-                    "description": (
-                        "Same value passed to preview_application — "
-                        "verbatim, no edits."
-                    ),
-                },
-                "body": {
-                    "type": "string",
-                    "description": (
-                        "Same value passed to preview_application — "
-                        "verbatim, no edits."
-                    ),
-                },
-                "phone": {
-                    "type": "string",
-                    "description": (
-                        "Same 9-digit number passed to "
-                        "preview_application — the one the visitor "
-                        "actually spoke aloud."
-                    ),
-                },
-                "category_slug": {
-                    "type": "string",
-                    "enum": [
-                        "housing",
-                        "land",
-                        "construction",
-                        "utilities",
-                        "employment",
-                        "education",
-                        "health",
-                        "social",
-                        "business",
-                        "other",
-                    ],
-                    "description": (
-                        "Same slug passed to preview_application. "
-                        "Do not re-categorize."
-                    ),
-                },
+                "topic": {"type": "string", "description": "Same value as preview_application."},
+                "body": {"type": "string", "description": "Same value as preview_application."},
+                "phone": {"type": "string", "description": "Same 9-digit number as preview_application."},
             },
-            "required": ["topic", "body", "phone", "category_slug"],
+            "required": ["topic", "body", "phone"],
         },
     },
     "appointment_progress": {
         "name": "appointment_progress",
         "description": (
-            "Lightweight stage marker for the qabul booking flow. Call after "
-            "EACH user reply during qabul to advance the kiosk stepper. Pass "
-            "only the field captured by THIS user reply.\n"
-            "  - stage='topic' + topic: visitor stated their issue\n"
-            "  - stage='official' + official_id: visitor confirmed the official you proposed\n"
+            "Lightweight stage marker for the qabul (reception) registration "
+            "flow. Call after EACH user reply during qabul to advance the "
+            "kiosk stepper. Pass only the field captured by THIS reply.\n"
+            "  - stage='topic' + topic: visitor stated the reason (OPTIONAL — "
+            "qabul can be booked without a reason)\n"
             "  - stage='phone' + phone: visitor said their phone number\n"
-            "Do NOT use this for the final confirmation step — that's preview_appointment."
+            "Do NOT use this for the final confirmation — that's "
+            "preview_appointment."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "stage": {
-                    "type": "string",
-                    "enum": ["topic", "official", "phone"],
-                },
+                "stage": {"type": "string", "enum": ["topic", "phone"]},
                 "topic": {"type": "string"},
-                "official_id": {"type": "string"},
                 "phone": {"type": "string"},
             },
             "required": ["stage"],
@@ -193,99 +126,105 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
     "preview_appointment": {
         "name": "preview_appointment",
         "description": (
-            "Show the visitor a draft qabul (reception appointment) on the "
-            "kiosk screen for review. This call renders the card the "
-            "visitor sees.\n\n"
-            "INVOCATION CONDITION — only call when ALL of these are true:\n"
-            "  (1) The visitor stated an issue that you mapped to one "
-            "specific official from the OFFICIALS KB (by responsibilities), "
-            "and you sent appointment_progress(stage='topic', topic=...).\n"
-            "  (2) You proposed that official by name and position, and "
-            "the visitor confirmed; you sent "
-            "appointment_progress(stage='official', official_id=...).\n"
-            "  (3) The visitor spoke a 9-digit phone number aloud in this "
-            "session, and you sent appointment_progress(stage='phone', "
-            "phone=...).\n"
-            "If any is missing, collect it first. Do not ask "
-            "«Мағлыўматлар дурыс па?» before this call — the visitor "
-            "needs to see the rendered card first."
+            "Show the visitor a draft qabul (reception) registration on the "
+            "kiosk screen for review. There is no official and no fixed date — "
+            "the Council calls the citizen back to schedule.\n\n"
+            "INVOCATION CONDITION — only call when the visitor has spoken a "
+            "9-digit phone aloud in this session. A short reason (topic) is "
+            "OPTIONAL. Do not ask «Мағлыўматлар дурыс па?» before this call — "
+            "the visitor needs to see the rendered card first."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "official_id": {
-                    "type": "string",
-                    "description": (
-                        "MUST be a UUID copied verbatim from the OFFICIALS "
-                        "KB block at the bottom of this prompt. Do not "
-                        "fabricate a UUID, do not pattern-match a "
-                        "plausible-looking one, do not pass any UUID that "
-                        "is not present in the KB block."
-                    ),
-                },
                 "topic": {
                     "type": "string",
                     "description": (
-                        "1-2 sentence summary of the visitor's issue, "
-                        "in their own words. Do not invent or paraphrase "
-                        "details the visitor did not state."
+                        "OPTIONAL 1-2 sentence reason for the reception, in "
+                        "the visitor's own words. Omit if not given."
                     ),
                 },
-                "phone": {
-                    "type": "string",
-                    "description": (
-                        "Exactly 9 digits, no spaces or separators. The "
-                        "visitor MUST have spoken this number aloud in "
-                        "the current session. Do not pass a placeholder, "
-                        "do not pass example digits like 998912345678 or "
-                        "901234567. If the visitor has not yet spoken a "
-                        "phone, do not call this tool — ask for the "
-                        "phone first."
-                    ),
-                },
+                "phone": {"type": "string", "description": _PHONE_DESC},
             },
-            "required": ["official_id", "topic", "phone"],
+            "required": ["phone"],
         },
     },
     "submit_appointment": {
         "name": "submit_appointment",
         "description": (
-            "Finalize the previously-previewed qabul (reception "
-            "appointment). Backend assigns a queue number and triggers "
-            "receipt printing.\n\n"
+            "Finalize the previously-previewed qabul registration. The Council "
+            "will call the citizen back to schedule.\n\n"
             "INVOCATION CONDITION — only call when BOTH are true:\n"
-            "  (1) preview_appointment was already called in this session "
-            "with the same official_id / topic / phone.\n"
-            "  (2) The visitor explicitly affirmed with «Ха», «Дурыс», or "
-            "an equivalent in reply to «Мағлыўматлар дурыс па?»."
+            "  (1) preview_appointment was already called in this session with "
+            "the same phone (and topic, if any).\n"
+            "  (2) The visitor explicitly affirmed («Ха», «Дурыс», ...) in "
+            "reply to «Мағлыўматлар дурыс па?»."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "official_id": {
-                    "type": "string",
-                    "description": (
-                        "Same UUID passed to preview_appointment — "
-                        "verbatim, copied from the OFFICIALS KB block."
-                    ),
-                },
-                "topic": {
-                    "type": "string",
-                    "description": (
-                        "Same value passed to preview_appointment — "
-                        "verbatim, no edits."
-                    ),
-                },
-                "phone": {
-                    "type": "string",
-                    "description": (
-                        "Same 9-digit number passed to "
-                        "preview_appointment — the one the visitor "
-                        "actually spoke aloud."
-                    ),
-                },
+                "topic": {"type": "string", "description": "Same value as preview_appointment (may be empty)."},
+                "phone": {"type": "string", "description": "Same 9-digit number as preview_appointment."},
             },
-            "required": ["official_id", "topic", "phone"],
+            "required": ["phone"],
+        },
+    },
+    "preview_feedback": {
+        "name": "preview_feedback",
+        "description": (
+            "Show the visitor a draft feedback entry (shaǵım / usınıs / "
+            "minnetdarshılıq) on the kiosk screen for review.\n\n"
+            "INVOCATION CONDITION — only call when ALL of these are true:\n"
+            "  (1) The visitor's intent maps to one feedback_type.\n"
+            "  (2) The visitor stated the feedback text in their own words.\n"
+            "  (3) The visitor spoke a 9-digit phone aloud in this session.\n"
+            "Do NOT ask «Дурыс па?» before this call — show the card first."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "feedback_type": {
+                    "type": "string",
+                    "enum": ["complaint", "suggestion", "gratitude"],
+                    "description": (
+                        "complaint = shaǵım, suggestion = usınıs, "
+                        "gratitude = minnetdarshılıq. Pick the closest match."
+                    ),
+                },
+                "text": {
+                    "type": "string",
+                    "description": (
+                        "The feedback body in Karakalpak Cyrillic, composed "
+                        "only from what the visitor stated."
+                    ),
+                },
+                "phone": {"type": "string", "description": _PHONE_DESC},
+            },
+            "required": ["feedback_type", "text", "phone"],
+        },
+    },
+    "submit_feedback": {
+        "name": "submit_feedback",
+        "description": (
+            "Submit the previously-previewed feedback entry.\n\n"
+            "INVOCATION CONDITION — only call when BOTH are true:\n"
+            "  (1) preview_feedback was already called in this session with "
+            "the same feedback_type / text / phone.\n"
+            "  (2) The visitor explicitly affirmed («Ха», «Дурыс», ...).\n"
+            "Pass the same values verbatim."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "feedback_type": {
+                    "type": "string",
+                    "enum": ["complaint", "suggestion", "gratitude"],
+                    "description": "Same value as preview_feedback.",
+                },
+                "text": {"type": "string", "description": "Same value as preview_feedback."},
+                "phone": {"type": "string", "description": "Same 9-digit number as preview_feedback."},
+            },
+            "required": ["feedback_type", "text", "phone"],
         },
     },
 }

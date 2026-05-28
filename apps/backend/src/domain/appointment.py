@@ -1,10 +1,11 @@
-"""Citizen-booked qabul (reception appointment) record.
+"""Citizen qabul (reception) registration record.
 
-The visitor states their issue — the AI picks the appropriate official from the
-KB, asks for confirmation + phone, then writes one of these. No time slots:
-each (official, scheduled_date) gets a sequential queue_number assigned at
-insert time. Receipt PDF + QR are generated on submit and embedded in the WS
-envelope so the kiosk can print + display without a second round trip.
+The visitor leaves a phone (+ optional short reason); Council staff call them
+back to schedule. No official, no fixed date, no queue number — those columns
+are nullable legacy from the Hokimiyat version (always NULL for new rows). A
+receipt PDF + QR (carrying a verification token) are still generated on submit
+so the kiosk can print + display a confirmation talon without a second round
+trip.
 """
 from __future__ import annotations
 
@@ -20,7 +21,6 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -48,13 +48,6 @@ ALL_SOURCES = (SOURCE_KIOSK, SOURCE_ONLINE)
 class Appointment(Base, TimestampMixin):
     __tablename__ = "appointments"
     __table_args__ = (
-        UniqueConstraint(
-            "official_id",
-            "scheduled_date",
-            "queue_number",
-            name="uq_appointments_official_date_queue",
-        ),
-        Index("ix_appointments_org_date", "org_id", "scheduled_date"),
         Index("ix_appointments_org_status_created", "org_id", "status", "created_at"),
     )
 
@@ -67,10 +60,13 @@ class Appointment(Base, TimestampMixin):
         nullable=False,
         index=True,
     )
-    official_id: Mapped[uuid.UUID] = mapped_column(
+    # Officials were removed for the Council (no per-official booking). Kept
+    # nullable for backward-compat with historical rows; always NULL for new
+    # qabul registrations.
+    official_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("org_kb_officials.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     session_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -82,8 +78,10 @@ class Appointment(Base, TimestampMixin):
     visitor_phone: Mapped[str] = mapped_column(String(32), nullable=False)
     topic_summary: Mapped[str] = mapped_column(Text, nullable=False)
 
-    scheduled_date: Mapped[date_type] = mapped_column(Date, nullable=False)
-    queue_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    # No fixed date/queue for the Council — the citizen registers and staff
+    # call them back. Nullable; new registrations leave these NULL.
+    scheduled_date: Mapped[date_type | None] = mapped_column(Date, nullable=True)
+    queue_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     status: Mapped[str] = mapped_column(String(32), default=STATUS_PENDING, nullable=False)
     source: Mapped[str] = mapped_column(String(16), default=SOURCE_KIOSK, nullable=False)

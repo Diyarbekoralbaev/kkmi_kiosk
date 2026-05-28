@@ -12,15 +12,14 @@ those are admin-only.
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, date as date_type, datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 
-from ...ai.appointments import build_verify_url
-from ...ai.receipt import format_date_kk, mask_phone
+from ...ai.appointments import build_verify_url, mask_phone, reference_no
 from ...core import audit
 from ...core.deps import (
     CurrentOrgAnyMember,
@@ -29,7 +28,6 @@ from ...core.deps import (
     is_reviewer,
 )
 from ...core.errors import NotFoundError, PermissionDeniedError, ValidationError
-from ...domain.ai_config import OrgKbOfficial
 from ...domain.appointment import (
     ALL_STATUSES,
     ALLOWED_TRANSITIONS,
@@ -49,15 +47,10 @@ admin-only (it's a public-facing decision)."""
 
 class AppointmentOut(BaseModel):
     id: str
-    official_id: str
-    official_name: str
-    official_position: str
     visitor_phone: str
     visitor_phone_masked: str
     topic_summary: str
-    scheduled_date: str
-    scheduled_date_human: str
-    queue_number: int
+    reference_no: str
     status: str
     source: str
     session_id: str | None
@@ -89,18 +82,13 @@ class AppointmentUpdateIn(BaseModel):
         return v
 
 
-def _to_out(a: Appointment, ofc: OrgKbOfficial | None) -> AppointmentOut:
+def _to_out(a: Appointment) -> AppointmentOut:
     return AppointmentOut(
         id=str(a.id),
-        official_id=str(a.official_id),
-        official_name=ofc.name if ofc else "",
-        official_position=ofc.position if ofc else "",
         visitor_phone=a.visitor_phone,
         visitor_phone_masked=mask_phone(a.visitor_phone),
         topic_summary=a.topic_summary,
-        scheduled_date=a.scheduled_date.isoformat(),
-        scheduled_date_human=format_date_kk(a.scheduled_date),
-        queue_number=a.queue_number,
+        reference_no=reference_no(a),
         status=a.status,
         source=a.source,
         session_id=str(a.session_id) if a.session_id else None,
@@ -113,27 +101,12 @@ def _to_out(a: Appointment, ofc: OrgKbOfficial | None) -> AppointmentOut:
     )
 
 
-async def _join_official(session, appts: list[Appointment]) -> dict[uuid.UUID, OrgKbOfficial]:
-    if not appts:
-        return {}
-    ids = list({a.official_id for a in appts})
-    rows = (
-        await session.execute(
-            select(OrgKbOfficial).where(OrgKbOfficial.id.in_(ids))
-        )
-    ).scalars().all()
-    return {r.id: r for r in rows}
-
-
 @router.get("", response_model=AppointmentListOut)
 async def list_appointments(
     session: DbSession,
     user: OrgMember,
     org: CurrentOrgAnyMember,
     status_filter: str | None = Query(default=None, alias="status"),
-    official_id: uuid.UUID | None = Query(default=None),
-    date_from: date_type | None = Query(default=None),
-    date_to: date_type | None = Query(default=None),
     search: str | None = Query(default=None, max_length=255),
     assigned_user_id: uuid.UUID | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
@@ -154,15 +127,6 @@ async def list_appointments(
     if status_filter:
         stmt = stmt.where(Appointment.status == status_filter)
         cstmt = cstmt.where(Appointment.status == status_filter)
-    if official_id:
-        stmt = stmt.where(Appointment.official_id == official_id)
-        cstmt = cstmt.where(Appointment.official_id == official_id)
-    if date_from:
-        stmt = stmt.where(Appointment.scheduled_date >= date_from)
-        cstmt = cstmt.where(Appointment.scheduled_date >= date_from)
-    if date_to:
-        stmt = stmt.where(Appointment.scheduled_date <= date_to)
-        cstmt = cstmt.where(Appointment.scheduled_date <= date_to)
     if search:
         like = f"%{search}%"
         cond = or_(
@@ -172,19 +136,11 @@ async def list_appointments(
         stmt = stmt.where(cond)
         cstmt = cstmt.where(cond)
 
-    stmt = (
-        stmt.order_by(
-            Appointment.scheduled_date.desc(),
-            Appointment.queue_number.asc(),
-        )
-        .limit(limit)
-        .offset(offset)
-    )
+    stmt = stmt.order_by(Appointment.created_at.desc()).limit(limit).offset(offset)
     rows = (await session.execute(stmt)).scalars().all()
     total = (await session.execute(cstmt)).scalar_one()
-    officials = await _join_official(session, list(rows))
     return AppointmentListOut(
-        items=[_to_out(a, officials.get(a.official_id)) for a in rows],
+        items=[_to_out(a) for a in rows],
         total=int(total),
     )
 
@@ -207,12 +163,7 @@ async def get_appointment(
         raise NotFoundError()
     if is_reviewer(user) and a.assigned_user_id != user.id:
         raise NotFoundError()
-    ofc = (
-        await session.execute(
-            select(OrgKbOfficial).where(OrgKbOfficial.id == a.official_id)
-        )
-    ).scalar_one_or_none()
-    return _to_out(a, ofc)
+    return _to_out(a)
 
 
 @router.patch("/{appt_id}", response_model=AppointmentOut)
@@ -296,9 +247,4 @@ async def update_appointment(
         after=after,
         request=request,
     )
-    ofc = (
-        await session.execute(
-            select(OrgKbOfficial).where(OrgKbOfficial.id == a.official_id)
-        )
-    ).scalar_one_or_none()
-    return _to_out(a, ofc)
+    return _to_out(a)

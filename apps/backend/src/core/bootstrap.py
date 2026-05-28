@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from ..domain.user import ROLE_SUPER_ADMIN, User
 from .config import (
@@ -13,7 +13,7 @@ from .config import (
     get_settings,
 )
 from .db import AsyncSessionLocal
-from .seed import ensure_default_nukus_org, ensure_system_ai_defaults
+from .seed import ensure_default_council_org, ensure_system_ai_defaults
 from .security import hash_password
 
 logger = structlog.get_logger(__name__)
@@ -57,8 +57,16 @@ async def run() -> None:
     _check_secrets(settings)
     async with AsyncSessionLocal() as session:
         async with session.begin():
+            # Serialize first-boot seeding across uvicorn workers. With
+            # `--workers 2` in prod, both workers run this lifespan
+            # concurrently and would both INSERT system_ai_defaults(id=1) →
+            # the loser hits a UniqueViolation and its startup crashes (then
+            # restarts idempotently). A transaction-scoped advisory lock makes
+            # the second worker wait, by which point the idempotent existence
+            # checks below short-circuit. Released automatically at commit.
+            await session.execute(text("SELECT pg_advisory_xact_lock(728193)"))
             await ensure_system_ai_defaults(session)
-            await ensure_default_nukus_org(session)
+            await ensure_default_council_org(session)
 
             existing_super = (
                 await session.execute(

@@ -106,42 +106,23 @@ public sealed record ApplicationSubmittedMessage
 
 public sealed record AppointmentProgressMessage
 {
-    /// <summary>One of: "topic", "official", "phone".</summary>
+    /// <summary>One of: "topic", "phone" (the legislative qabul flow has no
+    /// official stage — the Council calls the citizen back).</summary>
     [JsonPropertyName("stage")] public string Stage { get; init; } = "";
     [JsonPropertyName("topic")] public string? Topic { get; init; }
-    [JsonPropertyName("official_id")] public string? OfficialId { get; init; }
-    [JsonPropertyName("official_name")] public string? OfficialName { get; init; }
-    [JsonPropertyName("official_position")] public string? OfficialPosition { get; init; }
-    [JsonPropertyName("scheduled_date_human")] public string? ScheduledDateHuman { get; init; }
-    [JsonPropertyName("reception_time")] public string? ReceptionTime { get; init; }
     [JsonPropertyName("phone_masked")] public string? PhoneMasked { get; init; }
 }
 
 public sealed record AppointmentPreviewMessage
 {
-    [JsonPropertyName("official_id")] public string OfficialId { get; init; } = "";
-    [JsonPropertyName("official_name")] public string OfficialName { get; init; } = "";
-    [JsonPropertyName("official_position")] public string OfficialPosition { get; init; } = "";
-    [JsonPropertyName("scheduled_date")] public string ScheduledDate { get; init; } = "";
-    [JsonPropertyName("scheduled_date_human")] public string ScheduledDateHuman { get; init; } = "";
-    [JsonPropertyName("reception_time")] public string ReceptionTime { get; init; } = "";
-    [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
     [JsonPropertyName("topic")] public string Topic { get; init; } = "";
+    [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
 }
 
 public sealed record AppointmentSubmittedMessage
 {
     [JsonPropertyName("appointment_id")] public string AppointmentId { get; init; } = "";
-    [JsonPropertyName("queue_number")] public int QueueNumber { get; init; }
-    [JsonPropertyName("scheduled_date")] public string ScheduledDate { get; init; } = "";
-    [JsonPropertyName("scheduled_date_human")] public string ScheduledDateHuman { get; init; } = "";
-    [JsonPropertyName("reception_time")] public string ReceptionTime { get; init; } = "";
-    [JsonPropertyName("official_name")] public string OfficialName { get; init; } = "";
-    [JsonPropertyName("official_position")] public string OfficialPosition { get; init; } = "";
-    /// <summary>"chief" or "deputy". Drives which subtitle (Shaxsiy / O'rinbosar)
-    /// the on-screen success talon renders — must match the printed receipt.
-    /// Empty in older backend builds; SessionStore tolerates the absence.</summary>
-    [JsonPropertyName("official_role")] public string OfficialRole { get; init; } = "";
+    [JsonPropertyName("reference_no")] public string ReferenceNo { get; init; } = "";
     [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
     [JsonPropertyName("topic")] public string Topic { get; init; } = "";
     [JsonPropertyName("verification_url")] public string VerificationUrl { get; init; } = "";
@@ -151,6 +132,22 @@ public sealed record AppointmentSubmittedMessage
     /// right language without waiting for the next heartbeat.</summary>
     [JsonPropertyName("org_name_translations")]
     public Dictionary<string, string> OrgNameTranslations { get; init; } = new();
+}
+
+public sealed record FeedbackPreviewMessage
+{
+    /// <summary>One of: "complaint", "suggestion", "gratitude".</summary>
+    [JsonPropertyName("feedback_type")] public string FeedbackType { get; init; } = "";
+    [JsonPropertyName("text")] public string Text { get; init; } = "";
+    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
+}
+
+public sealed record FeedbackSubmittedMessage
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("feedback_type")] public string FeedbackType { get; init; } = "";
+    [JsonPropertyName("text")] public string Text { get; init; } = "";
+    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
 }
 
 public sealed record ServerErrorMessage
