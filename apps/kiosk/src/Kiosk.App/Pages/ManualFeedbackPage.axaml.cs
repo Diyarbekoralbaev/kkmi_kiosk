@@ -42,14 +42,23 @@ public partial class ManualFeedbackPage : UserControl
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         var s = SessionStore.Current;
-        // Fresh start every entry — wipe whatever the voice flow may have
-        // populated and reset to step 1 (type).
-        s.FeedbackType = "";
-        s.FeedbackText = "";
-        s.FeedbackPhone = "";
-        s.FeedbackSubmittedId = "";
-        s.ShowFeedbackSuccess = false;
-        s.ManualFeedbackStep = ManualFeedbackStep.Type;
+        // The voice agent drives us here with a ready preview: preview_feedback
+        // → OnFeedbackPreview sets step=Preview + the fields, THEN navigates.
+        // In that case keep the state so the preview card renders. A fresh
+        // touch entry (Home → Fikr tile) arrives at step Idle/Done → reset to
+        // the type picker. Wiping unconditionally was the bug that made the
+        // agent ask «Дурыс па?» over an empty type-picker screen.
+        bool voiceDriven = s.ManualFeedbackStep == ManualFeedbackStep.Preview
+                           && !string.IsNullOrWhiteSpace(s.FeedbackText);
+        if (!voiceDriven)
+        {
+            s.FeedbackType = "";
+            s.FeedbackText = "";
+            s.FeedbackPhone = "";
+            s.FeedbackSubmittedId = "";
+            s.ShowFeedbackSuccess = false;
+            s.ManualFeedbackStep = ManualFeedbackStep.Type;
+        }
         PhoneBox.Text = EmptyPhoneFormat;
 
         if (!_keyboardsWired)

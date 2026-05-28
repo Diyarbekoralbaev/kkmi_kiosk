@@ -441,12 +441,16 @@ public partial class SessionStore : ObservableObject
             case "topic":
                 if (!string.IsNullOrEmpty(p.Topic)) AppointmentTopic = p.Topic;
                 if (AppointmentStep < AppointmentStep.Topic) AppointmentStep = AppointmentStep.Topic;
-                Navigate(KioskPage.Qabul);
+                // No navigation here: the robot stays on screen while the
+                // agent collects by voice. We only switch to the Qabul page
+                // when the agent calls preview_appointment
+                // (OnAppointmentPreview) — same as the murajaat flow. Yanking
+                // the screen to a half-built manual form mid-conversation was
+                // why the experience felt non-interactive.
                 break;
             case "phone":
                 if (!string.IsNullOrEmpty(p.PhoneMasked)) AppointmentPhoneMasked = p.PhoneMasked;
                 if (AppointmentStep < AppointmentStep.Phone) AppointmentStep = AppointmentStep.Phone;
-                Navigate(KioskPage.Qabul);
                 break;
         }
     }

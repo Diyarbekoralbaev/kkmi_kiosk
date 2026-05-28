@@ -62,7 +62,13 @@ public partial class QabulPage : UserControl
             LocalizationService.LanguageChanged += OnLanguageChanged;
             RefreshTalonLabels();
 
-            if (!SessionStore.Current.ShowAppointmentSuccess)
+            // Only reset for a fresh touch entry — Home → Qabul tile leaves
+            // AppointmentStep at Idle. A voice-driven preview navigation
+            // arrives at step Preview (OnAppointmentPreview set it before
+            // navigating); wiping it would drop the agent's preview card onto
+            // an empty form, which is what broke voice interactivity.
+            if (!SessionStore.Current.ShowAppointmentSuccess
+                && SessionStore.Current.AppointmentStep == AppointmentStep.Idle)
                 WipeAppointmentState();
 
             _phonePreviewShown = false;
