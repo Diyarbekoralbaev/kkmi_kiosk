@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from ..ai.applications import create_application, create_feedback
 from ..ai.appointments import mask_phone, normalize_phone
-from ..core import audit
+from ..core import audit, telegram
 from ..core.deps import DbSession
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
 from ..core.errors import NotFoundError, ValidationError
@@ -89,6 +89,9 @@ async def create_kiosk_application(
         },
     )
 
+    # Telegram broadcast (no-op if the bot isn't configured).
+    telegram.post_murajaat_async(app, org)
+
     return CreateApplicationOut(
         application_id=str(app.id),
         topic=app.topic,
@@ -149,6 +152,8 @@ async def create_kiosk_feedback(
             "source": "kiosk_manual",
         },
     )
+
+    telegram.post_feedback_async(fb, ftype, org)
 
     return CreateFeedbackOut(
         feedback_id=str(fb.id),

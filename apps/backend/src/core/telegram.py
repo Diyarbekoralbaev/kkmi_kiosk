@@ -24,7 +24,6 @@ from typing import Any
 import httpx
 import structlog
 
-from ..domain.ai_config import OrgKbOfficial
 from ..domain.appointment import Appointment
 from ..domain.application import Application
 from ..domain.organization import Organization
@@ -118,19 +117,28 @@ def _now_str() -> str:
     return now_local().strftime("%d-%m-%Y %H:%M")
 
 
-def _format_murajaat(
-    app: Application,
-    category_slug: str,
-    org: Organization,
-) -> str:
-    """Plain-text post body. Slug is passed in as a string so this
-    module doesn't need a DB session to load ApplicationCategory — the
-    caller already has the slug from the request payload."""
+# Karakalpak Cyrillic labels for the feedback type (kind=feedback).
+_FEEDBACK_LABELS = {
+    "complaint": "Шағым",
+    "suggestion": "Усыныс",
+    "gratitude": "Миннетдаршылық",
+}
+
+
+def _ref_no(item_id: uuid.UUID) -> str:
+    """Short human reference shown on the talon + Telegram post, e.g.
+    Q-1A2B3C4D. Matches ai.appointments.reference_no (kept inline here to
+    avoid a core→ai import cycle)."""
+    return f"Q-{item_id.hex[:8].upper()}"
+
+
+def _format_murajaat(app: Application, org: Organization) -> str:
+    """Plain-text post body for a citizen appeal (murajaat). No category —
+    the Council intake is a single free-text appeal."""
     lines = [
         "📋 ЖАҢА МҮРӘЖАТ",
         "",
         f"Тема: {app.topic}",
-        f"Категория: {category_slug or 'other'}",
         "",
         "Мазмуны:",
         app.body,
@@ -143,27 +151,37 @@ def _format_murajaat(
     return "\n".join(lines)
 
 
-def _format_qabul(
-    appt: Appointment,
-    official: OrgKbOfficial,
-    org: Organization,
-    scheduled_date_human: str,
-) -> str:
-    role_label = "Ҳәким" if (official.role or "") == "chief" else "Орынбасар"
+def _format_qabul(appt: Appointment, org: Organization) -> str:
+    """Reception (qabul) registration. No official, no date, no queue — the
+    Council calls the citizen back."""
     lines = [
         "📅 ЖАҢА ҚАБЫЛ",
         "",
-        f"{role_label}: {official.position}",
-        f"            {official.name}",
-        "",
-        f"Тема: {appt.topic_summary or '—'}",
-        f"Сана: {scheduled_date_human}",
-        f"Ўақыты: {official.reception_time or '—'}",
-        f"Гезек: №{appt.queue_number:03d}",
+        f"Нөмер: {_ref_no(appt.id)}",
+        f"Мәселе: {appt.topic_summary or '—'}",
         "",
         f"📞 Телефон: {appt.visitor_phone}",
         f"🕐 Жазылды: {_now_str()}",
-        f"🆔 #{_short_id(appt.id)}",
+        f"🏢 {org.name}",
+        "",
+        "Кеңес пуқараға өзи қоңыраў етеди.",
+    ]
+    return "\n".join(lines)
+
+
+def _format_feedback(app: Application, feedback_type: str, org: Organization) -> str:
+    """Feedback entry — shaǵım / usınıs / minnetdarshılıq."""
+    lines = [
+        "💬 ЖАҢА ПИКИР",
+        "",
+        f"Түри: {_FEEDBACK_LABELS.get(feedback_type, feedback_type)}",
+        "",
+        "Мазмуны:",
+        app.body,
+        "",
+        f"📞 Телефон: {app.phone}",
+        f"🕐 {_now_str()}",
+        f"🆔 #{_short_id(app.id)}",
         f"🏢 {org.name}",
     ]
     return "\n".join(lines)
@@ -172,36 +190,36 @@ def _format_qabul(
 # ── Public fire-and-forget API ──────────────────────────────────────────
 
 
-def post_murajaat_async(
-    app: Application,
-    category_slug: str,
-    org: Organization,
-) -> None:
-    """Schedule a Telegram post for a freshly-created Application. The
-    caller is expected to call this AFTER the DB transaction commits —
-    posting a row that later rolls back would leave the channel out of
-    sync. Returns immediately (does NOT await the HTTP call)."""
+def post_murajaat_async(app: Application, org: Organization) -> None:
+    """Schedule a Telegram post for a freshly-created appeal. Call AFTER the
+    DB transaction commits (a rolled-back row would desync the channel).
+    Returns immediately — does NOT await the HTTP call."""
     if not _is_configured():
         return
     s = get_settings()
     if not s.telegram_murajat_channel_id:
         return
-    text = _format_murajaat(app, category_slug, org)
-    asyncio.create_task(_send(s.telegram_murajat_channel_id, text))
+    asyncio.create_task(_send(s.telegram_murajat_channel_id, _format_murajaat(app, org)))
 
 
-def post_qabul_async(
-    appt: Appointment,
-    official: OrgKbOfficial,
-    org: Organization,
-    scheduled_date_human: str,
-) -> None:
-    """Schedule a Telegram post for a freshly-created Appointment.
+def post_qabul_async(appt: Appointment, org: Organization) -> None:
+    """Schedule a Telegram post for a freshly-created qabul registration.
     See post_murajaat_async for the post-commit ordering note."""
     if not _is_configured():
         return
     s = get_settings()
     if not s.telegram_qabul_channel_id:
         return
-    text = _format_qabul(appt, official, org, scheduled_date_human)
-    asyncio.create_task(_send(s.telegram_qabul_channel_id, text))
+    asyncio.create_task(_send(s.telegram_qabul_channel_id, _format_qabul(appt, org)))
+
+
+def post_feedback_async(app: Application, feedback_type: str, org: Organization) -> None:
+    """Schedule a Telegram post for a freshly-created feedback entry. Falls
+    back to the murajaat channel if no dedicated feedback channel is set."""
+    if not _is_configured():
+        return
+    s = get_settings()
+    chan = s.telegram_feedback_channel_id or s.telegram_murajat_channel_id
+    if not chan:
+        return
+    asyncio.create_task(_send(chan, _format_feedback(app, feedback_type, org)))

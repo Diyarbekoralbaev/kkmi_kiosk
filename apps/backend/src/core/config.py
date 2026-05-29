@@ -91,6 +91,9 @@ class Settings(BaseSettings):
     telegram_bot_token: SecretStr = Field(default=SecretStr(""))
     telegram_murajat_channel_id: str = Field(default="")
     telegram_qabul_channel_id: str = Field(default="")
+    # Feedback (shaǵım/usınıs/minnetdarshılıq) channel. Empty → feedback posts
+    # fall back to the murajaat channel.
+    telegram_feedback_channel_id: str = Field(default="")
     # Optional Cloudflare Worker relay — api.telegram.org is blocked
     # from the Moscow prod IP, so prod overrides this to a workers.dev
     # URL that forwards verbatim to api.telegram.org. Leave default to

@@ -20,7 +20,7 @@ from ..ai.appointments import (
     reference_no,
 )
 from ..ai.receipt import render_qr_png
-from ..core import audit
+from ..core import audit, telegram
 from ..core.deps import DbSession
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
 from ..core.errors import NotFoundError
@@ -80,6 +80,8 @@ async def create_kiosk_appointment(
             "source": "kiosk_manual",
         },
     )
+    # Telegram broadcast (no-op if the bot isn't configured).
+    telegram.post_qabul_async(appt, org)
     # Render QR after the transaction (caller's DbSession commits on return).
     try:
         qr_bytes = render_qr_png(created.verify_url)

@@ -45,7 +45,7 @@ from ..ai.gemini_live import (
     Transcript,
 )
 from ..ai.prompt_builder import load_agent_config
-from ..core import audit
+from ..core import audit, telegram
 from ..core.connection_registry import registry
 from ..core.db import AsyncSessionLocal
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
@@ -129,6 +129,27 @@ async def kiosk_voice(ws: WebSocket) -> None:
     }
     # Last previewed feedback (type/text/phone) — mirrors last_preview.
     last_feedback: dict[str, str] = {}
+    # Cross-flow "what the visitor actually gave". Gemini does NOT reliably
+    # re-pass an already-collected value into a later preview_*/submit_* tool
+    # call — it gave the phone two turns ago and omits it now — which left the
+    # on-screen preview card (and the saved row) with a blank phone. These
+    # helpers remember the last non-empty value and fall back to it, so the
+    # preview + the DB row always carry what the visitor said. `_topic_q` does
+    # the same for the qabul reason via appt_state.
+    coll: dict[str, str] = {"phone": ""}
+
+    def _phone(arg: object) -> str:
+        p = str(arg or "").strip()
+        if p:
+            coll["phone"] = p
+        return coll["phone"]
+
+    def _topic_q(arg: object) -> str:
+        p = str(arg or "").strip()
+        if p:
+            appt_state["topic"] = p
+        return str(appt_state.get("topic") or "")
+
     audio_state = AudioPipelineState()
 
     # Track the kiosk's current UI language for receipt rendering. Defaults
@@ -221,10 +242,11 @@ async def kiosk_voice(ws: WebSocket) -> None:
                 ev.call_id, ev.name, {"status": "ok", "screen": screen}
             )
         elif ev.name == "preview_application":
-            topic = str(ev.args.get("topic", "")).strip()
-            body = str(ev.args.get("body", "")).strip()
-            phone = str(ev.args.get("phone", "")).strip()
+            topic = str(ev.args.get("topic", "")).strip() or last_preview.get("topic", "")
+            body = str(ev.args.get("body", "")).strip() or last_preview.get("body", "")
+            phone = _phone(ev.args.get("phone")) or last_preview.get("phone", "")
             last_preview.update({"topic": topic, "body": body, "phone": phone})
+            logger.info("preview_application", phone_len=len(phone), topic_len=len(topic))
             with contextlib_suppress():
                 await ws.send_json(
                     {
@@ -252,9 +274,9 @@ async def kiosk_voice(ws: WebSocket) -> None:
                 },
             )
         elif ev.name == "submit_application":
-            topic = str(ev.args.get("topic", "")).strip()
-            body = str(ev.args.get("body", "")).strip()
-            phone = str(ev.args.get("phone", "")).strip()
+            topic = str(ev.args.get("topic", "")).strip() or last_preview.get("topic", "")
+            body = str(ev.args.get("body", "")).strip() or last_preview.get("body", "")
+            phone = _phone(ev.args.get("phone")) or last_preview.get("phone", "")
             new_id: uuid.UUID | None = None
             try:
                 async with AsyncSessionLocal() as s:
@@ -297,10 +319,17 @@ async def kiosk_voice(ws: WebSocket) -> None:
                             "phone": phone,
                         }
                     )
+                # Fan out to the Telegram murajaat channel (no-op if the bot
+                # isn't configured). Fire-and-forget; `app` is detached after
+                # commit but its loaded attrs are readable, and _org_row was
+                # loaded at WS open.
+                if _org_row is not None:
+                    telegram.post_murajaat_async(app, _org_row)
                 # Successful submission completes the murajat flow —
-                # clear last_preview so a fresh request in the same
-                # session starts from a clean slate.
+                # clear last_preview + the collected phone so a fresh request
+                # in the same session starts from a clean slate.
                 last_preview.clear()
+                coll["phone"] = ""
                 await gemini.send_tool_response(
                     ev.call_id, ev.name,
                     {
@@ -362,15 +391,12 @@ async def kiosk_voice(ws: WebSocket) -> None:
 
         envelope: dict[str, object] = {"type": "appointment_progress", "stage": stage}
         if stage == "topic":
-            topic_val = str(ev.args.get("topic", "")).strip()
-            envelope["topic"] = topic_val
-            if topic_val:
-                appt_state["topic"] = topic_val
+            envelope["topic"] = _topic_q(ev.args.get("topic"))
         elif stage == "phone":
-            phone_raw = str(ev.args.get("phone", "")).strip()
-            envelope["phone_masked"] = mask_phone(phone_raw)
-            if phone_raw:
-                appt_state["phone"] = phone_raw
+            phone = _phone(ev.args.get("phone"))
+            if phone:
+                appt_state["phone"] = phone
+            envelope["phone_masked"] = mask_phone(phone)
 
         with contextlib_suppress():
             await ws.send_json(envelope)
@@ -380,12 +406,13 @@ async def kiosk_voice(ws: WebSocket) -> None:
         )
 
     async def _dispatch_preview_appointment(ev: ToolCallEvent) -> None:
-        topic = str(ev.args.get("topic", "")).strip()
-        phone = str(ev.args.get("phone", "")).strip()
-        if topic:
-            appt_state["topic"] = topic
+        # Resolve from session state — Gemini often omits the phone/topic it
+        # collected earlier, which left the preview card blank.
+        topic = _topic_q(ev.args.get("topic"))
+        phone = _phone(ev.args.get("phone"))
         if phone:
             appt_state["phone"] = phone
+        logger.info("preview_appointment", phone_len=len(phone), topic_len=len(topic))
         with contextlib_suppress():
             await ws.send_json(
                 {
@@ -410,8 +437,8 @@ async def kiosk_voice(ws: WebSocket) -> None:
         )
 
     async def _dispatch_submit_appointment(ev: ToolCallEvent) -> None:
-        topic = str(ev.args.get("topic", "")).strip()
-        phone = str(ev.args.get("phone", "")).strip()
+        topic = _topic_q(ev.args.get("topic"))
+        phone = _phone(ev.args.get("phone"))
         if not phone:
             await gemini.send_tool_response(
                 ev.call_id, ev.name,
@@ -484,9 +511,13 @@ async def kiosk_voice(ws: WebSocket) -> None:
                     ),
                 }
             )
+        # Fan out to the Telegram qabul channel (no-op if the bot isn't
+        # configured). Uses reference_no — no official/date for the Council.
+        telegram.post_qabul_async(appt, created.org)
         # Reset qabul state so the same session can start a fresh registration.
         appt_state["topic"] = None
         appt_state["phone"] = None
+        coll["phone"] = ""
         await gemini.send_tool_response(
             ev.call_id, ev.name,
             {
@@ -501,10 +532,11 @@ async def kiosk_voice(ws: WebSocket) -> None:
         )
 
     async def _dispatch_preview_feedback(ev: ToolCallEvent) -> None:
-        ftype = str(ev.args.get("feedback_type", "")).strip()
-        text = str(ev.args.get("text", "")).strip()
-        phone = str(ev.args.get("phone", "")).strip()
+        ftype = str(ev.args.get("feedback_type", "")).strip() or last_feedback.get("feedback_type", "")
+        text = str(ev.args.get("text", "")).strip() or last_feedback.get("text", "")
+        phone = _phone(ev.args.get("phone")) or last_feedback.get("phone", "")
         last_feedback.update({"feedback_type": ftype, "text": text, "phone": phone})
+        logger.info("preview_feedback", phone_len=len(phone), text_len=len(text), ftype=ftype)
         with contextlib_suppress():
             await ws.send_json(
                 {
@@ -527,9 +559,9 @@ async def kiosk_voice(ws: WebSocket) -> None:
         )
 
     async def _dispatch_submit_feedback(ev: ToolCallEvent) -> None:
-        ftype = str(ev.args.get("feedback_type", "")).strip()
-        text = str(ev.args.get("text", "")).strip()
-        phone = str(ev.args.get("phone", "")).strip()
+        ftype = str(ev.args.get("feedback_type", "")).strip() or last_feedback.get("feedback_type", "")
+        text = str(ev.args.get("text", "")).strip() or last_feedback.get("text", "")
+        phone = _phone(ev.args.get("phone")) or last_feedback.get("phone", "")
         if ftype not in ("complaint", "suggestion", "gratitude") or not text:
             await gemini.send_tool_response(
                 ev.call_id, ev.name, {"status": "error", "code": "missing_fields"}
@@ -575,7 +607,11 @@ async def kiosk_voice(ws: WebSocket) -> None:
                         "phone": phone,
                     }
                 )
+            # Fan out to the Telegram feedback channel (no-op if unconfigured).
+            if _org_row is not None:
+                telegram.post_feedback_async(fb, ftype, _org_row)
             last_feedback.clear()
+            coll["phone"] = ""
             await gemini.send_tool_response(
                 ev.call_id, ev.name,
                 {
