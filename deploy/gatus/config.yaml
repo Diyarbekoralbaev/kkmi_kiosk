@@ -1,5 +1,5 @@
 # Gatus — status page + alerting for the kiosk platform.
-# Runs as a container (127.0.0.1:8005), fronted by nginx at status.kioska.dbc.uz.
+# Runs as a container (127.0.0.1:8005), fronted by nginx at status.gov.diyarbek.uz.
 #
 # PHASE 1 (this file): Tier 1 external checks only — hit the public HTTPS
 # endpoints from outside. These catch total outages (nginx down, server down,
@@ -36,7 +36,7 @@ alerting:
 endpoints:
   - name: "Backend API"
     group: "Core"
-    url: "https://kenes-api.kioska.dbc.uz/health"
+    url: "https://kenes-api.gov.diyarbek.uz/health"
     interval: 60s
     conditions:
       - "[STATUS] == 200"
@@ -45,7 +45,7 @@ endpoints:
 
   - name: "Gov panel"
     group: "Core"
-    url: "https://kenes-gov.kioska.dbc.uz"
+    url: "https://kenes-gov.gov.diyarbek.uz"
     interval: 60s
     conditions:
       - "[STATUS] == 200"
@@ -54,7 +54,7 @@ endpoints:
 
   - name: "Super panel"
     group: "Core"
-    url: "https://kenes-super.kioska.dbc.uz"
+    url: "https://kenes-super.gov.diyarbek.uz"
     interval: 120s
     conditions:
       - "[STATUS] == 200"

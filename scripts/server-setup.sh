@@ -8,7 +8,7 @@
 # Idempotent — safe to re-run after cert renewal or vhost edits.
 #
 # Prereqs: nginx, certbot, openssl already installed; DNS for the 4 kenes-*
-# subdomains already resolves to this host (wildcard *.kioska.dbc.uz does).
+# subdomains already resolves to this host (wildcard *.gov.diyarbek.uz does).
 #
 # Usage: sudo bash /root/joqari_kenes/scripts/server-setup.sh
 set -euo pipefail
@@ -17,10 +17,10 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CERT_NAME=joqari-kenes
 EMAIL=admin@diyarbek.uz
 DOMAINS=(
-  kenes-api.kioska.dbc.uz
-  kenes-super.kioska.dbc.uz
-  kenes-gov.kioska.dbc.uz
-  kenes-status.kioska.dbc.uz
+  kenes-api.gov.diyarbek.uz
+  kenes-super.gov.diyarbek.uz
+  kenes-gov.gov.diyarbek.uz
+  kenes-status.gov.diyarbek.uz
 )
 ACME_VHOST=/etc/nginx/sites-available/_kenes-acme.conf
 
