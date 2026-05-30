@@ -75,7 +75,7 @@
 
     <!-- Success talon (no official, no date, no queue). -->
     <x:String x:Key="QabulTalonSubtitle">Qabulga yozilish taloni</x:String>
-    <x:String x:Key="QabulTalonCallback">Kengash siz bilan bog'lanadi.</x:String>
+    <x:String x:Key="QabulTalonCallback">Joqarg'i Kengash murojaatlar bo'limi siz bilan bog'lanadi.</x:String>
     <x:String x:Key="QabulTalonScanHint">QR ni telefonda skanerlang.</x:String>
     <!-- On-screen talon labels. Trailing space is intentional — bold
          "Label: " runs followed by a value run. -->

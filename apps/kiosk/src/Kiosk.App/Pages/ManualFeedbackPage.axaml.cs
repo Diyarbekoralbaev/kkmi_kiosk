@@ -90,7 +90,10 @@ public partial class ManualFeedbackPage : UserControl
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(SessionStore.ManualFeedbackStep)
-            || e.PropertyName == nameof(SessionStore.ShowFeedbackSuccess))
+            || e.PropertyName == nameof(SessionStore.ShowFeedbackSuccess)
+            || e.PropertyName == nameof(SessionStore.FeedbackType)
+            || e.PropertyName == nameof(SessionStore.FeedbackText)
+            || e.PropertyName == nameof(SessionStore.FeedbackPhone))
         {
             Dispatcher.UIThread.Post(UpdateVisibility);
         }

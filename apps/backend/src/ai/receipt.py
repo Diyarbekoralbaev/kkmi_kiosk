@@ -122,7 +122,7 @@ RECEIPT_STRINGS: dict[str, dict[str, str]] = {
         "ref_label": "Raqam:",
         "masala_label": "Masalasi:",
         "telefon_label": "Telefon:",
-        "footer": "Kengash xodimlari siz bilan bog'lanadi.",
+        "footer": "Joqarg'i Kengash murojaatlar bo'limi siz bilan bog'lanadi.",
         "org_fallback": "KENGASH",
     },
     "kk": {
@@ -130,7 +130,7 @@ RECEIPT_STRINGS: dict[str, dict[str, str]] = {
         "ref_label": "Нөмери:",
         "masala_label": "Мәселеси:",
         "telefon_label": "Телефон:",
-        "footer": "Кеңес хызметкерлери сиз бенен байланысады.",
+        "footer": "Жоқарғы Кеңес мүрәжат бөлими сиз бенен байланысады.",
         "org_fallback": "КЕҢЕС",
     },
     "ru": {
@@ -138,7 +138,7 @@ RECEIPT_STRINGS: dict[str, dict[str, str]] = {
         "ref_label": "Номер:",
         "masala_label": "Вопрос:",
         "telefon_label": "Телефон:",
-        "footer": "Сотрудники Кенгаша свяжутся с вами.",
+        "footer": "Отдел обращений Жокаргы Кенеса свяжется с вами.",
         "org_fallback": "КЕНГАШ",
     },
 }

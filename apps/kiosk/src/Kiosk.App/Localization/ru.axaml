@@ -70,7 +70,7 @@
 
     <!-- Success talon (no official, no date, no queue). -->
     <x:String x:Key="QabulTalonSubtitle">Талон записи на приём</x:String>
-    <x:String x:Key="QabulTalonCallback">Кенгаш свяжется с вами.</x:String>
+    <x:String x:Key="QabulTalonCallback">Отдел обращений Жокаргы Кенеса свяжется с вами.</x:String>
     <x:String x:Key="QabulTalonScanHint">Отсканируйте QR на телефоне.</x:String>
     <!-- On-screen talon labels. Trailing space is intentional — bold
          "Label: " runs followed by a value run. -->

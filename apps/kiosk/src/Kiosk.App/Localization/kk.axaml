@@ -72,7 +72,7 @@
 
     <!-- Success talon (no official, no date, no queue). -->
     <x:String x:Key="QabulTalonSubtitle">Қабылға жазылыў талоны</x:String>
-    <x:String x:Key="QabulTalonCallback">Кеңес сиз бенен байланысады.</x:String>
+    <x:String x:Key="QabulTalonCallback">Жоқарғы Кеңес мүрәжат бөлими сиз бенен байланысады.</x:String>
     <x:String x:Key="QabulTalonScanHint">QR-кодты телефонда сканерлең.</x:String>
     <!-- On-screen talon labels. Trailing space is intentional — bold
          "Label: " runs followed by a value run. -->

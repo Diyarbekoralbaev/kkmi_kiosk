@@ -115,12 +115,16 @@ public partial class QabulPage : UserControl
 
     private void OnSessionChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // AppointmentTopic is intentionally NOT in this list — the TopicBox
-        // two-way-binds to it, so reacting on every keystroke would flip the
-        // section away from the topic step on the first character typed.
+        // AppointmentTopic two-way-binds to the TopicBox, so we must NOT react
+        // to it during touch topic entry (it would flip the section on the
+        // first keystroke). But in the VOICE preview state (AppointmentStep ==
+        // Preview) the TopicBox isn't in use, and a 2nd preview_appointment can
+        // carry a new topic — so refresh the voice preview in that case only.
         if (e.PropertyName == nameof(SessionStore.ShowAppointmentSuccess)
             || e.PropertyName == nameof(SessionStore.AppointmentStep)
-            || e.PropertyName == nameof(SessionStore.AppointmentPhoneMasked))
+            || e.PropertyName == nameof(SessionStore.AppointmentPhoneMasked)
+            || (e.PropertyName == nameof(SessionStore.AppointmentTopic)
+                && SessionStore.Current.AppointmentStep == AppointmentStep.Preview))
         {
             Dispatcher.UIThread.Post(UpdateVisibility);
             if (e.PropertyName == nameof(SessionStore.ShowAppointmentSuccess)

@@ -93,7 +93,10 @@ public partial class ManualSubmitPage : UserControl
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(SessionStore.ManualSubmitStep)
-            || e.PropertyName == nameof(SessionStore.ShowSubmitSuccess))
+            || e.PropertyName == nameof(SessionStore.ShowSubmitSuccess)
+            || e.PropertyName == nameof(SessionStore.SubmitTopic)
+            || e.PropertyName == nameof(SessionStore.SubmitBody)
+            || e.PropertyName == nameof(SessionStore.SubmitPhone))
         {
             Dispatcher.UIThread.Post(UpdateVisibility);
         }
