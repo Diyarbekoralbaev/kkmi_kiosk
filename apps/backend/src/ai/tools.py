@@ -107,8 +107,8 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
             "Lightweight stage marker for the qabul (reception) registration "
             "flow. Call after EACH user reply during qabul to advance the "
             "kiosk stepper. Pass only the field captured by THIS reply.\n"
-            "  - stage='topic' + topic: visitor stated the reason (OPTIONAL — "
-            "qabul can be booked without a reason)\n"
+            "  - stage='topic' + topic: the reason the visitor states for the "
+            "reception (always ask for it)\n"
             "  - stage='phone' + phone: visitor said their phone number\n"
             "Do NOT use this for the final confirmation — that's "
             "preview_appointment."
@@ -129,10 +129,10 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
             "Show the visitor a draft qabul (reception) registration on the "
             "kiosk screen for review. There is no official and no fixed date — "
             "the Council calls the citizen back to schedule.\n\n"
-            "INVOCATION CONDITION — only call when the visitor has spoken a "
-            "9-digit phone aloud in this session. A short reason (topic) is "
-            "OPTIONAL. Do not ask «Мағлыўматлар дурыс па?» before this call — "
-            "the visitor needs to see the rendered card first."
+            "INVOCATION CONDITION — only call after the visitor has BOTH "
+            "stated the reason (topic) and spoken a 9-digit phone aloud in "
+            "this session. Do not ask «Мағлыўматлар дурыс па?» before this "
+            "call — the visitor needs to see the rendered card first."
         ),
         "parameters": {
             "type": "object",
@@ -140,8 +140,8 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
                 "topic": {
                     "type": "string",
                     "description": (
-                        "OPTIONAL 1-2 sentence reason for the reception, in "
-                        "the visitor's own words. Omit if not given."
+                        "The reason for the reception (1-2 sentences) in the "
+                        "visitor's own words."
                     ),
                 },
                 "phone": {"type": "string", "description": _PHONE_DESC},
