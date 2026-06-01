@@ -65,6 +65,8 @@ class Program
                 return RunI18nTest();
             if (args.Length >= 1 && args[0] == "--mic-diag")
                 return RunMicDiag();
+            if (args.Length >= 1 && args[0] == "--face-test")
+                return RunFaceTest(args);
 
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
             return 0;
@@ -249,6 +251,66 @@ class Program
     /// Usage on Windows:
     ///   cd "%LOCALAPPDATA%\Kiosk\current"
     ///   Kiosk.App.exe --mic-diag</summary>
+    /// <summary>PoC gate for local face recognition. Proves OnnxRuntime +
+    /// ImageSharp + FaceAiSharp load and run under Native AOT on the real kiosk
+    /// hardware (the one unknown) BEFORE wiring the camera + greeting. No camera:
+    /// reads an image file. Run on the kiosk:
+    ///   cd "%LOCALAPPDATA%\Kiosk\current"
+    ///   Kiosk.App.exe --face-test test.jpg</summary>
+    private static int RunFaceTest(string[] args)
+    {
+        if (args.Length < 2)
+        {
+            Console.Error.WriteLine("usage: --face-test <image.jpg>");
+            return 2;
+        }
+        var lines = new System.Collections.Generic.List<string>();
+        void Log(string s) { Console.WriteLine(s); lines.Add(s); }
+
+        Log($"=== face-test {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===");
+        Log($"OS: {Environment.OSVersion}");
+        Log($"image: {args[1]}");
+        try
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var det = FaceAiSharp.FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
+            var rec = FaceAiSharp.FaceAiSharpBundleFactory.CreateFaceEmbeddingsGenerator();
+            Log($"models loaded in {sw.ElapsedMilliseconds} ms");
+
+            using var img = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgb24>(args[1]);
+            Log($"image: {img.Width}x{img.Height}");
+
+            sw.Restart();
+            var faces = det.DetectFaces(img);
+            var n = System.Linq.Enumerable.Count(faces);
+            Log($"detect: {n} face(s) in {sw.ElapsedMilliseconds} ms");
+
+            sw.Restart();
+            var emb = rec.GenerateEmbedding(img);
+            Log($"embedding: dim={emb.Length} in {sw.ElapsedMilliseconds} ms");
+
+            Log("RESULT: OK — Native AOT + OnnxRuntime + ImageSharp + FaceAiSharp run on this machine.");
+        }
+        catch (Exception ex)
+        {
+            Log($"RESULT: FAIL — {ex.GetType().Name}: {ex.Message}");
+            for (var e = ex.InnerException; e != null; e = e.InnerException)
+                Log($"  inner: {e.GetType().Name}: {e.Message}");
+            Log(ex.StackTrace ?? "");
+        }
+
+        try
+        {
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetDirectoryName(Kiosk.App.Settings.KioskSettings.SettingsPath) ?? ".",
+                "face-test.log");
+            System.IO.File.WriteAllText(path, string.Join("\n", lines) + "\n");
+            Console.WriteLine($"\nfull report: {path}");
+        }
+        catch { /* ignore */ }
+        return 0;
+    }
+
     private static int RunMicDiag()
     {
         var lines = new System.Collections.Generic.List<string>();

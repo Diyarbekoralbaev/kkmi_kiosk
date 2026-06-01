@@ -23,6 +23,11 @@
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.7" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
+    <!-- Local on-device face recognition (SCRFD detect + ArcFace embed via ONNX).
+         FaceAiSharp.Bundle ships the models + managed code + ImageSharp;
+         Microsoft.ML.OnnxRuntime brings the win-x64 native runtime. -->
+    <PackageReference Include="FaceAiSharp.Bundle" Version="0.6.35" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.26.0" />
   </ItemGroup>
 
   <ItemGroup>
