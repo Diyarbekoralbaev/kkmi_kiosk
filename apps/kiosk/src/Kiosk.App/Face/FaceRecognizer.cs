@@ -142,48 +142,111 @@ public static class FaceRecognizer
         }
     }
 
-    /// <summary>Open the default camera, grab frames for up to <paramref name="seconds"/>,
+    /// <summary>Open a working camera. Windows' OpenCV default (MSMF) is flaky on
+    /// many UVC/laptop cameras — it "opens" but delivers no frames. So we try
+    /// DSHOW first, then MSMF, then ANY, across indices 0-2, and accept the first
+    /// combo that actually yields a non-empty frame. Returns null if none do.</summary>
+    private static VideoCapture? OpenCamera(Action<string>? log)
+    {
+        var backends = new (VideoCaptureAPIs Api, string Name)[]
+        {
+            (VideoCaptureAPIs.DSHOW, "DSHOW"),
+            (VideoCaptureAPIs.MSMF, "MSMF"),
+            (VideoCaptureAPIs.ANY, "ANY"),
+        };
+        for (int idx = 0; idx < 3; idx++)
+        {
+            foreach (var (api, name) in backends)
+            {
+                VideoCapture? cap = null;
+                try
+                {
+                    cap = new VideoCapture(idx, api);
+                    if (!cap.IsOpened()) { cap.Dispose(); continue; }
+                    // First frames are often empty while the sensor warms up.
+                    using var probe = new Mat();
+                    for (int i = 0; i < 15; i++)
+                    {
+                        if (cap.Read(probe) && !probe.Empty())
+                        {
+                            log?.Invoke($"camera: idx={idx} backend={name} "
+                                + $"{cap.FrameWidth}x{cap.FrameHeight}");
+                            return cap;
+                        }
+                    }
+                    cap.Dispose();
+                }
+                catch { cap?.Dispose(); }
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Open a working camera, grab frames for up to <paramref name="seconds"/>,
     /// and return the first enrolled person matching above threshold. Returns
     /// null on no camera, no face, or no confident match. Synchronous (call via
-    /// Task.Run); never throws.</summary>
-    public static RecognizedPerson? RecognizeFromCamera(int seconds = 2, double threshold = MatchThreshold)
+    /// Task.Run); never throws. Pass <paramref name="log"/> for diagnostics.</summary>
+    public static RecognizedPerson? RecognizeFromCamera(
+        int seconds = 2, double threshold = MatchThreshold, Action<string>? log = null)
     {
         List<(string Name, string Title, float[] Emb)> enrolled;
         lock (_gate) { enrolled = _enrolled; }
+        log?.Invoke($"enrolled faces: {enrolled.Count}");
         if (enrolled.Count == 0) return null;
 
+        VideoCapture? cap = null;
         try
         {
             EnsureModels();
-            using var cap = new VideoCapture(0);
-            if (!cap.IsOpened()) return null;
+            cap = OpenCamera(log);
+            if (cap is null)
+            {
+                log?.Invoke("camera: no backend/index produced a frame "
+                    + "(tried DSHOW/MSMF/ANY × idx 0-2).");
+                return null;
+            }
 
-            var deadline = DateTime.UtcNow.AddSeconds(seconds);
+            int frames = 0, withFace = 0, black = 0;
+            double bestEver = -1; string bestName = "(none)";
+            RecognizedPerson? match = null;
             using var mat = new Mat();
+            var deadline = DateTime.UtcNow.AddSeconds(seconds);
             while (DateTime.UtcNow < deadline)
             {
                 if (!cap.Read(mat) || mat.Empty()) continue;
+                frames++;
+                var mean = Cv2.Mean(mat);
+                if ((mean.Val0 + mean.Val1 + mean.Val2) / 3.0 < 8.0) { black++; continue; }
                 if (!Cv2.ImEncode(".bmp", mat, out byte[] buf)) continue;
                 float[]? emb;
                 using (var img = Image.Load<Rgb24>(buf))
                     emb = EmbedLargestFace(img);
                 if (emb == null) continue;
+                withFace++;
 
-                (string Name, string Title, double Score) best = ("", "", -1);
+                (string Name, string Title) top = ("", ""); double topd = -1;
                 foreach (var e in enrolled)
                 {
                     var d = Dot(emb, e.Emb);
-                    if (d > best.Score) best = (e.Name, e.Title, d);
+                    if (d > topd) { topd = d; top = (e.Name, e.Title); }
                 }
-                if (best.Score >= threshold)
-                    return new RecognizedPerson(best.Name, best.Title, best.Score);
+                if (topd > bestEver) { bestEver = topd; bestName = $"{top.Title} {top.Name}".Trim(); }
+                if (topd >= threshold)
+                {
+                    match = new RecognizedPerson(top.Name, top.Title, topd);
+                    break;
+                }
             }
+            log?.Invoke($"frames={frames} black={black} withFace={withFace} "
+                + $"bestScore={bestEver:F3} closest={bestName} thr={threshold:F2}");
+            return match;
         }
-        catch
+        catch (Exception ex)
         {
-            // Camera/driver/AOT hiccup → just no greeting.
+            log?.Invoke($"camera EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+            return null;
         }
-        return null;
+        finally { cap?.Dispose(); }
     }
 
     /// <summary>One-shot recognize-first used at AI-session start: make sure the

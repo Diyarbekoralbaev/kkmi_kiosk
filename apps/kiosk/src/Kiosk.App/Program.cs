@@ -358,7 +358,8 @@ class Program
 
                 Log("opening camera (~4s) — look at it now...");
                 sw.Restart();
-                var who = Kiosk.App.Face.FaceRecognizer.RecognizeFromCamera(4);
+                var who = Kiosk.App.Face.FaceRecognizer.RecognizeFromCamera(4,
+                    Kiosk.App.Face.FaceRecognizer.MatchThreshold, Log);
                 sw.Stop();
                 if (who != null)
                     Log($"RESULT: OK — recognized {who.Title} {who.Name} "
