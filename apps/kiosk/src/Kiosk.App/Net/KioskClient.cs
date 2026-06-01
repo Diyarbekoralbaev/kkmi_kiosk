@@ -35,6 +35,11 @@ public sealed class KioskClient : IAsyncDisposable
 
     private readonly string _backendUrl;
     private readonly string _deviceId;
+    // Set when a known person was recognized by the local camera just before
+    // this session opened. Appended to the /ws/kiosk/voice upgrade URL so the
+    // backend folds the name into the agent's opening greeting. Cleared after
+    // the first successful connect so a mid-session reconnect doesn't re-greet.
+    private string _greetQuery = "";
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private CancellationTokenSource? _cts;
     private Task? _runTask;
@@ -62,10 +67,18 @@ public sealed class KioskClient : IAsyncDisposable
     /// "this device needs to be re-enrolled" UI instead of a transient offline overlay.</summary>
     public event Action? Unauthorized;
 
-    public KioskClient(string backendUrl, string deviceId)
+    public KioskClient(string backendUrl, string deviceId,
+        string? greetName = null, string? greetTitle = null)
     {
         _backendUrl = backendUrl;
         _deviceId = deviceId;
+        if (!string.IsNullOrWhiteSpace(greetName))
+        {
+            var q = "?gname=" + Uri.EscapeDataString(greetName);
+            if (!string.IsNullOrWhiteSpace(greetTitle))
+                q += "&gtitle=" + Uri.EscapeDataString(greetTitle);
+            _greetQuery = q;
+        }
     }
 
     public void Start()
@@ -189,8 +202,10 @@ public sealed class KioskClient : IAsyncDisposable
                     .BuildAuthHeaderAsync(_backendUrl, _deviceId, ct)
                     .ConfigureAwait(false);
                 ws.Options.SetRequestHeader("X-Kiosk-Auth", authHeader);
-                var wsUri = new Uri(HttpToWs(_backendUrl) + "/ws/kiosk/voice");
+                var wsUri = new Uri(HttpToWs(_backendUrl) + "/ws/kiosk/voice" + _greetQuery);
                 await ws.ConnectAsync(wsUri, ct).ConfigureAwait(false);
+                // Greet by name only on the first connect of this session.
+                _greetQuery = "";
 
                 _activeWs = ws;
                 SetState(ConnectionState.Connected);

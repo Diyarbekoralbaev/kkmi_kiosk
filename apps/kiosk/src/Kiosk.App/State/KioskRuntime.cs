@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Kiosk.App.Audio;
+using Kiosk.App.Face;
 using Kiosk.App.Identity;
 using Kiosk.App.Localization;
 using Kiosk.App.Net;
@@ -95,7 +96,16 @@ public sealed class KioskRuntime : IAsyncDisposable
 
         _capture = new AudioCapture();
 
-        _ws = new KioskClient(creds.BackendUrl, creds.DeviceId);
+        // Recognize-first: a brief local camera match BEFORE the WS opens. If a
+        // known "Руководство" person is recognized, hand their name + title to
+        // the client so the agent's opening greeting addresses them. Bounded
+        // and fully swallowed — face recognition is a nicety and must never
+        // delay (beyond its small budget) or break the voice session.
+        RecognizedPerson? who = null;
+        try { who = await FaceRecognizer.RecognizeForGreetingAsync(creds.BackendUrl); }
+        catch { }
+
+        _ws = new KioskClient(creds.BackendUrl, creds.DeviceId, who?.Name, who?.Title);
         WireWsEvents(_ws);
         _ws.Start();
 

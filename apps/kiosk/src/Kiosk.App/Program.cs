@@ -67,6 +67,8 @@ class Program
                 return RunMicDiag();
             if (args.Length >= 1 && args[0] == "--face-test")
                 return RunFaceTest(args);
+            if (args.Length >= 1 && args[0] == "--face-match-test")
+                return RunFaceMatchTest();
 
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
             return 0;
@@ -316,6 +318,70 @@ class Program
             var path = System.IO.Path.Combine(
                 System.IO.Path.GetDirectoryName(Kiosk.App.Settings.KioskSettings.SettingsPath) ?? ".",
                 "face-test.log");
+            System.IO.File.WriteAllText(path, string.Join("\n", lines) + "\n");
+            Console.WriteLine($"\nfull report: {path}");
+        }
+        catch { /* ignore */ }
+        return 0;
+    }
+
+    /// <summary>End-to-end face-greeting check: sync the "Руководство" persons,
+    /// open the default camera for a few seconds, and report which enrolled
+    /// person (if any) is recognized. Validates OpenCvSharp + the camera + the
+    /// match path on real hardware before the UI wires it in. Writes
+    /// face-match.log next to settings. Run:
+    ///   Kiosk.App.exe --face-match-test</summary>
+    private static int RunFaceMatchTest()
+    {
+        var lines = new System.Collections.Generic.List<string>();
+        void Log(string s) { Console.WriteLine(s); lines.Add(s); }
+
+        Log($"=== face-match-test {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===");
+        Log($"OS: {Environment.OSVersion}");
+        try
+        {
+            var creds = Kiosk.App.Identity.DeviceKeyStore.Load();
+            if (creds is null)
+            {
+                Log("RESULT: FAIL — device not enrolled (no credentials). Enroll first.");
+            }
+            else
+            {
+                Log($"backend={creds.BackendUrl}");
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var n = Kiosk.App.Face.FaceRecognizer.SyncAsync(creds.BackendUrl)
+                    .GetAwaiter().GetResult();
+                Log($"synced {n} enrolled face(s) in {sw.ElapsedMilliseconds} ms");
+                if (n == 0)
+                    Log("NOTE: no enrolled faces — add persons with a clear photo "
+                        + "in gov-panel «Руководство».");
+
+                Log("opening camera (~4s) — look at it now...");
+                sw.Restart();
+                var who = Kiosk.App.Face.FaceRecognizer.RecognizeFromCamera(4);
+                sw.Stop();
+                if (who != null)
+                    Log($"RESULT: OK — recognized {who.Title} {who.Name} "
+                        + $"(score={who.Score:F3}) in {sw.ElapsedMilliseconds} ms");
+                else
+                    Log($"RESULT: NO MATCH (no camera / no face / below "
+                        + $"{Kiosk.App.Face.FaceRecognizer.MatchThreshold:F2}) "
+                        + $"in {sw.ElapsedMilliseconds} ms");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"RESULT: FAIL — {ex.GetType().Name}: {ex.Message}");
+            for (var e = ex.InnerException; e != null; e = e.InnerException)
+                Log($"  inner: {e.GetType().Name}: {e.Message}");
+            Log(ex.StackTrace ?? "");
+        }
+
+        try
+        {
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetDirectoryName(Kiosk.App.Settings.KioskSettings.SettingsPath) ?? ".",
+                "face-match.log");
             System.IO.File.WriteAllText(path, string.Join("\n", lines) + "\n");
             Console.WriteLine($"\nfull report: {path}");
         }

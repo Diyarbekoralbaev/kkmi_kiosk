@@ -156,5 +156,18 @@ public sealed record ServerErrorMessage
     [JsonPropertyName("message")] public string Message { get; init; } = "";
 }
 
+/// <summary>One "Руководство" person returned by GET /api/kiosk/officials.
+/// The kiosk fetches these + their photos to build local face embeddings for
+/// the recognize-on-AI-button greeting. Only the fields the face flow needs
+/// are mapped; extra JSON fields (responsibilities, reception_*) are ignored.</summary>
+public sealed record OfficialDto
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("position")] public string Position { get; init; } = "";
+    [JsonPropertyName("role")] public string Role { get; init; } = "deputy";
+    [JsonPropertyName("has_photo")] public bool HasPhoto { get; init; }
+}
+
 // Outbound JSON envelopes (turn_start / turn_end) are tiny static literals
 // sent by KioskClient directly — no record types needed.
