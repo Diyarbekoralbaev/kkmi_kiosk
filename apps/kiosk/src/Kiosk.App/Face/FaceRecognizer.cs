@@ -43,6 +43,8 @@ public static class FaceRecognizer
     private static ArcFaceEmbeddingsGenerator? _rec;
     private static List<(string Name, string Title, float[] Emb)> _enrolled = new();
     private static Task<int>? _syncTask;
+    private static RecognizedPerson? _pendingGreet;
+    private static DateTime _pendingGreetAt = DateTime.MinValue;
 
     public static int EnrolledCount
     {
@@ -247,6 +249,29 @@ public static class FaceRecognizer
             return null;
         }
         finally { cap?.Dispose(); }
+    }
+
+    /// <summary>Stash a recognition result computed OFF the AI/robot page (e.g.
+    /// on the Home tile tap) so the session can greet by name without running
+    /// the camera while the robot's OpenGL FBO is initializing — that GPU
+    /// contention is what aggravates the Intel FBO crash.</summary>
+    public static void StashGreet(RecognizedPerson? person)
+    {
+        lock (_gate) { _pendingGreet = person; _pendingGreetAt = DateTime.UtcNow; }
+    }
+
+    /// <summary>Take a stashed greet if fresher than <paramref name="maxAge"/>;
+    /// clears it either way. Returns null if none or stale.</summary>
+    public static RecognizedPerson? TakeFreshGreet(TimeSpan maxAge)
+    {
+        lock (_gate)
+        {
+            var p = _pendingGreet;
+            var at = _pendingGreetAt;
+            _pendingGreet = null;
+            _pendingGreetAt = DateTime.MinValue;
+            return (p != null && DateTime.UtcNow - at <= maxAge) ? p : null;
+        }
     }
 
     /// <summary>One-shot recognize-first used at AI-session start: make sure the

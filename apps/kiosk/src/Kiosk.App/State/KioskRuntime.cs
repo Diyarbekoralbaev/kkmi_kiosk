@@ -96,14 +96,18 @@ public sealed class KioskRuntime : IAsyncDisposable
 
         _capture = new AudioCapture();
 
-        // Recognize-first: a brief local camera match BEFORE the WS opens. If a
-        // known "Руководство" person is recognized, hand their name + title to
-        // the client so the agent's opening greeting addresses them. Bounded
-        // and fully swallowed — face recognition is a nicety and must never
-        // delay (beyond its small budget) or break the voice session.
-        RecognizedPerson? who = null;
-        try { who = await FaceRecognizer.RecognizeForGreetingAsync(creds.BackendUrl); }
-        catch { }
+        // Greeting identity. Preferred path: the Home AI tile already recognized
+        // the visitor (off the GL-free Home page) and stashed the result, so we
+        // do NOT run the camera here — running it while the robot's OpenGL FBO
+        // initializes is what aggravates the Intel GL crash. Fallback: if there's
+        // no fresh stash (session started from the mic orb on a GL-free page, or
+        // a direct nav), recognize now — safe because the robot isn't present.
+        RecognizedPerson? who = FaceRecognizer.TakeFreshGreet(TimeSpan.FromSeconds(15));
+        if (who is null)
+        {
+            try { who = await FaceRecognizer.RecognizeForGreetingAsync(creds.BackendUrl); }
+            catch { }
+        }
 
         _ws = new KioskClient(creds.BackendUrl, creds.DeviceId, who?.Name, who?.Title);
         WireWsEvents(_ws);
