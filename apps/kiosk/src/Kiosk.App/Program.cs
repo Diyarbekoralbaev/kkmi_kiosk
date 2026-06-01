@@ -273,8 +273,20 @@ class Program
         try
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            var det = FaceAiSharp.FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
-            var rec = FaceAiSharp.FaceAiSharpBundleFactory.CreateFaceEmbeddingsGenerator();
+            // FaceAiSharpBundleFactory resolves model paths via
+            // Assembly.GetExecutingAssembly().Location, which is EMPTY under
+            // Native AOT -> Path.Combine(null,...) crash. So construct the
+            // detector/embedder with explicit paths off AppContext.BaseDirectory
+            // (AOT-safe). The bundle copies the .onnx files to <exe>\onnx\.
+            var onnxDir = System.IO.Path.Combine(AppContext.BaseDirectory, "onnx");
+            var detPath = System.IO.Path.Combine(onnxDir, "scrfd_2.5g_kps.onnx");
+            var recPath = System.IO.Path.Combine(onnxDir, "arcfaceresnet100-11-int8.onnx");
+            Log($"onnxDir={onnxDir} exists={System.IO.Directory.Exists(onnxDir)}");
+            Log($"det model exists={System.IO.File.Exists(detPath)}  rec model exists={System.IO.File.Exists(recPath)}");
+            var det = new FaceAiSharp.ScrfdDetector(
+                new FaceAiSharp.ScrfdDetectorOptions { ModelPath = detPath }, null);
+            var rec = new FaceAiSharp.ArcFaceEmbeddingsGenerator(
+                new FaceAiSharp.ArcFaceEmbeddingsGeneratorOptions { ModelPath = recPath }, null);
             Log($"models loaded in {sw.ElapsedMilliseconds} ms");
 
             using var img = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgb24>(args[1]);
