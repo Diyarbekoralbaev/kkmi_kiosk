@@ -23,16 +23,6 @@
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.7" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
-    <!-- Local on-device face recognition (SCRFD detect + ArcFace embed via ONNX).
-         FaceAiSharp.Bundle ships the models + managed code + ImageSharp;
-         Microsoft.ML.OnnxRuntime brings the win-x64 native runtime. -->
-    <PackageReference Include="FaceAiSharp.Bundle" Version="0.6.35" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.26.0" />
-    <!-- Default-camera frame grab for the recognize-on-AI-button greeting.
-         OpenCvSharp4.runtime.win carries the native OpenCvSharpExtern +
-         opencv_world DLLs (win-x64); P/Invoke is Native-AOT safe. -->
-    <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260531" />
-    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260531" />
   </ItemGroup>
 
   <ItemGroup>

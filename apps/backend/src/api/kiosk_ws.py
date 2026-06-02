@@ -182,26 +182,8 @@ async def kiosk_voice(ws: WebSocket) -> None:
     # response, and audio alone is unreliable to act as that trigger.
     # The prompt's `greeting` section is what the agent says back; this
     # `[START]` is just the empty user turn that licenses it to begin.
-    #
-    # Face recognition: the kiosk runs a brief local camera match BEFORE
-    # connecting and, if a known person (gov-panel "Руководство" entry) is
-    # recognized, passes their name + title as `?gname=...&gtitle=...` query
-    # params. We fold that VERIFIED fact into the [START] turn so the opening
-    # greeting addresses them by name. (The guardrails grounding rule carves
-    # out names provided to it this way.)
-    greet_name = (ws.query_params.get("gname") or "").strip()
-    greet_title = (ws.query_params.get("gtitle") or "").strip()
-    if greet_name:
-        who = f"{greet_title} {greet_name}".strip()
-        start_signal = (
-            f"[START] Камера арқалы танылған, тастыйықланған пуқара: {who}. "
-            "Ашылыў сәлемлесиўинде оны усы исми (ҳәм лаўазымы) менен ҳүрмет "
-            "пенен қарсы ал — бул мағлыўмат сенге берилди, оны қолланыўың мүмкин."
-        )
-        logger.info("kiosk_ws_recognized_greeting", name_len=len(greet_name))
-    else:
-        start_signal = "[START]"
-    await gemini.send_text(start_signal)
+    # There are NO per-screen context messages — page navigation is silent.
+    await gemini.send_text("[START]")
 
     async def _handle_event(ev: Any) -> None:
         nonlocal error_code

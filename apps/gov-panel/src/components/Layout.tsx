@@ -8,7 +8,6 @@ import {
   User,
   LogOut,
   CalendarCheck,
-  ScanFace,
 } from 'lucide-react'
 import { isReviewer, useAuth } from '../lib/auth'
 import { cn } from './ui/cn'
@@ -23,7 +22,6 @@ const ADMIN_NAV = [
   { to: '/appointments', label: 'Приёмы', icon: CalendarCheck },
   { to: '/sessions', label: 'Сессии', icon: Headphones },
   { to: '/staff', label: 'Сотрудники', icon: Users },
-  { to: '/officials', label: 'Руководство', icon: ScanFace },
   { to: '/profile', label: 'Профиль', icon: User },
 ]
 

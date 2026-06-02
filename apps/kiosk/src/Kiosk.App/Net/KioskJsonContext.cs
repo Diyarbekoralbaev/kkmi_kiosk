@@ -41,8 +41,6 @@ namespace Kiosk.App.Net;
 [JsonSerializable(typeof(CreateApplicationResponse))]
 [JsonSerializable(typeof(CreateFeedbackRequest))]
 [JsonSerializable(typeof(CreateFeedbackResponse))]
-// Officials list for the local face-recognition greeting (GET /api/kiosk/officials).
-[JsonSerializable(typeof(OfficialDto[]))]
 // Org name translations land as a nested dictionary inside multiple DTOs
 // (EnrollResponse, HeartbeatResponse, AppointmentSubmittedMessage,
 // CreateAppointmentResponse, DeviceCredentials). Registering the concrete

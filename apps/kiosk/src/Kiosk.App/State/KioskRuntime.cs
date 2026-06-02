@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Kiosk.App.Audio;
-using Kiosk.App.Face;
 using Kiosk.App.Identity;
 using Kiosk.App.Localization;
 using Kiosk.App.Net;
@@ -96,20 +95,7 @@ public sealed class KioskRuntime : IAsyncDisposable
 
         _capture = new AudioCapture();
 
-        // Greeting identity. Preferred path: the Home AI tile already recognized
-        // the visitor (off the GL-free Home page) and stashed the result, so we
-        // do NOT run the camera here — running it while the robot's OpenGL FBO
-        // initializes is what aggravates the Intel GL crash. Fallback: if there's
-        // no fresh stash (session started from the mic orb on a GL-free page, or
-        // a direct nav), recognize now — safe because the robot isn't present.
-        RecognizedPerson? who = FaceRecognizer.TakeFreshGreet(TimeSpan.FromSeconds(15));
-        if (who is null)
-        {
-            try { who = await FaceRecognizer.RecognizeForGreetingAsync(creds.BackendUrl); }
-            catch { }
-        }
-
-        _ws = new KioskClient(creds.BackendUrl, creds.DeviceId, who?.Name, who?.Title);
+        _ws = new KioskClient(creds.BackendUrl, creds.DeviceId);
         WireWsEvents(_ws);
         _ws.Start();
 
