@@ -44,8 +44,10 @@ from ..ai.gemini_live import (
     ToolCallEvent,
     Transcript,
 )
+from ..ai.kaa_voice import KaaVoiceSession
 from ..ai.prompt_builder import load_agent_config
 from ..core import audit, telegram
+from ..core.config import get_settings
 from ..core.connection_registry import registry
 from ..core.db import AsyncSessionLocal
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
@@ -91,6 +93,9 @@ async def kiosk_voice(ws: WebSocket) -> None:
     async with AsyncSessionLocal() as session:
         agent_config = await load_agent_config(session, org_id)
 
+    settings = get_settings()
+    _use_kaa = settings.voice_backend == "kaa" and bool(settings.kaa_ws_url)
+
     # Persist session row up-front + bump device.last_seen_at
     started_at = datetime.now(UTC)
     session_pk = uuid.uuid4()
@@ -103,7 +108,7 @@ async def kiosk_voice(ws: WebSocket) -> None:
                     device_id=device_id,
                     call_id=call_id,
                     started_at=started_at,
-                    provider="google_live",
+                    provider=("kaa" if _use_kaa else "google_live"),
                     model=agent_config.model,
                 )
             )
@@ -164,7 +169,11 @@ async def kiosk_voice(ws: WebSocket) -> None:
         (_org_row.locale if _org_row and _org_row.locale else "kk").lower()
     )
 
-    gemini = GeminiLiveSession(config=agent_config)
+    gemini = (
+        KaaVoiceSession(config=agent_config, ws_url=settings.kaa_ws_url)
+        if _use_kaa
+        else GeminiLiveSession(config=agent_config)
+    )
     try:
         await gemini.start()
     except ProviderError as e:

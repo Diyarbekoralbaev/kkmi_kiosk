@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     # AI provider
     google_api_key: SecretStr = Field(default=SecretStr(""))
 
+    # Voice backend selector. "gemini_live" (default) = native Gemini Live
+    # audio. "kaa" = bridge the kiosk WS to the local Karakalpak STT→LLM→TTS
+    # WebSocket server at KAA_WS_URL (kiosk protocol unchanged). Falls back to
+    # gemini_live if "kaa" is selected but KAA_WS_URL is empty.
+    voice_backend: str = Field(default="gemini_live")
+    kaa_ws_url: str = Field(default="")
+
     # Paths
     archive_dir: Path = Field(default=Path("/app/archive"))
 
