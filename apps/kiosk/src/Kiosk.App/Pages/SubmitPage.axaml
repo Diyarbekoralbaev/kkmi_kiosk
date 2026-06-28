@@ -7,7 +7,10 @@
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1920"
              x:Class="Kiosk.App.Pages.SubmitPage"
              x:DataType="state:SessionStore">
-    <Grid Background="#f4f7fb" RowDefinitions="Auto,Auto,*" Margin="56,80,56,180">
+    <!-- AI voice murajat preview. The agent composes a draft (text + phone,
+         plus name for a new citizen) and pushes it over the WS — this page is
+         a passive read-only preview; submission is driven by voice. -->
+    <Grid Background="#f4f7fb" RowDefinitions="Auto,*" Margin="56,80,56,180">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <TextBlock Grid.Column="0" Text="{DynamicResource SubmitPageTitle}"
                        FontSize="44" FontWeight="Light" Foreground="#0a4d8c"
@@ -16,29 +19,8 @@
             <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
         </Grid>
 
-        <!-- 4-step indicator (wraps to 2 rows on portrait) -->
-        <ItemsControl Grid.Row="1" Margin="0,28,0,0">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <Border x:Name="StepTopic" Classes="step">
-                <TextBlock Text="{DynamicResource SubmitStep1}" />
-            </Border>
-            <Border x:Name="StepBody" Classes="step">
-                <TextBlock Text="{DynamicResource SubmitStep2}" />
-            </Border>
-            <Border x:Name="StepReview" Classes="step">
-                <TextBlock Text="{DynamicResource SubmitStep3}" />
-            </Border>
-            <Border x:Name="StepDone" Classes="step">
-                <TextBlock Text="{DynamicResource SubmitStep4}" />
-            </Border>
-        </ItemsControl>
-
         <!-- Live preview / transcript -->
-        <ScrollViewer Grid.Row="2" Margin="0,32,0,0">
+        <ScrollViewer Grid.Row="1" Margin="0,32,0,0">
             <StackPanel Spacing="16">
                 <Border IsVisible="{Binding LiveTranscript, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                         Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1"
@@ -47,25 +29,29 @@
                                FontSize="26" TextWrapping="Wrap" />
                 </Border>
 
-                <Border IsVisible="{Binding SubmitTopic, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                <!-- Citizen name — only present for a new / «men emas» citizen -->
+                <Border IsVisible="{Binding SubmitFirstName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                         Background="#f1f5f9" BorderBrush="#cbd5e1" BorderThickness="1"
                         CornerRadius="14" Padding="26,20">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="{DynamicResource SubmitTopicLabel}"
+                        <TextBlock Text="{DynamicResource SubmitNameLabel}"
                                    FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
-                        <TextBlock Text="{Binding SubmitTopic}" FontSize="28"
-                                   FontWeight="SemiBold"
-                                   Foreground="#0f172a" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="{Binding SubmitFirstName}" FontSize="26"
+                                       FontWeight="SemiBold" Foreground="#0f172a" />
+                            <TextBlock Text="{Binding SubmitLastName}" FontSize="26"
+                                       FontWeight="SemiBold" Foreground="#0f172a" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <Border IsVisible="{Binding SubmitBody, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                <Border IsVisible="{Binding SubmitText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                         Background="#f1f5f9" BorderBrush="#cbd5e1" BorderThickness="1"
                         CornerRadius="14" Padding="26,20">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="{DynamicResource SubmitBodyLabel}"
+                        <TextBlock Text="{DynamicResource SubmitTextLabel}"
                                    FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
-                        <TextBlock Text="{Binding SubmitBody}" FontSize="26"
+                        <TextBlock Text="{Binding SubmitText}" FontSize="26"
                                    Foreground="#0f172a" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
@@ -83,27 +69,4 @@
             </StackPanel>
         </ScrollViewer>
     </Grid>
-
-    <UserControl.Styles>
-        <Style Selector="Border.step">
-            <Setter Property="Background" Value="#ffffff" />
-            <Setter Property="BorderBrush" Value="#cbd5e1" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="20" />
-            <Setter Property="Padding" Value="22,12" />
-            <Setter Property="Margin" Value="0,0,12,12" />
-        </Style>
-        <Style Selector="Border.step.active">
-            <Setter Property="Background" Value="#0a4d8c" />
-            <Setter Property="BorderBrush" Value="#0a4d8c" />
-        </Style>
-        <Style Selector="Border.step TextBlock">
-            <Setter Property="Foreground" Value="#64748b" />
-            <Setter Property="FontSize" Value="15" />
-        </Style>
-        <Style Selector="Border.step.active TextBlock">
-            <Setter Property="Foreground" Value="#ffffff" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-    </UserControl.Styles>
 </UserControl>

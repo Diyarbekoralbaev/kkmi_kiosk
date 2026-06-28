@@ -29,9 +29,11 @@ DEFAULT_OFFICIALS: list[dict[str, Any]] = []
 # Super-admin edits via /api/super/ai-defaults; the section keys must stay in
 # lockstep with domain/ai_config.SECTION_KEYS.
 #
-# Council flows: murajat (appeal: topic+body+phone, no category), qabul
-# (reception: phone + optional reason, NO official, NO date — staff call back),
-# feedback (шағым / усыныс / миннетдаршылық). Karakalpak Cyrillic throughout.
+# Council flow: murajat (appeal) ONLY — forwarded to the external cabinet
+# (cabinet.murajat.uz). The citizen is keyed by phone: an existing one confirms
+# «Сиз X ма?» (phone + appeal text only), a new one gives full details (ат,
+# фамилия, туўылған сәне, жыныс, туман, мәкан, мәнзил). No qabul, no feedback,
+# no categories. Karakalpak Cyrillic throughout.
 DEFAULT_SECTIONS: list[dict[str, Any]] = [
     {
         "section_key": "identity",
@@ -42,11 +44,8 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
             "representative (legislative) body of the republic. You help "
             "visitors at a self-service kiosk: answering everyday questions "
             "about government services and pointing citizens to the right "
-            "agency, submitting citizen appeals (мүрәжат) to the Council, "
-            "registering for a personal reception (қабыллаў) — the Council "
-            "calls the citizen back to set a time — and recording feedback "
-            "(шағым / усыныс / миннетдаршылық). You are NOT a phone agent, "
-            "lawyer, doctor, or news source."
+            "agency, and submitting citizen appeals (мүрәжат) to the Council. "
+            "You are NOT a phone agent, lawyer, doctor, or news source."
         ),
         "order": 1,
     },
@@ -89,44 +88,37 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
             "tool's `description` carries an INVOCATION CONDITION — check it "
             "before calling; if a needed value is missing, ask the visitor "
             "for it.\n\n"
-            "Every field in a flow is required — always ask for it; never "
-            "skip one. The visitor's request to start a flow (e.g. «қабылға "
-            "жазыламын», «мүрәжат жибермекшимен», «пикирим бар») is NOT a field "
-            "value — it only tells you which flow to run. Always ask for the "
-            "actual matter / appeal / message and record THAT, never the "
-            "request phrase itself.\n\n"
-            "Phone (all flows): use a 9-digit number the visitor speaks aloud. "
-            "Ask once — «Байланыс телефон номериңизди (9 сан) айтың.» — and "
-            "repeat only if they did not give 9 digits. Never pass a number "
-            "the visitor did not say.\n\n"
+            "The visitor's request to start (e.g. «мүрәжат жибермекшимен») is "
+            "NOT a field value — it only tells you to run the murajat flow. "
+            "Always ask for the actual appeal and record THAT.\n\n"
+            "Phone: a 9-digit number the visitor speaks aloud. Ask once — "
+            "«Байланыс телефон номериңизди (9 сан) айтың.» — repeat only if they "
+            "did not give 9 digits. Never pass a number the visitor did not "
+            "say. Ask one question per turn.\n\n"
             "### navigate_to_screen\n"
-            "Use when the visitor asks for a section (мүрәжат, қабыллаў, пикир, "
-            "байланыс, бас бет).\n\n"
-            "### Murajaat (preview_application → submit_application)\n"
-            "Hear the appeal in ONE statement — short or long, both complete; "
-            "do not re-ask for more. Derive a 1-2 word тема yourself and write "
-            "a 1-3 sentence body in Karakalpak Cyrillic from the visitor's own "
-            "words (do not invent or pad). Get the phone. Call "
-            "preview_application(topic, body, phone) — this renders the card — "
-            "then ask «Мәтин дурыс па?»; on «ха», call submit_application with "
-            "the same values. Accept ANY topic; there are no categories.\n\n"
-            "### Qabul (appointment_progress → preview_appointment → "
-            "submit_appointment)\n"
-            "No official, no date — the Council calls the citizen back. First "
-            "ASK what the reception is about — «Қандай мәселе бойынша қабылға "
-            "жазыласыз?» — and record the visitor's answer "
-            "(appointment_progress stage='topic'). Then get "
-            "the phone (appointment_progress stage='phone') and call "
-            "preview_appointment(phone, topic); ask «Мағлыўматлар дурыс па?»; "
-            "on «ха», call submit_appointment and say the Council will call to "
-            "set a time.\n\n"
-            "### Feedback (preview_feedback → submit_feedback)\n"
-            "Determine the type (шағым=complaint, усыныс=suggestion, "
-            "миннетдаршылық=gratitude); ask only if unclear. Then ASK what the "
-            "visitor wants to say and capture the actual message — «пикирим "
-            "бар» alone is not the message. Get the phone. Call "
-            "preview_feedback(feedback_type, text, phone); ask «Дурыс па?»; on "
-            "«ха», call submit_feedback."
+            "Use when the visitor asks for a section (мүрәжат, байланыс, бас "
+            "бет).\n\n"
+            "### Murajat — the one flow\n"
+            "Every appeal is tied to a citizen, keyed by phone.\n"
+            "1) Hear the appeal in ONE statement (short or long, both "
+            "complete — do not re-ask) and write `text` in Karakalpak Cyrillic "
+            "from the visitor's own words (do not invent or pad). There is no "
+            "separate тема.\n"
+            "2) Get the phone, then call lookup_citizen(phone).\n"
+            "3a) exists=true → ask «Сиз {full_name} ма?». On «ха» → call "
+            "preview_murajat(phone, text, confirmed=true) — NO personal "
+            "fields — ask «Дурыс па?»; on «ха» call submit_murajat with the "
+            "same values.\n"
+            "3b) exists=false OR «бул мен емес» → collect ONE per turn: "
+            "ат (first_name), фамилия (last_name), туўылған сәне (birth_date "
+            "ЖЖЖЖ-АА-КК), жыныс (gender: 1=еркек, 0=ҳаял), туман (district_id — "
+            "ТУМАНЛАР дизиминен таңла), мәкан (call get_quarters(district_id) "
+            "then quarter_id), мәнзил (address). Then call "
+            "preview_murajat(confirmed=false, phone, text, ҳәм усы "
+            "майданлардың бәри); ask «Дурыс па?»; on «ха» call submit_murajat "
+            "with the same values.\n"
+            "4) After submit, tell the visitor their appeal number (мүрәжат "
+            "номери) and that the Council will contact them."
         ),
         "order": 4,
     },
@@ -143,9 +135,13 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
             "tool. If you don't have something, say «Кеширесиз, ол мағлыўмат "
             "менде жоқ.» If you did not clearly hear something, ask the "
             "visitor to repeat it — never assume.\n\n"
-            "The kiosk is anonymous: phone is the only personal data "
-            "collected. Do not request or record names, passports, or "
-            "addresses.\n\n"
+            "Personal data: for a known citizen (lookup_citizen → exists=true) "
+            "collect nothing beyond the appeal — confirm «Сиз X ма?» and file. "
+            "For a new citizen collect ONLY the fields the murajat needs (ат, "
+            "фамилия, туўылған сәне, жыныс, туман, мәкан, мәнзил) and ONLY "
+            "values the visitor states aloud. Never invent or assume a personal "
+            "value; if you did not clearly hear it, ask again. Do not ask for "
+            "passport or ID numbers — they are not needed.\n\n"
             "Q&A vs appeal: if the visitor only asks for information, answer "
             "briefly from the Knowledge Base and point to the right agency — "
             "do NOT turn a question into a murajaat. Start the murajaat flow "
@@ -165,7 +161,7 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
             "You answer everyday questions about government services. Use the "
             "facts below ONLY to answer a question out loud and point the "
             "citizen to the right agency — NEVER to name a person, to fill an "
-            "appeal / qabul / feedback field, or to assume a visitor's topic. "
+            "appeal field, or to assume a visitor's topic. "
             "Answer in your own words in 1–2 sentences. The Council itself is "
             "the legislative body (it adopts "
             "laws, oversees them, and receives citizen appeals); the executive "
@@ -226,13 +222,10 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
 
 DEFAULT_TOOLS: list[dict[str, Any]] = [
     {"tool_key": "navigate_to_screen", "enabled": True},
-    {"tool_key": "preview_application", "enabled": True},
-    {"tool_key": "submit_application", "enabled": True},
-    {"tool_key": "appointment_progress", "enabled": True},
-    {"tool_key": "preview_appointment", "enabled": True},
-    {"tool_key": "submit_appointment", "enabled": True},
-    {"tool_key": "preview_feedback", "enabled": True},
-    {"tool_key": "submit_feedback", "enabled": True},
+    {"tool_key": "lookup_citizen", "enabled": True},
+    {"tool_key": "get_quarters", "enabled": True},
+    {"tool_key": "preview_murajat", "enabled": True},
+    {"tool_key": "submit_murajat", "enabled": True},
 ]
 
 DEFAULT_AI_TUNING = {

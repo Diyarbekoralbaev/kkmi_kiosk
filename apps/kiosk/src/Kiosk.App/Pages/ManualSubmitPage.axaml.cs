@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Kiosk.App.Localization;
@@ -11,28 +12,20 @@ using Kiosk.App.State;
 
 namespace Kiosk.App.Pages;
 
-/// <summary>Manual touch-driven murajaat flow. Visitor moves through
-/// topic → body → phone → preview → success without using voice. All
-/// alphanumeric input is on the custom on-screen keyboard; phone uses
-/// the existing NumericKeypad. Backend POST /api/kiosk/applications is
-/// the only network call.
-///
-/// The page reuses <see cref="SessionStore"/> fields SubmitTopic /
-/// SubmitBody / SubmitPhone / SubmittedId / ShowSubmitSuccess. The
-/// step machine is its own enum (<see cref="ManualSubmitStep"/>) so
-/// the AI voice flow's SubmitStep can't accidentally drive this
-/// page's visibility.
-/// </summary>
+/// <summary>Manual touch-driven murajat flow. Phone → (lookup) → confirm
+/// identity OR full personal form → appeal text → preview → submit. All
+/// alphanumeric input is on the on-screen keyboard; phone uses NumericKeypad.
+/// Reads/writes the shared SessionStore Submit* fields and drives its own
+/// section visibility off <see cref="SubmitStep"/>. Backend calls:
+/// KioskApi.LookupPersonalAsync, GetLocationsAsync, SubmitAppealAsync.</summary>
 public partial class ManualSubmitPage : UserControl
 {
     private const string EmptyPhoneFormat = "+998 __ - ___ - __ - __";
 
     private bool _keyboardsWired;
-    // Re-entrancy guard: PhoneBox.Text = formatted inside OnPhoneTextChanged
-    // re-fires TextChanged. Without this flag we'd recurse and FormatPhone
-    // would keep absorbing the "+998" prefix as if it were typed digits,
-    // producing strings like "+998 99 - 899 - 89 - 98" with the user not
-    // typing anything. Mirror of QabulPage's _formattingPhone.
+    // Re-entrancy guard: setting PhoneBox.Text inside OnPhoneTextChanged
+    // re-fires TextChanged. Without this flag FormatPhone would keep absorbing
+    // the "+998" prefix as if it were typed digits.
     private bool _formattingPhone;
     private DispatcherTimer? _successDismissTimer;
 
@@ -44,44 +37,65 @@ public partial class ManualSubmitPage : UserControl
         SessionStore.Current.PropertyChanged += OnStateChanged;
     }
 
-    private void OnLoaded(object? sender, RoutedEventArgs e)
+    private async void OnLoaded(object? sender, RoutedEventArgs e)
     {
         var s = SessionStore.Current;
-        // Fresh start every entry — wipe whatever the voice flow may
-        // have populated and reset to step 1 (topic).
-        s.SubmitTopic = "";
-        s.SubmitBody = "";
+        // Fresh start every entry — wipe whatever a prior session left.
+        s.SubmitText = "";
         s.SubmitPhone = "";
-        s.SubmittedId = "";
+        s.SubmitConfirmed = false;
+        s.SubmitFirstName = "";
+        s.SubmitLastName = "";
+        s.SubmitBirthDate = "";
+        s.SubmitAddress = "";
+        s.SubmitGender = null;
+        s.SubmitDistrictId = null;
+        s.SubmitQuarterId = null;
+        s.LookupExists = false;
+        s.LookupPersonal = null;
+        s.AppealNumber = "";
         s.ShowSubmitSuccess = false;
-        s.ManualSubmitStep = ManualSubmitStep.Topic;
+        s.SubmitStep = SubmitStep.Phone;
         PhoneBox.Text = EmptyPhoneFormat;
 
         if (!_keyboardsWired)
         {
-            TopicKeyboard.TargetTextBox = TopicBox;
-            TopicKeyboard.Cleared += (_, _) =>
-            {
-                SessionStore.Current.SubmitTopic = "";
-                TopicStatus.IsVisible = false;
-            };
-            BodyKeyboard.TargetTextBox = BodyBox;
-            BodyKeyboard.Cleared += (_, _) =>
-            {
-                SessionStore.Current.SubmitBody = "";
-                BodyStatus.IsVisible = false;
-            };
             PhoneKeypad.TargetTextBox = PhoneBox;
             PhoneKeypad.Cleared += (_, _) => PhoneBox.Text = EmptyPhoneFormat;
             PhoneBox.TextChanged += OnPhoneTextChanged;
+
+            // Form keyboard is shared across the personal fields — it retargets
+            // to whichever box just got focus.
+            FirstNameBox.GotFocus += (_, _) => FormKeyboard.TargetTextBox = FirstNameBox;
+            LastNameBox.GotFocus += (_, _) => FormKeyboard.TargetTextBox = LastNameBox;
+            BirthDateBox.GotFocus += (_, _) => FormKeyboard.TargetTextBox = BirthDateBox;
+            AddressBox.GotFocus += (_, _) => FormKeyboard.TargetTextBox = AddressBox;
+            FormKeyboard.TargetTextBox = FirstNameBox;
+            FormKeyboard.Cleared += (_, _) =>
+            {
+                if (FormKeyboard.TargetTextBox is { } box) box.Text = "";
+            };
+
+            TextKeyboard.TargetTextBox = AppealTextBox;
+            TextKeyboard.Cleared += (_, _) => AppealTextBox.Text = "";
+
             _keyboardsWired = true;
         }
 
-        TopicStatus.IsVisible = false;
-        BodyStatus.IsVisible = false;
         PhoneStatus.IsVisible = false;
+        FormStatus.IsVisible = false;
+        TextStatus.IsVisible = false;
         PreviewStatus.IsVisible = false;
         UpdateVisibility();
+
+        // Load the districts/quarters reference once. If it fails the lists
+        // stay empty — the form still renders, just without selectable rows.
+        if (!s.LocationsLoaded)
+        {
+            var resp = await KioskApi.GetLocationsAsync();
+            if (resp is not null) s.SetLocations(resp);
+            UpdateVisibility();
+        }
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -92,11 +106,8 @@ public partial class ManualSubmitPage : UserControl
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SessionStore.ManualSubmitStep)
-            || e.PropertyName == nameof(SessionStore.ShowSubmitSuccess)
-            || e.PropertyName == nameof(SessionStore.SubmitTopic)
-            || e.PropertyName == nameof(SessionStore.SubmitBody)
-            || e.PropertyName == nameof(SessionStore.SubmitPhone))
+        if (e.PropertyName == nameof(SessionStore.SubmitStep)
+            || e.PropertyName == nameof(SessionStore.ShowSubmitSuccess))
         {
             Dispatcher.UIThread.Post(UpdateVisibility);
         }
@@ -105,75 +116,47 @@ public partial class ManualSubmitPage : UserControl
     private void UpdateVisibility()
     {
         var s = SessionStore.Current;
-        var showSuccess = s.ShowSubmitSuccess;
-        SectionTopic.IsVisible = !showSuccess && s.ManualSubmitStep == ManualSubmitStep.Topic;
-        SectionBody.IsVisible = !showSuccess && s.ManualSubmitStep == ManualSubmitStep.Body;
-        SectionPhone.IsVisible = !showSuccess && s.ManualSubmitStep == ManualSubmitStep.Phone;
-        SectionPreview.IsVisible = !showSuccess && s.ManualSubmitStep == ManualSubmitStep.Preview;
-        SectionSuccess.IsVisible = showSuccess;
+        var step = s.SubmitStep;
+        SectionPhone.IsVisible = step == SubmitStep.Phone;
+        SectionConfirm.IsVisible = step == SubmitStep.Confirm;
+        SectionForm.IsVisible = step == SubmitStep.Form;
+        SectionText.IsVisible = step == SubmitStep.Text;
+        SectionPreview.IsVisible = step == SubmitStep.Review;
+        // Done → the shared SubmitSuccessOverlay (MainWindow) covers the screen.
 
-        if (SectionPreview.IsVisible)
+        if (step == SubmitStep.Confirm)
         {
-            PreviewTopic.Text = s.SubmitTopic ?? "";
-            PreviewBody.Text = s.SubmitBody ?? "";
+            var name = s.LookupPersonal?.FullName ?? "";
+            ConfirmQuestion.Text = string.Format(
+                LocalizationService.Get("MurajatConfirmQuestion"), name);
+        }
+        if (step == SubmitStep.Form)
+        {
+            BuildDistrictList();
+            BuildQuarterList(s.SubmitDistrictId);
+            UpdateGenderHighlight();
+        }
+        if (step == SubmitStep.Review)
+        {
+            var showName = !s.SubmitConfirmed
+                && (!string.IsNullOrWhiteSpace(s.SubmitFirstName)
+                    || !string.IsNullOrWhiteSpace(s.SubmitLastName));
+            PreviewNameBlock.IsVisible = showName;
+            PreviewName.Text = $"{s.SubmitFirstName} {s.SubmitLastName}".Trim();
+            PreviewText.Text = s.SubmitText ?? "";
             PreviewPhone.Text = FormatPhonePretty(s.SubmitPhone ?? "");
-        }
-        if (showSuccess)
-        {
-            SuccessIdText.Text = string.IsNullOrEmpty(s.SubmittedId)
-                ? ""
-                : string.Format(
-                    LocalizationService.Get("ManualMurajatSuccessId"),
-                    ShortenId(s.SubmittedId));
-            StartSuccessDismissTimer();
+            PreviewStatus.IsVisible = false;
+            PreviewStatus.Foreground = Avalonia.Media.Brush.Parse("#dc2626");
+            PreviewStatus.Text = LocalizationService.Get("ManualMurajatSubmitError");
+            SubmitButton.IsEnabled = true;
         }
     }
 
-    // ── Topic ───────────────────────────────────────────────────────
-
-    private void OnTopicContinue(object? sender, RoutedEventArgs e)
-    {
-        var s = SessionStore.Current;
-        var topic = (s.SubmitTopic ?? "").Trim();
-        if (topic.Length < 3)
-        {
-            TopicStatus.IsVisible = true;
-            return;
-        }
-        s.SubmitTopic = topic;
-        TopicStatus.IsVisible = false;
-        s.ManualSubmitStep = ManualSubmitStep.Body;
-    }
-
-    // ── Body ────────────────────────────────────────────────────────
-
-    private void OnBodyBack(object? sender, RoutedEventArgs e)
-    {
-        SessionStore.Current.ManualSubmitStep = ManualSubmitStep.Topic;
-    }
-
-    private void OnBodyContinue(object? sender, RoutedEventArgs e)
-    {
-        var s = SessionStore.Current;
-        var body = (s.SubmitBody ?? "").Trim();
-        if (body.Length < 5)
-        {
-            BodyStatus.IsVisible = true;
-            return;
-        }
-        s.SubmitBody = body;
-        BodyStatus.IsVisible = false;
-        s.ManualSubmitStep = ManualSubmitStep.Phone;
-    }
-
-    // ── Phone ───────────────────────────────────────────────────────
+    // ── Phone step ──────────────────────────────────────────────────
 
     private void OnPhoneTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (PhoneBox is null) return;
-        // Guard against the recursive TextChanged that our own assignment
-        // below triggers. Without this, FormatPhone would re-absorb the
-        // "+998" prefix as if it were typed digits on every echo.
         if (_formattingPhone) return;
         _formattingPhone = true;
         try
@@ -184,10 +167,6 @@ public partial class ManualSubmitPage : UserControl
         finally { _formattingPhone = false; }
     }
 
-    /// <summary>Format the masked phone box the same way QabulPage does.
-    /// Strips the "+998" prefix from the digit extraction so we don't
-    /// double-count it when the user-entered digits land in the slots.
-    /// Verbatim port of QabulPage.FormatPhone.</summary>
     private static string FormatPhone(string raw)
     {
         var digits = new string(raw.Where(char.IsDigit).ToArray());
@@ -197,12 +176,6 @@ public partial class ManualSubmitPage : UserControl
         return $"+998 {p[0]}{p[1]} - {p[2]}{p[3]}{p[4]} - {p[5]}{p[6]} - {p[7]}{p[8]}";
     }
 
-    /// <summary>Pull the 9 visitor-entered digits out of a formatted
-    /// mask like "+998 90 - 123 - 45 - 67". Strips the "+998" prefix so
-    /// validation against `.Length == 9` works correctly — without the
-    /// strip, ExtractPhoneDigits would return 12 digits for any properly
-    /// filled mask and OnPhoneContinue's check would always fail. Mirror
-    /// of QabulPage.ExtractPhoneDigits.</summary>
     private static string ExtractPhoneDigits(string raw)
     {
         var digits = new string(raw.Where(char.IsDigit).ToArray());
@@ -212,19 +185,13 @@ public partial class ManualSubmitPage : UserControl
 
     private static string FormatPhonePretty(string e164)
     {
-        // E.164 +998901234567 → +998 90 - 123 - 45 - 67 for the preview
         var d = ExtractPhoneDigits(e164);
         if (d.Length == 12 && d.StartsWith("998")) d = d.Substring(3);
         if (d.Length != 9) return e164;
         return $"+998 {d[0]}{d[1]} - {d[2]}{d[3]}{d[4]} - {d[5]}{d[6]} - {d[7]}{d[8]}";
     }
 
-    private void OnPhoneBack(object? sender, RoutedEventArgs e)
-    {
-        SessionStore.Current.ManualSubmitStep = ManualSubmitStep.Body;
-    }
-
-    private void OnPhoneContinue(object? sender, RoutedEventArgs e)
+    private async void OnPhoneContinue(object? sender, RoutedEventArgs e)
     {
         var s = SessionStore.Current;
         var digits = ExtractPhoneDigits(PhoneBox.Text ?? "");
@@ -233,27 +200,201 @@ public partial class ManualSubmitPage : UserControl
             PhoneStatus.IsVisible = true;
             return;
         }
-        s.SubmitPhone = "+998" + digits;
         PhoneStatus.IsVisible = false;
-        s.ManualSubmitStep = ManualSubmitStep.Preview;
+        var phone = "+998" + digits;
+        s.SubmitPhone = phone;
+
+        PhoneContinueButton.IsEnabled = false;
+        try
+        {
+            var resp = await KioskApi.LookupPersonalAsync(phone);
+            if (resp is not null && resp.Exists && resp.Personal is not null)
+            {
+                s.LookupExists = true;
+                s.LookupPersonal = resp.Personal;
+                s.SubmitConfirmed = false;
+                s.SubmitStep = SubmitStep.Confirm;
+            }
+            else
+            {
+                s.LookupExists = false;
+                s.LookupPersonal = null;
+                s.SubmitConfirmed = false;
+                s.SubmitStep = SubmitStep.Form;
+            }
+        }
+        finally
+        {
+            PhoneContinueButton.IsEnabled = true;
+        }
+    }
+
+    // ── Confirm identity ────────────────────────────────────────────
+
+    private void OnConfirmYes(object? sender, RoutedEventArgs e)
+    {
+        // Existing citizen confirmed — phone + text only, no personal fields.
+        SessionStore.Current.SubmitConfirmed = true;
+        SessionStore.Current.SubmitStep = SubmitStep.Text;
+    }
+
+    private void OnConfirmNo(object? sender, RoutedEventArgs e)
+    {
+        // «Men emas» — collect a fresh full set of personal details.
+        var s = SessionStore.Current;
+        s.SubmitConfirmed = false;
+        s.SubmitFirstName = "";
+        s.SubmitLastName = "";
+        s.SubmitBirthDate = "";
+        s.SubmitAddress = "";
+        s.SubmitGender = null;
+        s.SubmitDistrictId = null;
+        s.SubmitQuarterId = null;
+        s.SubmitStep = SubmitStep.Form;
+    }
+
+    // ── Full personal form ──────────────────────────────────────────
+
+    private void OnGenderMale(object? sender, RoutedEventArgs e)
+    {
+        SessionStore.Current.SubmitGender = 1;
+        UpdateGenderHighlight();
+    }
+
+    private void OnGenderFemale(object? sender, RoutedEventArgs e)
+    {
+        SessionStore.Current.SubmitGender = 0;
+        UpdateGenderHighlight();
+    }
+
+    private void UpdateGenderHighlight()
+    {
+        var g = SessionStore.Current.SubmitGender;
+        SetSelected(GenderMale, g == 1);
+        SetSelected(GenderFemale, g == 0);
+    }
+
+    private static void SetSelected(Button b, bool on)
+    {
+        if (on)
+        {
+            if (!b.Classes.Contains("selected")) b.Classes.Add("selected");
+        }
+        else
+        {
+            b.Classes.Remove("selected");
+        }
+    }
+
+    private static string LocName(string qq, string uz, string ru)
+    {
+        if (!string.IsNullOrWhiteSpace(qq)) return qq;
+        if (!string.IsNullOrWhiteSpace(uz)) return uz;
+        return ru ?? "";
+    }
+
+    private void BuildDistrictList()
+    {
+        var s = SessionStore.Current;
+        DistrictList.Children.Clear();
+        foreach (var d in s.Districts)
+        {
+            var btn = new Button { Content = LocName(d.NameQq, d.NameUz, d.NameRu), Tag = d.Id };
+            btn.Classes.Add("locitem");
+            if (s.SubmitDistrictId == d.Id) btn.Classes.Add("selected");
+            btn.Click += OnDistrictClick;
+            DistrictList.Children.Add(btn);
+        }
+    }
+
+    private void OnDistrictClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button b || b.Tag is not int id) return;
+        var s = SessionStore.Current;
+        s.SubmitDistrictId = id;
+        s.SubmitQuarterId = null;
+        BuildDistrictList();
+        BuildQuarterList(id);
+    }
+
+    private void BuildQuarterList(int? districtId)
+    {
+        QuarterList.Children.Clear();
+        if (districtId is null) return;
+        var s = SessionStore.Current;
+        foreach (var q in s.QuartersForDistrict(districtId.Value))
+        {
+            var btn = new Button { Content = LocName(q.NameQq, q.NameUz, q.NameRu), Tag = q.Id };
+            btn.Classes.Add("locitem");
+            if (s.SubmitQuarterId == q.Id) btn.Classes.Add("selected");
+            btn.Click += OnQuarterClick;
+            QuarterList.Children.Add(btn);
+        }
+    }
+
+    private void OnQuarterClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button b || b.Tag is not int id) return;
+        SessionStore.Current.SubmitQuarterId = id;
+        BuildQuarterList(SessionStore.Current.SubmitDistrictId);
+    }
+
+    private void OnFormBack(object? sender, RoutedEventArgs e)
+    {
+        SessionStore.Current.SubmitStep = SubmitStep.Phone;
+    }
+
+    private void OnFormContinue(object? sender, RoutedEventArgs e)
+    {
+        var s = SessionStore.Current;
+        var firstOk = (s.SubmitFirstName ?? "").Trim().Length >= 1;
+        var lastOk = (s.SubmitLastName ?? "").Trim().Length >= 1;
+        var birthOk = (s.SubmitBirthDate ?? "").Trim().Length >= 4;
+        var addressOk = (s.SubmitAddress ?? "").Trim().Length >= 1;
+        if (!firstOk || !lastOk || !birthOk || s.SubmitGender is null
+            || s.SubmitDistrictId is null || s.SubmitQuarterId is null || !addressOk)
+        {
+            FormStatus.IsVisible = true;
+            return;
+        }
+        FormStatus.IsVisible = false;
+        s.SubmitStep = SubmitStep.Text;
+    }
+
+    // ── Appeal text ─────────────────────────────────────────────────
+
+    private void OnTextBack(object? sender, RoutedEventArgs e)
+    {
+        var s = SessionStore.Current;
+        s.SubmitStep = s.SubmitConfirmed ? SubmitStep.Confirm : SubmitStep.Form;
+    }
+
+    private void OnTextContinue(object? sender, RoutedEventArgs e)
+    {
+        var s = SessionStore.Current;
+        if ((s.SubmitText ?? "").Trim().Length < 5)
+        {
+            TextStatus.IsVisible = true;
+            return;
+        }
+        TextStatus.IsVisible = false;
+        s.SubmitStep = SubmitStep.Review;
     }
 
     // ── Preview / Submit ────────────────────────────────────────────
 
     private void OnPreviewEdit(object? sender, RoutedEventArgs e)
     {
-        // Send the visitor back to the topic step so they can tweak
-        // anything. Body and phone are preserved.
-        SessionStore.Current.ManualSubmitStep = ManualSubmitStep.Topic;
+        // Back to the appeal-text step to tweak the body.
+        SessionStore.Current.SubmitStep = SubmitStep.Text;
     }
 
     private async void OnPreviewConfirm(object? sender, RoutedEventArgs e)
     {
         var s = SessionStore.Current;
-        var topic = (s.SubmitTopic ?? "").Trim();
-        var body = (s.SubmitBody ?? "").Trim();
+        var text = (s.SubmitText ?? "").Trim();
         var phone = (s.SubmitPhone ?? "").Trim();
-        if (topic.Length < 3 || body.Length < 5 || ExtractPhoneDigits(phone).Length != 9)
+        if (text.Length < 5 || ExtractPhoneDigits(phone).Length != 9)
         {
             PreviewStatus.IsVisible = true;
             return;
@@ -264,7 +405,29 @@ public partial class ManualSubmitPage : UserControl
         PreviewStatus.Text = LocalizationService.Get("ManualMurajatSubmitting");
         PreviewStatus.IsVisible = true;
 
-        var result = await KioskApi.CreateApplicationAsync(topic, body, phone);
+        AppealRequest req;
+        if (s.SubmitConfirmed)
+        {
+            req = new AppealRequest { Phone = phone, Text = text, Confirmed = true };
+        }
+        else
+        {
+            req = new AppealRequest
+            {
+                Phone = phone,
+                Text = text,
+                Confirmed = false,
+                FirstName = (s.SubmitFirstName ?? "").Trim(),
+                LastName = (s.SubmitLastName ?? "").Trim(),
+                BirthDate = string.IsNullOrWhiteSpace(s.SubmitBirthDate) ? null : s.SubmitBirthDate.Trim(),
+                Gender = s.SubmitGender,
+                DistrictId = s.SubmitDistrictId,
+                QuarterId = s.SubmitQuarterId,
+                Address = string.IsNullOrWhiteSpace(s.SubmitAddress) ? null : s.SubmitAddress.Trim(),
+            };
+        }
+
+        var result = await KioskApi.SubmitAppealAsync(req);
         if (result is null)
         {
             PreviewStatus.Foreground = Avalonia.Media.Brush.Parse("#dc2626");
@@ -273,9 +436,10 @@ public partial class ManualSubmitPage : UserControl
             return;
         }
 
-        s.SubmittedId = result.ApplicationId;
+        s.AppealNumber = result.AppealNumber;
         s.ShowSubmitSuccess = true;
-        s.ManualSubmitStep = ManualSubmitStep.Done;
+        s.SubmitStep = SubmitStep.Done;
+        StartSuccessDismissTimer();
     }
 
     // ── Success auto-dismiss ───────────────────────────────────────
@@ -291,10 +455,4 @@ public partial class ManualSubmitPage : UserControl
         };
         _successDismissTimer.Start();
     }
-
-    /// <summary>Show only the first 8 chars of the UUID so the visitor
-    /// has something readable to quote later if they call the helpline.
-    /// Full id is in the audit log.</summary>
-    private static string ShortenId(string id) =>
-        string.IsNullOrEmpty(id) || id.Length < 8 ? id : id.Substring(0, 8);
 }

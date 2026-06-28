@@ -16,12 +16,11 @@ from .api import auth as auth_router
 from .api import health as health_router
 from .api import health_deep as health_deep_router
 from .api import kiosk_applications as kiosk_applications_router
-from .api import kiosk_appointments as kiosk_appointments_router
 from .api import kiosk_auth as kiosk_auth_router
 from .api import kiosk_enrollment as kiosk_enrollment_router
+from .api import kiosk_locations as kiosk_locations_router
 from .api import kiosk_updates as kiosk_updates_router
 from .api import kiosk_ws as kiosk_ws_router
-from .api.public import qabul as public_qabul_router
 from .api.gov import applications as gov_applications_router
 from .api.gov import appointments as gov_appointments_router
 from .api.gov import categories as gov_categories_router
@@ -30,6 +29,7 @@ from .api.gov import dashboard_monthly as gov_dashboard_monthly_router
 from .api.gov import officials as gov_officials_router
 from .api.gov import sessions as gov_sessions_router
 from .api.gov import staff as gov_staff_router
+from .api.public import qabul as public_qabul_router
 from .api.super import ai_defaults as super_ai_defaults_router
 from .api.super import audit as super_audit_router
 from .api.super import categories as super_categories_router
@@ -40,7 +40,6 @@ from .api.super import users as super_users_router
 from .core import bootstrap
 from .core.config import get_settings
 from .core.connection_registry import registry as ws_registry
-from .core.redis_bus import bus as redis_bus
 from .core.errors import (
     AppError,
     app_error_handler,
@@ -49,6 +48,7 @@ from .core.errors import (
     validation_exception_handler,
 )
 from .core.logging import setup_logging
+from .core.redis_bus import bus as redis_bus
 
 logger = structlog.get_logger(__name__)
 
@@ -134,9 +134,8 @@ def create_app() -> FastAPI:
     app.include_router(gov_staff_router.router)
     app.include_router(kiosk_auth_router.router)
     app.include_router(kiosk_enrollment_router.router)
-    app.include_router(kiosk_appointments_router.router)
     app.include_router(kiosk_applications_router.router)
-    app.include_router(kiosk_applications_router.feedback_router)
+    app.include_router(kiosk_locations_router.router)
     app.include_router(kiosk_updates_router.router)
     app.include_router(kiosk_ws_router.router)
     app.include_router(public_qabul_router.router)

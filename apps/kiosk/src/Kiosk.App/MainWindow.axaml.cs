@@ -425,8 +425,8 @@ public partial class MainWindow : Window
     private void NavHome(object? sender, RoutedEventArgs e) =>
         SessionStore.Current.Navigate(KioskPage.Home);
 
-    private void NavQabul(object? sender, RoutedEventArgs e) =>
-        SessionStore.Current.Navigate(KioskPage.Qabul);
+    private void NavManualSubmit(object? sender, RoutedEventArgs e) =>
+        SessionStore.Current.Navigate(KioskPage.ManualSubmit);
 
     private void NavSubmit(object? sender, RoutedEventArgs e) =>
         SessionStore.Current.Navigate(KioskPage.Submit);

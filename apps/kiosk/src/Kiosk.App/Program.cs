@@ -136,8 +136,8 @@ class Program
         client.AudioReceived += pcm => { Interlocked.Increment(ref audioFrames); Interlocked.Add(ref audioBytes, pcm.Length); };
         client.TranscriptReceived += t => { Interlocked.Increment(ref transcripts); Console.WriteLine($"[transcript {t.Speaker} final={t.Final}] {t.Text}"); };
         client.NavigateReceived += n => Console.WriteLine($"[navigate] {n.Screen}");
-        client.PreviewReceived += p => Console.WriteLine($"[preview] {p.Topic}");
-        client.SubmittedReceived += sub => Console.WriteLine($"[submitted] {sub.Id}");
+        client.MurajatPreviewReceived += p => Console.WriteLine($"[murajat_preview] {p.Text}");
+        client.MurajatSubmittedReceived += sub => Console.WriteLine($"[murajat_submitted] {sub.AppealNumber}");
         client.AudioDoneReceived += () => Console.WriteLine($"[audio_done]");
         client.ErrorReceived += e => Console.WriteLine($"[error] {e.Code} {e.Message}");
 

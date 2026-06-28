@@ -89,65 +89,27 @@ public sealed record TranscriptMessage
     [JsonPropertyName("speaker")] public string Speaker { get; init; } = "";
 }
 
-public sealed record ApplicationPreviewMessage
+public sealed record MurajatPreviewMessage
 {
-    [JsonPropertyName("topic")] public string Topic { get; init; } = "";
-    [JsonPropertyName("body")] public string Body { get; init; } = "";
+    /// <summary>The appeal body the agent composed (single text, no topic).</summary>
+    [JsonPropertyName("text")] public string Text { get; init; } = "";
     [JsonPropertyName("phone")] public string Phone { get; init; } = "";
+    /// <summary>true = an existing citizen confirmed identity (only phone+text
+    /// shown). false = a new / «men emas» citizen (name is also shown).</summary>
+    [JsonPropertyName("confirmed")] public bool Confirmed { get; init; }
+    [JsonPropertyName("first_name")] public string FirstName { get; init; } = "";
+    [JsonPropertyName("last_name")] public string LastName { get; init; } = "";
 }
 
-public sealed record ApplicationSubmittedMessage
+public sealed record MurajatSubmittedMessage
 {
-    [JsonPropertyName("id")] public string Id { get; init; } = "";
-    [JsonPropertyName("topic")] public string Topic { get; init; } = "";
-    [JsonPropertyName("body")] public string Body { get; init; } = "";
-    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
-}
-
-public sealed record AppointmentProgressMessage
-{
-    /// <summary>One of: "topic", "phone" (the legislative qabul flow has no
-    /// official stage — the Council calls the citizen back).</summary>
-    [JsonPropertyName("stage")] public string Stage { get; init; } = "";
-    [JsonPropertyName("topic")] public string? Topic { get; init; }
-    [JsonPropertyName("phone_masked")] public string? PhoneMasked { get; init; }
-}
-
-public sealed record AppointmentPreviewMessage
-{
-    [JsonPropertyName("topic")] public string Topic { get; init; } = "";
+    /// <summary>The cabinet's appeal number, e.g. "25678/26".</summary>
+    [JsonPropertyName("appeal_number")] public string AppealNumber { get; init; } = "";
     [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
-}
-
-public sealed record AppointmentSubmittedMessage
-{
-    [JsonPropertyName("appointment_id")] public string AppointmentId { get; init; } = "";
-    [JsonPropertyName("reference_no")] public string ReferenceNo { get; init; } = "";
-    [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
-    [JsonPropertyName("topic")] public string Topic { get; init; } = "";
-    [JsonPropertyName("verification_url")] public string VerificationUrl { get; init; } = "";
-    [JsonPropertyName("qr_png_base64")] public string QrPngBase64 { get; init; } = "";
-    [JsonPropertyName("receipt_pdf_base64")] public string ReceiptPdfBase64 { get; init; } = "";
-    /// <summary>Localized org names so the success-talon header swaps to the
-    /// right language without waiting for the next heartbeat.</summary>
+    /// <summary>Localized org names so the success-talon header swaps language
+    /// without waiting for the next heartbeat.</summary>
     [JsonPropertyName("org_name_translations")]
     public Dictionary<string, string> OrgNameTranslations { get; init; } = new();
-}
-
-public sealed record FeedbackPreviewMessage
-{
-    /// <summary>One of: "complaint", "suggestion", "gratitude".</summary>
-    [JsonPropertyName("feedback_type")] public string FeedbackType { get; init; } = "";
-    [JsonPropertyName("text")] public string Text { get; init; } = "";
-    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
-}
-
-public sealed record FeedbackSubmittedMessage
-{
-    [JsonPropertyName("id")] public string Id { get; init; } = "";
-    [JsonPropertyName("feedback_type")] public string FeedbackType { get; init; } = "";
-    [JsonPropertyName("text")] public string Text { get; init; } = "";
-    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
 }
 
 public sealed record ServerErrorMessage

@@ -64,7 +64,7 @@
                 IsVisible="{x:Static app:DebugFlags.IsDebugBuild}">
             <StackPanel Orientation="Horizontal" Spacing="2">
                 <Button Content="Home" Click="NavHome" Classes="nav" />
-                <Button Content="Qabul" Click="NavQabul" Classes="nav" />
+                <Button Content="Murajat" Click="NavManualSubmit" Classes="nav" />
                 <Button Content="Submit" Click="NavSubmit" Classes="nav" />
                 <Button Content="Contacts" Click="NavContacts" Classes="nav" />
             </StackPanel>

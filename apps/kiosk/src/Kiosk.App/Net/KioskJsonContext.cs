@@ -18,34 +18,33 @@ namespace Kiosk.App.Net;
 /// stays at the default (preserve member name) because all our DTOs already
 /// pin per-property snake_case via [JsonPropertyName] to match the backend.
 /// </summary>
+// WhenWritingNull: the appeal's personal fields (first_name … address) are
+// nullable and must be omitted for a confirmed existing citizen so the request
+// stays phone+text only. Non-nullable string DTOs are unaffected (never null).
+[JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(EnrollRequest))]
 [JsonSerializable(typeof(EnrollResponse))]
 [JsonSerializable(typeof(AuthChallengeResponse))]
 [JsonSerializable(typeof(NavigateMessage))]
 [JsonSerializable(typeof(TranscriptMessage))]
-[JsonSerializable(typeof(ApplicationPreviewMessage))]
-[JsonSerializable(typeof(ApplicationSubmittedMessage))]
-[JsonSerializable(typeof(AppointmentProgressMessage))]
-[JsonSerializable(typeof(AppointmentPreviewMessage))]
-[JsonSerializable(typeof(AppointmentSubmittedMessage))]
-[JsonSerializable(typeof(FeedbackPreviewMessage))]
-[JsonSerializable(typeof(FeedbackSubmittedMessage))]
+[JsonSerializable(typeof(MurajatPreviewMessage))]
+[JsonSerializable(typeof(MurajatSubmittedMessage))]
 [JsonSerializable(typeof(ServerErrorMessage))]
 [JsonSerializable(typeof(ApiError))]
 [JsonSerializable(typeof(HeartbeatResponse))]
 [JsonSerializable(typeof(KioskSettings))]
 [JsonSerializable(typeof(DeviceCredentials))]
-[JsonSerializable(typeof(CreateAppointmentRequest))]
-[JsonSerializable(typeof(CreateAppointmentResponse))]
-[JsonSerializable(typeof(CreateApplicationRequest))]
-[JsonSerializable(typeof(CreateApplicationResponse))]
-[JsonSerializable(typeof(CreateFeedbackRequest))]
-[JsonSerializable(typeof(CreateFeedbackResponse))]
+[JsonSerializable(typeof(AppealRequest))]
+[JsonSerializable(typeof(AppealResponse))]
+[JsonSerializable(typeof(PersonalDto))]
+[JsonSerializable(typeof(PersonalLookupResponse))]
+[JsonSerializable(typeof(DistrictDto))]
+[JsonSerializable(typeof(QuarterDto))]
+[JsonSerializable(typeof(LocationsResponse))]
 // Org name translations land as a nested dictionary inside multiple DTOs
-// (EnrollResponse, HeartbeatResponse, AppointmentSubmittedMessage,
-// CreateAppointmentResponse, DeviceCredentials). Registering the concrete
-// type once here gives the source generator an explicit hook so the AOT
-// build doesn't need to fall back to reflection for it.
+// (EnrollResponse, HeartbeatResponse, MurajatSubmittedMessage,
+// DeviceCredentials). Registering the concrete type once here gives the source
+// generator an explicit hook so the AOT build doesn't fall back to reflection.
 [JsonSerializable(typeof(System.Collections.Generic.Dictionary<string, string>))]
 internal partial class KioskJsonContext : JsonSerializerContext
 {

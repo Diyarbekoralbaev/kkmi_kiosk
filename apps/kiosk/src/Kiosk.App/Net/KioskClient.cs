@@ -46,13 +46,8 @@ public sealed class KioskClient : IAsyncDisposable
     public event Action<byte[]>? AudioReceived;
     public event Action<TranscriptMessage>? TranscriptReceived;
     public event Action<NavigateMessage>? NavigateReceived;
-    public event Action<ApplicationPreviewMessage>? PreviewReceived;
-    public event Action<ApplicationSubmittedMessage>? SubmittedReceived;
-    public event Action<AppointmentProgressMessage>? AppointmentProgressReceived;
-    public event Action<AppointmentPreviewMessage>? AppointmentPreviewReceived;
-    public event Action<AppointmentSubmittedMessage>? AppointmentSubmittedReceived;
-    public event Action<FeedbackPreviewMessage>? FeedbackPreviewReceived;
-    public event Action<FeedbackSubmittedMessage>? FeedbackSubmittedReceived;
+    public event Action<MurajatPreviewMessage>? MurajatPreviewReceived;
+    public event Action<MurajatSubmittedMessage>? MurajatSubmittedReceived;
     public event Action? AudioDoneReceived;
     public event Action<ServerErrorMessage>? ErrorReceived;
     public event Action<ConnectionState>? StateChanged;
@@ -275,33 +270,13 @@ public sealed class KioskClient : IAsyncDisposable
                     var n = JsonSerializer.Deserialize(json, KioskJsonContext.Default.NavigateMessage);
                     if (n is not null) NavigateReceived?.Invoke(n);
                     break;
-                case "application_preview":
-                    var p = JsonSerializer.Deserialize(json, KioskJsonContext.Default.ApplicationPreviewMessage);
-                    if (p is not null) PreviewReceived?.Invoke(p);
+                case "murajat_preview":
+                    var p = JsonSerializer.Deserialize(json, KioskJsonContext.Default.MurajatPreviewMessage);
+                    if (p is not null) MurajatPreviewReceived?.Invoke(p);
                     break;
-                case "application_submitted":
-                    var s = JsonSerializer.Deserialize(json, KioskJsonContext.Default.ApplicationSubmittedMessage);
-                    if (s is not null) SubmittedReceived?.Invoke(s);
-                    break;
-                case "appointment_progress":
-                    var apg = JsonSerializer.Deserialize(json, KioskJsonContext.Default.AppointmentProgressMessage);
-                    if (apg is not null) AppointmentProgressReceived?.Invoke(apg);
-                    break;
-                case "appointment_preview":
-                    var ap = JsonSerializer.Deserialize(json, KioskJsonContext.Default.AppointmentPreviewMessage);
-                    if (ap is not null) AppointmentPreviewReceived?.Invoke(ap);
-                    break;
-                case "appointment_submitted":
-                    var asm = JsonSerializer.Deserialize(json, KioskJsonContext.Default.AppointmentSubmittedMessage);
-                    if (asm is not null) AppointmentSubmittedReceived?.Invoke(asm);
-                    break;
-                case "feedback_preview":
-                    var fp = JsonSerializer.Deserialize(json, KioskJsonContext.Default.FeedbackPreviewMessage);
-                    if (fp is not null) FeedbackPreviewReceived?.Invoke(fp);
-                    break;
-                case "feedback_submitted":
-                    var fs = JsonSerializer.Deserialize(json, KioskJsonContext.Default.FeedbackSubmittedMessage);
-                    if (fs is not null) FeedbackSubmittedReceived?.Invoke(fs);
+                case "murajat_submitted":
+                    var s = JsonSerializer.Deserialize(json, KioskJsonContext.Default.MurajatSubmittedMessage);
+                    if (s is not null) MurajatSubmittedReceived?.Invoke(s);
                     break;
                 case "audio_done":
                     AudioDoneReceived?.Invoke();

@@ -11,19 +11,15 @@
     <x:String x:Key="FooterRights">Все права защищены.</x:String>
     <x:String x:Key="HelpLabel">Помощь:</x:String>
 
-    <!-- Home page (2026 redesign) -->
+    <!-- Home page (2 services: AI + Murajat) -->
     <x:String x:Key="HomeGreetingChip">Добро пожаловать!</x:String>
     <x:String x:Key="HomeQuestion">Чем мы можем вам помочь?</x:String>
     <x:String x:Key="HomeQuestionHighlight">помочь</x:String>
-    <x:String x:Key="HomeSubtitle">Выберите одну из услуг ниже. Оставьте обращение в Кенгаш, поговорите с AI-ассистентом или запишитесь на приём.</x:String>
+    <x:String x:Key="HomeSubtitle">Поговорите с AI-ассистентом или оставьте обращение в Кенгаш.</x:String>
     <x:String x:Key="HomeTileAiTitle">Поговорить с AI</x:String>
     <x:String x:Key="HomeTileAiSubtitle">Получите быстрые ответы от искусственного интеллекта</x:String>
     <x:String x:Key="HomeTileSubmitTitle">Обращение в Кенгаш</x:String>
     <x:String x:Key="HomeTileSubmitSubtitle">Оформите жалобу или предложение в электронном виде</x:String>
-    <x:String x:Key="HomeTileQabulTitle">Запись на личный приём</x:String>
-    <x:String x:Key="HomeTileQabulSubtitle">Оставьте номер телефона — Кенгаш свяжется с вами</x:String>
-    <x:String x:Key="HomeTileFeedbackTitle">Жалоба / предложение / благодарность</x:String>
-    <x:String x:Key="HomeTileFeedbackSubtitle">Оставьте отзыв — жалоба, предложение или благодарность</x:String>
 
     <!-- NavBar -->
     <x:String x:Key="NavBack">Назад</x:String>
@@ -45,47 +41,10 @@
     <x:String x:Key="MicStarting">Запускается...</x:String>
     <x:String x:Key="MicError">Ошибка</x:String>
 
-    <!-- Qabul page (reception registration — no official, no date) -->
-    <x:String x:Key="QabulPageTitle">Запись на личный приём</x:String>
-    <x:String x:Key="QabulRegisterIntro">Оставьте номер телефона — Кенгаш свяжется с вами.</x:String>
-    <x:String x:Key="QabulTopicSkip">Пропустить</x:String>
-    <x:String x:Key="QabulEditTopic">Изменить тему</x:String>
-    <x:String x:Key="QabulPhonePreviewTitle">Проверьте ваш номер телефона</x:String>
-    <x:String x:Key="QabulPhonePreviewHint">Перед отправкой убедитесь, что номер указан верно. Если ошибка — нажмите «Исправить».</x:String>
-    <x:String x:Key="QabulPhonePreviewEdit">Исправить</x:String>
-    <x:String x:Key="QabulPhonePreviewSend">Да, отправить</x:String>
-    <x:String x:Key="QabulPhoneLabel">Номер телефона</x:String>
-    <x:String x:Key="QabulPhoneHint">Введите ваш номер телефона</x:String>
-    <x:String x:Key="QabulConfirmButton">Подтвердить</x:String>
-    <x:String x:Key="QabulConfirmErrorPhoneShort">Номер телефона неполный (минимум 9 цифр)</x:String>
-    <x:String x:Key="QabulConfirmSending">Отправляется...</x:String>
-    <x:String x:Key="QabulConfirmError">Ошибка. Проверьте интернет и попробуйте снова.</x:String>
-
-    <!-- Voice-flow preview card — shown after AI agent calls preview_appointment -->
-    <x:String x:Key="QabulVoicePreviewTitle">Подтверждение</x:String>
-    <x:String x:Key="QabulVoicePreviewPhoneLabel">Телефон</x:String>
-    <x:String x:Key="QabulVoicePreviewTopicLabel">Тема</x:String>
-    <x:String x:Key="QabulVoicePreviewConfirm">Подтверждаю</x:String>
-    <x:String x:Key="QabulVoicePreviewReject">Нет, вернуть</x:String>
-
-    <!-- Success talon (no official, no date, no queue). -->
-    <x:String x:Key="QabulTalonSubtitle">Талон записи на приём</x:String>
-    <x:String x:Key="QabulTalonCallback">Отдел обращений Жокаргы Кенеса свяжется с вами.</x:String>
-    <x:String x:Key="QabulTalonScanHint">Отсканируйте QR на телефоне.</x:String>
-    <!-- On-screen talon labels. Trailing space is intentional — bold
-         "Label: " runs followed by a value run. -->
-    <x:String x:Key="QabulTalonReference">Номер обращения: </x:String>
-    <x:String x:Key="QabulTalonMasala">Тема: </x:String>
-    <x:String x:Key="QabulTalonTelefon">Телефон: </x:String>
-
-    <!-- Submit page -->
+    <!-- Submit page (AI voice preview) -->
     <x:String x:Key="SubmitPageTitle">Подать обращение</x:String>
-    <x:String x:Key="SubmitStep1">1. Направление</x:String>
-    <x:String x:Key="SubmitStep2">2. Полный текст</x:String>
-    <x:String x:Key="SubmitStep3">3. Проверка</x:String>
-    <x:String x:Key="SubmitStep4">4. Готово</x:String>
-    <x:String x:Key="SubmitTopicLabel">Направление</x:String>
-    <x:String x:Key="SubmitBodyLabel">Полный текст</x:String>
+    <x:String x:Key="SubmitNameLabel">Ф.И.О.</x:String>
+    <x:String x:Key="SubmitTextLabel">Текст обращения</x:String>
     <x:String x:Key="SubmitPhoneLabel">Телефон</x:String>
 
     <!-- Contacts page -->
@@ -108,10 +67,9 @@
     <x:String x:Key="RevokedBody">Доступ этого устройства отозван администратором. Оператор должен ввести новый код.</x:String>
     <x:String x:Key="RevokedButton">Ввести новый код</x:String>
 
-    <!-- Submit success overlay -->
+    <!-- Submit success overlay (shared by voice + manual) -->
     <x:String x:Key="SubmitSuccessTitle">Ваше обращение принято</x:String>
     <x:String x:Key="SubmitSuccessBody">Сотрудники Кенгаша рассмотрят ваше обращение.</x:String>
-    <x:String x:Key="SubmitSuccessTopicLabel">Тема:</x:String>
     <x:String x:Key="SubmitSuccessIdLabel">Номер:</x:String>
 
     <!-- Updating page -->
@@ -162,40 +120,45 @@
     <x:String x:Key="EnrollmentCodeLabel">Код регистрации</x:String>
     <x:String x:Key="EnrollmentButton">Зарегистрировать</x:String>
 
-    <!-- Manual qabul topic step -->
-    <x:String x:Key="QabulTopicLabel">Кратко опишите свой вопрос</x:String>
-    <x:String x:Key="QabulTopicHint">Одной-двумя фразами</x:String>
-    <x:String x:Key="QabulTopicErrorShort">Введите минимум 3 символа</x:String>
-    <x:String x:Key="QabulContinueButton">Продолжить</x:String>
-
-    <!-- Manual murojaat flow -->
+    <!-- Manual murajat flow (ManualSubmitPage) -->
     <x:String x:Key="ManualSubmitPageTitle">Подать обращение</x:String>
-    <x:String x:Key="ManualMurajatTopicTitle">Тема обращения</x:String>
-    <x:String x:Key="ManualMurajatTopicHint">Кратко — одной-двумя фразами</x:String>
-    <x:String x:Key="ManualMurajatBodyTitle">Подробное описание</x:String>
-    <x:String x:Key="ManualMurajatBodyHint">Что произошло, что просите — изложите подробно</x:String>
-    <x:String x:Key="ManualMurajatBodyErrorShort">Введите минимум 5 символов</x:String>
-    <x:String x:Key="ManualMurajatPhoneTitle">Контактный номер</x:String>
+    <x:String x:Key="ManualBackButton">Назад</x:String>
+    <x:String x:Key="ManualEditButton">Изменить</x:String>
+    <x:String x:Key="ManualConfirmButton">Подтвердить и отправить</x:String>
     <x:String x:Key="ManualMurajatPreviewTitle">Проверьте данные</x:String>
-    <x:String x:Key="ManualMurajatSuccessTitle">Обращение принято</x:String>
-    <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
-    <x:String x:Key="ManualMurajatSuccessHint">Сотрудники Кенгаша рассмотрят ваше обращение.</x:String>
+    <x:String x:Key="ManualMurajatPhoneTitle">Контактный номер</x:String>
     <x:String x:Key="ManualMurajatSubmitting">Отправка...</x:String>
     <x:String x:Key="ManualMurajatSubmitError">Не удалось отправить. Попробуйте ещё раз.</x:String>
-    <x:String x:Key="ManualBackButton">Назад</x:String>
-    <x:String x:Key="ManualConfirmButton">Подтвердить и отправить</x:String>
-    <x:String x:Key="ManualEditButton">Изменить</x:String>
 
-    <!-- Feedback flow (ManualFeedbackPage) -->
-    <x:String x:Key="FeedbackPageTitle">Оставить отзыв</x:String>
-    <x:String x:Key="FeedbackTypePrompt">Выберите тип отзыва</x:String>
-    <x:String x:Key="FeedbackTypeComplaint">Жалоба</x:String>
-    <x:String x:Key="FeedbackTypeSuggestion">Предложение</x:String>
-    <x:String x:Key="FeedbackTypeGratitude">Благодарность</x:String>
-    <x:String x:Key="FeedbackTextTitle">Напишите ваш отзыв</x:String>
-    <x:String x:Key="FeedbackTextHint">Что вы хотите сказать — изложите подробно</x:String>
-    <x:String x:Key="FeedbackTextErrorShort">Введите минимум 5 символов</x:String>
-    <x:String x:Key="FeedbackPhoneTitle">Контактный номер</x:String>
-    <x:String x:Key="FeedbackSuccessTitle">Ваш отзыв принят</x:String>
-    <x:String x:Key="FeedbackSuccessHint">Сотрудники Кенгаша рассмотрят ваш отзыв.</x:String>
+    <!-- Phone step -->
+    <x:String x:Key="MurajatPhoneHint">Введите ваш номер телефона</x:String>
+    <x:String x:Key="MurajatPhoneError">Номер телефона неполный (минимум 9 цифр)</x:String>
+    <x:String x:Key="MurajatContinue">Продолжить</x:String>
+
+    <!-- Identity confirm step -->
+    <x:String x:Key="MurajatConfirmQuestion">Вы {0}?</x:String>
+    <x:String x:Key="MurajatConfirmYes">Да, это я</x:String>
+    <x:String x:Key="MurajatConfirmNo">Нет, это не я</x:String>
+
+    <!-- Full personal form -->
+    <x:String x:Key="MurajatFormTitle">Заполните ваши данные</x:String>
+    <x:String x:Key="MurajatFirstName">Имя</x:String>
+    <x:String x:Key="MurajatLastName">Фамилия</x:String>
+    <x:String x:Key="MurajatBirthDate">Дата рождения (ГГГГ-ММ-ДД)</x:String>
+    <x:String x:Key="MurajatGender">Пол</x:String>
+    <x:String x:Key="MurajatGenderMale">Мужской</x:String>
+    <x:String x:Key="MurajatGenderFemale">Женский</x:String>
+    <x:String x:Key="MurajatDistrict">Район / город</x:String>
+    <x:String x:Key="MurajatQuarter">Махалля (МФЙ)</x:String>
+    <x:String x:Key="MurajatAddress">Адрес</x:String>
+    <x:String x:Key="MurajatFormError">Заполните все данные полностью</x:String>
+
+    <!-- Appeal text step -->
+    <x:String x:Key="MurajatTextTitle">Текст вашего обращения</x:String>
+    <x:String x:Key="MurajatTextHint">Что произошло, что просите — изложите подробно</x:String>
+    <x:String x:Key="MurajatTextError">Введите минимум 5 символов</x:String>
+
+    <!-- Preview labels -->
+    <x:String x:Key="MurajatNameLabel">Ф.И.О.</x:String>
+    <x:String x:Key="MurajatTextLabel">Текст обращения</x:String>
 </ResourceDictionary>

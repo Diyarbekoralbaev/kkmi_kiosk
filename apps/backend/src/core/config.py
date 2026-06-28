@@ -56,6 +56,15 @@ class Settings(BaseSettings):
     voice_backend: str = Field(default="gemini_live")
     kaa_ws_url: str = Field(default="")
 
+    # External murajat cabinet (cabinet.murajat.uz). The kiosk's appeals are
+    # stored THERE, not in our DB — the backend only proxies (look up a citizen
+    # by phone, submit an appeal, serve districts/quarters). The bearer token is
+    # minted on their server (`php artisan kiosk:token`) and lives ONLY here,
+    # never on a kiosk. Empty token → the murajat proxy is disabled (503).
+    murajat_api_base: str = Field(default="https://cabinet.murajat.uz")
+    kiosk_murajat_token: SecretStr = Field(default=SecretStr(""))
+    murajat_timeout: int = Field(default=30)
+
     # Paths
     archive_dir: Path = Field(default=Path("/app/archive"))
 

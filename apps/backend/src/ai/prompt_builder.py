@@ -28,15 +28,19 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core import murajat
 from ..core.seed import ensure_system_ai_defaults
 from ..domain.organization import (
     Organization,
     address_translations_for_response,
     work_hours_translations_for_response,
 )
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -81,10 +85,7 @@ def _format_today_block(now: datetime | None = None) -> str:
     weekday = _WEEKDAY_INDEX_TO_KK[now.weekday()]
     return (
         "===== ҲӘЗИРГИ ЎАҚЫТ =====\n"
-        f"Бүгинги күн: {iso} ({weekday}).\n"
-        "Усы күнди келешек қабыл күнлерин есаплаўда қолланың "
-        "(ертең, индин, келеси жума ҳ.т.б.). Айтып турған сораўыңыз "
-        "усы күннен кейинги болыўы керек."
+        f"Бүгинги күн: {iso} ({weekday})."
     )
 
 
@@ -126,6 +127,30 @@ def _format_org_contact_block(org: Organization) -> str:
     )
 
 
+def _format_districts_block(districts: list[dict]) -> str:
+    """The 17 districts (id + name) so the agent maps a spoken tuman to its
+    district_id during a new-citizen murajat. Quarters are fetched per-district
+    at runtime via the get_quarters tool — 454 of them won't fit the prompt."""
+    lines = [
+        "===== ТУМАНЛАР (district_id) =====",
+        "Жаңа пуқараның мүрәжатын толтырғанда, оның жасайтуғын туманын усы "
+        "дизимнен таңла ҳәм id'син district_id ретинде қолла (қарақалпақша, "
+        "өзбекше яки русша айтса да ең жақынын таңла):",
+    ]
+    for d in districts:
+        did = d.get("id")
+        name = (d.get("name_qq") or d.get("name_uz") or "").strip()
+        uz = (d.get("name_uz") or "").strip()
+        suffix = f" / {uz}" if uz and uz != name else ""
+        lines.append(f"  {did} — {name}{suffix}")
+    lines.append(
+        "Туман белгили болғаннан кейин get_quarters(district_id) шақыр — ол сол "
+        "туманның мәкан (МПЖ/АПЖ) дизимин қайтарады; пуқара айтқан мәканды таңлап "
+        "quarter_id ди ал."
+    )
+    return "\n".join(lines)
+
+
 async def load_agent_config(session: AsyncSession, org_id: uuid.UUID) -> AgentConfig:
     defaults = await ensure_system_ai_defaults(session)
 
@@ -150,6 +175,16 @@ async def load_agent_config(session: AsyncSession, org_id: uuid.UUID) -> AgentCo
     ).scalar_one_or_none()
     if org is not None:
         pieces.append(_format_org_contact_block(org))
+
+    # Districts reference — only the murajat new-citizen flow needs it. Fetched
+    # (and cached) from the external cabinet; if it's unreachable or unconfigured
+    # we build the prompt without it rather than failing the whole session.
+    try:
+        districts = (await murajat.get_locations()).get("districts") or []
+        if districts:
+            pieces.append(_format_districts_block(districts))
+    except Exception as e:
+        logger.warning("districts_block_skipped", error=str(e), error_type=type(e).__name__)
 
     system_prompt = "\n\n".join(pieces)
     enabled_tools = [

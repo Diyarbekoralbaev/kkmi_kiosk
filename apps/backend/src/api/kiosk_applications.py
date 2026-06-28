@@ -1,164 +1,59 @@
-"""Kiosk-side manual murajaat (appeal) + feedback submission.
+"""Kiosk manual murajat (appeal) submission — proxied to cabinet.murajat.uz.
 
-Murajat: visitor taps the Murajat tile → topic + body via on-screen keyboard →
-phone via numeric keypad → preview → submit. Shares
-`ai.applications.create_application` with the voice flow (kind=murajaat); only
-`source` differs ("kiosk_manual" vs "kiosk_voice").
+The visitor fills the touch form (phone → lookup → confirm name, or full citizen
+details → appeal text) and the kiosk POSTs it here. We forward to the external
+Council cabinet; nothing is stored locally. Citizen lookup by phone and the
+districts/quarters reference lists live in `kiosk_locations.py`.
 
-Feedback: the Fikr tile → pick type (shaǵım/usınıs/minnetdarshılıq) → text +
-phone. Rides on the same `applications` table via the `kind` discriminator.
-
-No categories, no officials — the Council intake is simpler than the Hokimiyat
-version this was cloned from.
+No categories, no officials, no qabul, no feedback — the Council kiosk does one
+thing: file an appeal to the external cabinet.
 """
 from __future__ import annotations
 
 from fastapi import APIRouter, Header
 from pydantic import BaseModel, Field
 
-from ..ai.applications import create_application, create_feedback
-from ..ai.appointments import mask_phone, normalize_phone
-from ..core import audit, telegram
+from ..core import murajat
 from ..core.deps import DbSession
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
-from ..core.errors import NotFoundError, ValidationError
-from ..domain.application import ALL_FEEDBACK_TYPES
-from ..domain.organization import Organization, name_translations_for_response
 
-router = APIRouter(prefix="/api/kiosk/applications", tags=["kiosk:applications"])
-feedback_router = APIRouter(prefix="/api/kiosk/feedback", tags=["kiosk:feedback"])
+router = APIRouter(prefix="/api/kiosk", tags=["kiosk:appeal"])
 
 
-class CreateApplicationIn(BaseModel):
-    topic: str = Field(min_length=1, max_length=500)
-    body: str = Field(min_length=1, max_length=10_000)
+class CreateAppealIn(BaseModel):
     phone: str = Field(min_length=4, max_length=32)
-
-
-class CreateApplicationOut(BaseModel):
-    application_id: str
-    topic: str
-    body: str
-    phone_masked: str
-    status: str
-    # Localized org name (uz/kk/ru) for the on-screen success talon header.
-    org_name_translations: dict[str, str] = {}
-
-
-async def _active_org(session: DbSession, x_kiosk_auth: str | None) -> Organization:
-    device = await resolve_device_from_signed_request(session, x_kiosk_auth)
-    org = await session.get(Organization, device.org_id)
-    if org is None or getattr(org, "status", "active") != "active":
-        raise NotFoundError("org_not_found")
-    return org
-
-
-@router.post("", response_model=CreateApplicationOut, status_code=201)
-async def create_kiosk_application(
-    body: CreateApplicationIn,
-    session: DbSession,
-    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
-) -> CreateApplicationOut:
-    org = await _active_org(session, x_kiosk_auth)
-
-    phone_norm = normalize_phone(body.phone)
-    topic_clean = body.topic.strip()
-    body_clean = body.body.strip()
-
-    app = await create_application(
-        session,
-        org_id=org.id,
-        topic=topic_clean,
-        body=body_clean,
-        phone=phone_norm,
-        source="kiosk_manual",
-    )
-
-    await audit.record(
-        session,
-        actor_user_id=None,
-        actor_org_id=org.id,
-        action="application.create",
-        entity_type="application",
-        entity_id=app.id,
-        after={
-            "topic": topic_clean,
-            "phone_masked": mask_phone(phone_norm),
-            "kind": "murajaat",
-            "source": "kiosk_manual",
-        },
-    )
-
-    # Telegram broadcast (no-op if the bot isn't configured).
-    telegram.post_murajaat_async(app, org)
-
-    return CreateApplicationOut(
-        application_id=str(app.id),
-        topic=app.topic,
-        body=app.body,
-        phone_masked=mask_phone(phone_norm),
-        status=app.status,
-        org_name_translations=name_translations_for_response(org),
-    )
-
-
-class CreateFeedbackIn(BaseModel):
-    feedback_type: str = Field(max_length=16)  # complaint | suggestion | gratitude
     text: str = Field(min_length=1, max_length=10_000)
-    phone: str = Field(min_length=4, max_length=32)
+    # true = an existing citizen confirmed their identity → only phone + text are
+    # forwarded and the registry record is left unchanged. false = a new citizen
+    # or «men emas» → all personal fields below are required upstream.
+    confirmed: bool = False
+    first_name: str | None = Field(default=None, max_length=120)
+    last_name: str | None = Field(default=None, max_length=120)
+    birth_date: str | None = None  # YYYY-MM-DD
+    gender: int | None = None  # 1 = erkak, 0 = ayol
+    district_id: int | None = None
+    quarter_id: int | None = None
+    address: str | None = Field(default=None, max_length=500)
+    high_organization: str | None = Field(default=None, max_length=255)
 
 
-class CreateFeedbackOut(BaseModel):
-    feedback_id: str
-    feedback_type: str
-    phone_masked: str
+class CreateAppealOut(BaseModel):
+    appeal_number: str
     status: str
-    org_name_translations: dict[str, str] = {}
 
 
-@feedback_router.post("", response_model=CreateFeedbackOut, status_code=201)
-async def create_kiosk_feedback(
-    body: CreateFeedbackIn,
+@router.post("/appeal", response_model=CreateAppealOut, status_code=201)
+async def create_kiosk_appeal(
+    body: CreateAppealIn,
     session: DbSession,
     x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
-) -> CreateFeedbackOut:
-    org = await _active_org(session, x_kiosk_auth)
-
-    ftype = body.feedback_type.strip()
-    if ftype not in ALL_FEEDBACK_TYPES:
-        raise ValidationError("invalid_feedback_type")
-    phone_norm = normalize_phone(body.phone)
-
-    fb = await create_feedback(
-        session,
-        org_id=org.id,
-        feedback_type=ftype,
-        text=body.text.strip(),
-        phone=phone_norm,
-        source="kiosk_manual",
-    )
-
-    await audit.record(
-        session,
-        actor_user_id=None,
-        actor_org_id=org.id,
-        action="feedback.create",
-        entity_type="application",
-        entity_id=fb.id,
-        after={
-            "feedback_type": ftype,
-            "phone_masked": mask_phone(phone_norm),
-            "kind": "feedback",
-            "source": "kiosk_manual",
-        },
-    )
-
-    telegram.post_feedback_async(fb, ftype, org)
-
-    return CreateFeedbackOut(
-        feedback_id=str(fb.id),
-        feedback_type=ftype,
-        phone_masked=mask_phone(phone_norm),
-        status=fb.status,
-        org_name_translations=name_translations_for_response(org),
+) -> CreateAppealOut:
+    # Device auth only — the appeal is stored upstream, not in our DB.
+    await resolve_device_from_signed_request(session, x_kiosk_auth)
+    fields = body.model_dump(exclude_none=True)
+    data = await murajat.submit_appeal(fields)
+    appeal = data.get("appeal") or {}
+    return CreateAppealOut(
+        appeal_number=str(appeal.get("appeal_number") or ""),
+        status=str(appeal.get("status") or "pending"),
     )
