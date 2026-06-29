@@ -140,8 +140,8 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
                     "description": "Birth date YYYY-MM-DD. Required when confirmed=false.",
                 },
                 "gender": {
-                    "type": "integer",
-                    "enum": [1, 0],
+                    "type": "string",
+                    "enum": ["1", "0"],
                     "description": "1 = erkak (male), 0 = ayol (female). Required when confirmed=false.",
                 },
                 "district_id": {
@@ -187,7 +187,7 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
                 "first_name": {"type": "string", "description": "Same as preview_murajat (when confirmed=false)."},
                 "last_name": {"type": "string", "description": "Same as preview_murajat (when confirmed=false)."},
                 "birth_date": {"type": "string", "description": "Same as preview_murajat (when confirmed=false)."},
-                "gender": {"type": "integer", "enum": [1, 0], "description": "Same as preview_murajat (when confirmed=false)."},
+                "gender": {"type": "string", "enum": ["1", "0"], "description": "Same as preview_murajat (when confirmed=false)."},
                 "district_id": {"type": "integer", "description": "Same as preview_murajat (when confirmed=false)."},
                 "quarter_id": {"type": "integer", "description": "Same as preview_murajat (when confirmed=false)."},
                 "address": {"type": "string", "description": "Same as preview_murajat (when confirmed=false)."},
