@@ -66,6 +66,11 @@ class Program
             if (args.Length >= 1 && args[0] == "--mic-diag")
                 return RunMicDiag();
 
+            // Upload the previous run's crash.log (if any) to the backend so we
+            // can diagnose crashes remotely. Fire-and-forget — must never block
+            // or break startup.
+            _ = TryUploadCrashLogAsync();
+
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
             return 0;
         }
@@ -93,6 +98,36 @@ class Program
             Console.Error.WriteLine(entry);
         }
         catch { /* nothing to do — disk full / readonly / whatever */ }
+    }
+
+    /// <summary>On startup, if the previous run left a crash.log, POST its tail
+    /// to the backend (device-auth) so crashes are diagnosable without physical
+    /// access, then rotate the file so the same content isn't re-sent. Only runs
+    /// when enrolled. Swallows everything — diagnostics must never break boot.</summary>
+    private static async Task TryUploadCrashLogAsync()
+    {
+        try
+        {
+            if (!DeviceKeyStore.HasKey()) return;
+            var path = Path.Combine(
+                Path.GetDirectoryName(Kiosk.App.Settings.KioskSettings.SettingsPath) ?? ".",
+                "crash.log");
+            if (!File.Exists(path)) return;
+            var content = File.ReadAllText(path);
+            if (string.IsNullOrWhiteSpace(content)) return;
+            // Backend caps at 20k chars — send the most recent tail.
+            if (content.Length > 16000)
+                content = content.Substring(content.Length - 16000);
+            await KioskApi.UploadCrashLogAsync(content);
+            // Rotate so we don't re-upload next start; keep the last batch on disk.
+            var rotated = path + ".uploaded";
+            try { File.Delete(rotated); } catch { }
+            try { File.Move(path, rotated); } catch { }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[crashlog] upload failed: {ex.Message}");
+        }
     }
 
     private static async Task<int> RunHeadlessEnroll(string[] args)

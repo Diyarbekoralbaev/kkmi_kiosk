@@ -80,6 +80,11 @@ public sealed record LocationsResponse
     [JsonPropertyName("quarters")] public List<QuarterDto> Quarters { get; init; } = new();
 }
 
+public sealed record CrashLogRequest
+{
+    [JsonPropertyName("text")] public string Text { get; init; } = "";
+}
+
 /// <summary>
 /// HTTP client for the kiosk's manual murajat flow. The backend proxies every
 /// call to the external Council cabinet (cabinet.murajat.uz); nothing is stored
@@ -137,6 +142,25 @@ public static class KioskApi
         {
             Console.Error.WriteLine($"[api] LookupPersonalAsync: {ex.Message}");
             return null;
+        }
+    }
+
+    /// <summary>POST /api/kiosk/crashlog — upload the local crash.log after a
+    /// crash + watchdog restart so we can see the exact exception remotely.
+    /// Fire-and-forget; never throws.</summary>
+    public static async Task UploadCrashLogAsync(string text)
+    {
+        var creds = DeviceKeyStore.Load();
+        if (creds is null || string.IsNullOrWhiteSpace(text)) return;
+        try
+        {
+            await SignedHttpClient.PostJsonAsync(
+                creds.BackendUrl, "/api/kiosk/crashlog",
+                new CrashLogRequest { Text = text }, KioskJsonContext.Default.CrashLogRequest);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[api] UploadCrashLogAsync: {ex.Message}");
         }
     }
 

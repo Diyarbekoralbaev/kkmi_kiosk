@@ -34,12 +34,19 @@ public partial class ManualSubmitPage : UserControl
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
-        SessionStore.Current.PropertyChanged += OnStateChanged;
+        // NOTE: PropertyChanged is subscribed in OnLoaded (and removed in
+        // OnUnloaded), NOT in the constructor. This page is cached, so a
+        // constructor-time subscription would leave the cached instance
+        // reacting to the AI voice flow's shared SubmitStep changes while it's
+        // detached — driving UpdateVisibility cross-flow and crashing the app.
     }
 
     private async void OnLoaded(object? sender, RoutedEventArgs e)
     {
         var s = SessionStore.Current;
+        // Listen only while this page is actually shown (idempotent guard).
+        s.PropertyChanged -= OnStateChanged;
+        s.PropertyChanged += OnStateChanged;
         // Fresh start every entry — wipe whatever a prior session left.
         s.SubmitText = "";
         s.SubmitPhone = "";
@@ -100,6 +107,9 @@ public partial class ManualSubmitPage : UserControl
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        // Stop reacting to SubmitStep once we leave — otherwise the cached page
+        // would run UpdateVisibility for the AI voice flow (cross-flow crash).
+        SessionStore.Current.PropertyChanged -= OnStateChanged;
         _successDismissTimer?.Stop();
         _successDismissTimer = null;
     }
@@ -115,6 +125,9 @@ public partial class ManualSubmitPage : UserControl
 
     private void UpdateVisibility()
     {
+        // Belt-and-suspenders: never touch this (cached) page's controls unless
+        // it's the visible page — the AI voice flow shares SubmitStep.
+        if (SessionStore.Current.CurrentPage != KioskPage.ManualSubmit) return;
         var s = SessionStore.Current;
         var step = s.SubmitStep;
         SectionPhone.IsVisible = step == SubmitStep.Phone;

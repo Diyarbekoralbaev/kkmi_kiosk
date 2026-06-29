@@ -41,6 +41,7 @@ namespace Kiosk.App.Net;
 [JsonSerializable(typeof(DistrictDto))]
 [JsonSerializable(typeof(QuarterDto))]
 [JsonSerializable(typeof(LocationsResponse))]
+[JsonSerializable(typeof(CrashLogRequest))]
 // Org name translations land as a nested dictionary inside multiple DTOs
 // (EnrollResponse, HeartbeatResponse, MurajatSubmittedMessage,
 // DeviceCredentials). Registering the concrete type once here gives the source

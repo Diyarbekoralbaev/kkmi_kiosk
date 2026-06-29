@@ -53,17 +53,20 @@ public partial class App : Application
     private static void OnUiThreadException(
         object? sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        // Only swallow the OpenGL FBO failure — every other unhandled exception
-        // must still surface (the AppDomain handler logs it to crash.log).
-        if (e.Exception is Avalonia.OpenGL.OpenGlException)
-        {
-            e.Handled = true;
-            var n = Interlocked.Increment(ref _glErrorCount);
-            // Log the first few, then rarely, so a persistent failure can't spin
-            // the log at frame rate.
-            if (n <= 3) LogLine($"swallowed OpenGlException #{n}: {e.Exception.Message}");
-            else if (n % 600 == 0) LogLine($"OpenGlException x{n} (throttled)");
-        }
+        // Kiosk resilience: an unhandled exception on the UI thread must NEVER
+        // hard-quit the kiosk in front of a citizen. Swallow it (the render loop
+        // drops a frame and carries on), and log it — throttled — so a persistent
+        // fault can't spin crash.log at frame rate. This covers the known Intel
+        // UHD OpenGL FBO crash AND any transient navigation/render glitch.
+        // Non-UI-thread faults still reach the AppDomain handler (crash.log), and
+        // the crash log is uploaded to the backend on next start for diagnosis.
+        e.Handled = true;
+        var n = Interlocked.Increment(ref _glErrorCount);
+        var kind = e.Exception.GetType().Name;
+        if (n <= 10)
+            LogLine($"swallowed UI exception #{n} [{kind}]: {e.Exception.Message}");
+        else if (n % 600 == 0)
+            LogLine($"UI exceptions x{n} (throttled), last [{kind}]: {e.Exception.Message}");
     }
 
     private static void LogLine(string msg)
