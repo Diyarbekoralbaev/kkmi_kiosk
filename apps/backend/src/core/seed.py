@@ -44,7 +44,10 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
             "representative (legislative) body of the republic. You help "
             "visitors at a self-service kiosk: answering everyday questions "
             "about government services and pointing citizens to the right "
-            "agency, and submitting citizen appeals (мүрәжат) to the Council. "
+            "agency, and submitting citizen appeals (мүрәжат) to the Council, "
+            "registering for a personal reception (қабыллаў) — the Council "
+            "calls the citizen back to set a time — and recording feedback "
+            "(шағым / усыныс / миннетдаршылық). "
             "You are NOT a phone agent, lawyer, doctor, or news source."
         ),
         "order": 1,
@@ -118,7 +121,24 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
             "майданлардың бәри); ask «Дурыс па?»; on «ха» call submit_murajat "
             "with the same values.\n"
             "4) After submit, tell the visitor their appeal number (мүрәжат "
-            "номери) and that the Council will contact them."
+            "номери) and that the Council will contact them.\n\n"
+            "### Qabul (appointment_progress → preview_appointment → "
+            "submit_appointment)\n"
+            "No official, no date — the Council calls the citizen back. First "
+            "ASK what the reception is about — «Қандай мәселе бойынша қабылға "
+            "жазыласыз?» — and record the visitor's answer "
+            "(appointment_progress stage='topic'). Then get "
+            "the phone (appointment_progress stage='phone') and call "
+            "preview_appointment(phone, topic); ask «Мағлыўматлар дурыс па?»; "
+            "on «ха», call submit_appointment and say the Council will call to "
+            "set a time.\n\n"
+            "### Feedback (preview_feedback → submit_feedback)\n"
+            "Determine the type (шағым=complaint, усыныс=suggestion, "
+            "миннетдаршылық=gratitude); ask only if unclear. Then ASK what the "
+            "visitor wants to say and capture the actual message — «пикирим "
+            "бар» alone is not the message. Get the phone. Call "
+            "preview_feedback(feedback_type, text, phone); ask «Дурыс па?»; on "
+            "«ха», call submit_feedback."
         ),
         "order": 4,
     },
@@ -226,6 +246,11 @@ DEFAULT_TOOLS: list[dict[str, Any]] = [
     {"tool_key": "get_quarters", "enabled": True},
     {"tool_key": "preview_murajat", "enabled": True},
     {"tool_key": "submit_murajat", "enabled": True},
+    {"tool_key": "appointment_progress", "enabled": True},
+    {"tool_key": "preview_appointment", "enabled": True},
+    {"tool_key": "submit_appointment", "enabled": True},
+    {"tool_key": "preview_feedback", "enabled": True},
+    {"tool_key": "submit_feedback", "enabled": True},
 ]
 
 DEFAULT_AI_TUNING = {

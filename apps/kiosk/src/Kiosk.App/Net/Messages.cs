@@ -112,6 +112,56 @@ public sealed record MurajatSubmittedMessage
     public Dictionary<string, string> OrgNameTranslations { get; init; } = new();
 }
 
+// ── Qabul (reception registration) WS envelopes ────────────────────────────
+
+public sealed record AppointmentProgressMessage
+{
+    /// <summary>One of: "topic", "phone" (the legislative qabul flow has no
+    /// official stage — the Council calls the citizen back).</summary>
+    [JsonPropertyName("stage")] public string Stage { get; init; } = "";
+    [JsonPropertyName("topic")] public string? Topic { get; init; }
+    [JsonPropertyName("phone_masked")] public string? PhoneMasked { get; init; }
+}
+
+public sealed record AppointmentPreviewMessage
+{
+    [JsonPropertyName("topic")] public string Topic { get; init; } = "";
+    [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
+}
+
+public sealed record AppointmentSubmittedMessage
+{
+    [JsonPropertyName("appointment_id")] public string AppointmentId { get; init; } = "";
+    [JsonPropertyName("reference_no")] public string ReferenceNo { get; init; } = "";
+    [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
+    [JsonPropertyName("topic")] public string Topic { get; init; } = "";
+    [JsonPropertyName("verification_url")] public string VerificationUrl { get; init; } = "";
+    [JsonPropertyName("qr_png_base64")] public string QrPngBase64 { get; init; } = "";
+    [JsonPropertyName("receipt_pdf_base64")] public string ReceiptPdfBase64 { get; init; } = "";
+    /// <summary>Localized org names so the success-talon header swaps to the
+    /// right language without waiting for the next heartbeat.</summary>
+    [JsonPropertyName("org_name_translations")]
+    public Dictionary<string, string> OrgNameTranslations { get; init; } = new();
+}
+
+// ── Feedback (shaǵım / usınıs / minnetdarshılıq) WS envelopes ───────────────
+
+public sealed record FeedbackPreviewMessage
+{
+    /// <summary>One of: "complaint", "suggestion", "gratitude".</summary>
+    [JsonPropertyName("feedback_type")] public string FeedbackType { get; init; } = "";
+    [JsonPropertyName("text")] public string Text { get; init; } = "";
+    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
+}
+
+public sealed record FeedbackSubmittedMessage
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("feedback_type")] public string FeedbackType { get; init; } = "";
+    [JsonPropertyName("text")] public string Text { get; init; } = "";
+    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
+}
+
 public sealed record ServerErrorMessage
 {
     [JsonPropertyName("code")] public string Code { get; init; } = "";

@@ -162,4 +162,54 @@
     <!-- Preview labels -->
     <x:String x:Key="MurajatNameLabel">Аты-жөни</x:String>
     <x:String x:Key="MurajatTextLabel">Мүрәжат тексти</x:String>
+
+    <!-- ===== Home tiles: Qabul + Feedback ===== -->
+    <x:String x:Key="HomeTileQabulTitle">Жеке қабылға жазылыў</x:String>
+    <x:String x:Key="HomeTileQabulSubtitle">Телефон номериңизди қалдырың — Кеңес сиз бенен байланысады</x:String>
+    <x:String x:Key="HomeTileFeedbackTitle">Шағым / усыныс / миннетдаршылық</x:String>
+    <x:String x:Key="HomeTileFeedbackSubtitle">Пикириңизди қалдырың — шағым, усыныс ямаса миннетдаршылық</x:String>
+
+    <!-- ===== Qabul (reception registration) page ===== -->
+    <x:String x:Key="QabulPageTitle">Жеке қабылға жазылыў</x:String>
+    <x:String x:Key="QabulRegisterIntro">Телефон номериңизди қалдырың — Кеңес сиз бенен байланысады.</x:String>
+    <x:String x:Key="QabulTopicLabel">Мәселеңиз не ҳаққында?</x:String>
+    <x:String x:Key="QabulTopicHint">1–2 гәп пенен жазың</x:String>
+    <x:String x:Key="QabulTopicSkip">Өткизип жибериў</x:String>
+    <x:String x:Key="QabulContinueButton">Даўам етиў</x:String>
+    <x:String x:Key="QabulEditTopic">Мәселени өзгертиў</x:String>
+    <x:String x:Key="QabulPhoneLabel">Телефон номериңиз</x:String>
+    <x:String x:Key="QabulConfirmButton">Тастыйықлаў</x:String>
+    <x:String x:Key="QabulPhonePreviewTitle">Телефон номериңизди тексериң</x:String>
+    <x:String x:Key="QabulPhonePreviewHint">Жуўмақламастан алдын номериңиздиң дурыслығына көз жеткизиң. Қәте болса «Дүзетиў» түймесин басың.</x:String>
+    <x:String x:Key="QabulPhonePreviewEdit">Дүзетиў</x:String>
+    <x:String x:Key="QabulPhonePreviewSend">Аўа, жибериў</x:String>
+    <x:String x:Key="QabulVoicePreviewTitle">Тастыйықлаў</x:String>
+    <x:String x:Key="QabulVoicePreviewTopicLabel">Мәселе</x:String>
+    <x:String x:Key="QabulVoicePreviewPhoneLabel">Телефон</x:String>
+    <x:String x:Key="QabulVoicePreviewReject">Яқ, қайтарың</x:String>
+    <x:String x:Key="QabulVoicePreviewConfirm">Тастыйықлайман</x:String>
+    <x:String x:Key="QabulTalonSubtitle">Қабылға жазылыў талоны</x:String>
+    <x:String x:Key="QabulTalonCallback">Жоқарғы Кеңес мүрәжат бөлими сиз бенен байланысады.</x:String>
+    <x:String x:Key="QabulTalonScanHint">QR-кодты телефонда сканерлең.</x:String>
+    <x:String x:Key="QabulTalonReference">Мүрәжат номери: </x:String>
+    <x:String x:Key="QabulTalonMasala">Мәселеси: </x:String>
+    <x:String x:Key="QabulTalonTelefon">Телефон: </x:String>
+    <x:String x:Key="QabulConfirmErrorPhoneShort">Телефон номери толық емес (кеминде 9 сан)</x:String>
+    <x:String x:Key="QabulConfirmSending">Жиберилип атыр...</x:String>
+    <x:String x:Key="QabulConfirmError">Қәтелик. Интернетти тексерип, қайтадан урынып көриң.</x:String>
+    <x:String x:Key="QabulPhoneHint">Телефон номериңизди киритиң</x:String>
+
+    <!-- ===== Feedback (shaǵım / usınıs / minnetdarshılıq) page ===== -->
+    <x:String x:Key="FeedbackPageTitle">Пикир қалдырыў</x:String>
+    <x:String x:Key="FeedbackTypePrompt">Пикириңиздиң түрин сайлаң</x:String>
+    <x:String x:Key="FeedbackTypeComplaint">Шағым</x:String>
+    <x:String x:Key="FeedbackTypeSuggestion">Усыныс</x:String>
+    <x:String x:Key="FeedbackTypeGratitude">Миннетдаршылық</x:String>
+    <x:String x:Key="FeedbackTextTitle">Пикириңизди жазың</x:String>
+    <x:String x:Key="FeedbackTextHint">Не айтпақшысыз — толық жазың</x:String>
+    <x:String x:Key="FeedbackTextErrorShort">Кеминде 5 ҳәрип жазың</x:String>
+    <x:String x:Key="FeedbackPhoneTitle">Байланыс телефоны</x:String>
+    <x:String x:Key="FeedbackSuccessTitle">Пикириңиз қабыл етилди</x:String>
+    <x:String x:Key="FeedbackSuccessHint">Кеңес хызметкерлери пикириңизди көрип шығады.</x:String>
+    <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
 </ResourceDictionary>

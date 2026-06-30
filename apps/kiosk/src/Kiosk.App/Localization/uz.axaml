@@ -166,4 +166,54 @@
     <!-- Preview labels -->
     <x:String x:Key="MurajatNameLabel">F.I.O.</x:String>
     <x:String x:Key="MurajatTextLabel">Murojaat matni</x:String>
+
+    <!-- ===== Home tiles: Qabul + Feedback ===== -->
+    <x:String x:Key="HomeTileQabulTitle">Shaxsiy qabulga yozilish</x:String>
+    <x:String x:Key="HomeTileQabulSubtitle">Telefon raqamingizni qoldiring — Kengash siz bilan bog'lanadi</x:String>
+    <x:String x:Key="HomeTileFeedbackTitle">Shikoyat / taklif / minnatdorchilik</x:String>
+    <x:String x:Key="HomeTileFeedbackSubtitle">Fikringizni qoldiring — shikoyat, taklif yoki minnatdorchilik</x:String>
+
+    <!-- ===== Qabul (reception registration) page ===== -->
+    <x:String x:Key="QabulPageTitle">Shaxsiy qabulga yozilish</x:String>
+    <x:String x:Key="QabulRegisterIntro">Telefon raqamingizni qoldiring — Kengash siz bilan bog'lanadi.</x:String>
+    <x:String x:Key="QabulTopicLabel">Masalangiz qisqacha?</x:String>
+    <x:String x:Key="QabulTopicHint">1–2 gap bilan yozing</x:String>
+    <x:String x:Key="QabulTopicSkip">O'tkazib yuborish</x:String>
+    <x:String x:Key="QabulContinueButton">Davom etish</x:String>
+    <x:String x:Key="QabulEditTopic">Masalani o'zgartirish</x:String>
+    <x:String x:Key="QabulPhoneLabel">Telefon raqami</x:String>
+    <x:String x:Key="QabulConfirmButton">Tasdiqlash</x:String>
+    <x:String x:Key="QabulPhonePreviewTitle">Telefon raqamingizni tekshiring</x:String>
+    <x:String x:Key="QabulPhonePreviewHint">Yakunlashdan oldin raqamingiz to'g'riligini tasdiqlang. Xato bo'lsa "Tuzatish" tugmasini bosing.</x:String>
+    <x:String x:Key="QabulPhonePreviewEdit">Tuzatish</x:String>
+    <x:String x:Key="QabulPhonePreviewSend">Ha, yuborish</x:String>
+    <x:String x:Key="QabulVoicePreviewTitle">Tasdiqlash</x:String>
+    <x:String x:Key="QabulVoicePreviewTopicLabel">Masala</x:String>
+    <x:String x:Key="QabulVoicePreviewPhoneLabel">Telefon</x:String>
+    <x:String x:Key="QabulVoicePreviewReject">Yo'q, qaytaring</x:String>
+    <x:String x:Key="QabulVoicePreviewConfirm">Tasdiqlayman</x:String>
+    <x:String x:Key="QabulTalonSubtitle">Qabulga yozilish taloni</x:String>
+    <x:String x:Key="QabulTalonCallback">Joqarg'i Kengash murojaatlar bo'limi siz bilan bog'lanadi.</x:String>
+    <x:String x:Key="QabulTalonScanHint">QR ni telefonda skanerlang.</x:String>
+    <x:String x:Key="QabulTalonReference">Murojaat raqami: </x:String>
+    <x:String x:Key="QabulTalonMasala">Masalasi: </x:String>
+    <x:String x:Key="QabulTalonTelefon">Telefon: </x:String>
+    <x:String x:Key="QabulConfirmErrorPhoneShort">Telefon raqami to'liq emas (kamida 9 raqam)</x:String>
+    <x:String x:Key="QabulConfirmSending">Yuborilmoqda...</x:String>
+    <x:String x:Key="QabulConfirmError">Xatolik. Internetni tekshirib qaytadan urinib ko'ring.</x:String>
+    <x:String x:Key="QabulPhoneHint">Telefon raqamingizni kiriting</x:String>
+
+    <!-- ===== Feedback (shaǵım / usınıs / minnetdarshılıq) page ===== -->
+    <x:String x:Key="FeedbackPageTitle">Fikr qoldirish</x:String>
+    <x:String x:Key="FeedbackTypePrompt">Fikringiz turini tanlang</x:String>
+    <x:String x:Key="FeedbackTypeComplaint">Shikoyat</x:String>
+    <x:String x:Key="FeedbackTypeSuggestion">Taklif</x:String>
+    <x:String x:Key="FeedbackTypeGratitude">Minnatdorchilik</x:String>
+    <x:String x:Key="FeedbackTextTitle">Fikringizni yozing</x:String>
+    <x:String x:Key="FeedbackTextHint">Nima demoqchisiz — batafsil yozing</x:String>
+    <x:String x:Key="FeedbackTextErrorShort">Kamida 5 ta harf kiriting</x:String>
+    <x:String x:Key="FeedbackPhoneTitle">Aloqa telefon raqami</x:String>
+    <x:String x:Key="FeedbackSuccessTitle">Fikringiz qabul qilindi</x:String>
+    <x:String x:Key="FeedbackSuccessHint">Kengash xodimlari fikringizni ko'rib chiqishadi.</x:String>
+    <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
 </ResourceDictionary>

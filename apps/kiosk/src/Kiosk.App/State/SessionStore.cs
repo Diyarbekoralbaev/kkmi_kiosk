@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kiosk.App.Net;
 using Kiosk.App.Pages;
+using Kiosk.App.Print;
+using Kiosk.App.Settings;
 
 namespace Kiosk.App.State;
 
@@ -22,6 +25,15 @@ public enum KioskPage
     /// Home Murajat tile. Phone → (lookup) → confirm/full-form → text →
     /// preview → submit. Distinct from the AI voice flow above.</summary>
     ManualSubmit,
+    /// <summary>Reception-registration flow (Joqarı Keńes qabul). No official,
+    /// no scheduled date — citizen leaves a phone (+ optional topic) and the
+    /// Council calls back. Reached by the Home Qabul tile or the voice agent
+    /// navigating to "qabul"/"reception".</summary>
+    Qabul,
+    /// <summary>Touch-driven feedback flow (shaǵım / usınıs / minnetdarshılıq).
+    /// Reached by the Home Fikr tile, or by the voice agent navigating to
+    /// "feedback".</summary>
+    Feedback,
 }
 
 /// <summary>Step machine shared by the AI voice preview page (Review/Done
@@ -39,6 +51,33 @@ public enum SubmitStep
     Done,
 }
 
+/// <summary>State machine for the reception-registration (qabul) flow. Kept
+/// separate from <see cref="SubmitStep"/> so the murajat and qabul flows
+/// can't drive each other's page visibility — both share SessionStore but
+/// read different step enums.</summary>
+public enum AppointmentStep
+{
+    Idle,
+    Topic,
+    Phone,
+    Preview,
+    Done,
+}
+
+/// <summary>State machine for the manual feedback page (touch flow, no
+/// voice). Visitor: pick type → type text → enter phone → preview →
+/// success. Kept separate from the submit/appointment steps so the
+/// three flows can't drive each other's visibility.</summary>
+public enum ManualFeedbackStep
+{
+    Idle,
+    Type,
+    Text,
+    Phone,
+    Preview,
+    Done,
+}
+
 /// <summary>
 /// Observable singleton. Owned by MainWindow's DataContext. UI-thread only —
 /// KioskRuntime marshals WS events through Dispatcher.UIThread before mutating it.
@@ -50,7 +89,9 @@ public partial class SessionStore : ObservableObject
     private HomePage? _home;
     private SubmitPage? _submit;
     private ContactsPage? _contacts;
+    private QabulPage? _qabul;
     private ManualSubmitPage? _manualSubmit;
+    private ManualFeedbackPage? _manualFeedback;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentView))]
@@ -101,6 +142,31 @@ public partial class SessionStore : ObservableObject
     [ObservableProperty] private int? _submitDistrictId;
     [ObservableProperty] private int? _submitQuarterId;
     [ObservableProperty] private string _submitAddress = "";
+
+    // ── Qabul (reception registration) state ───────────────────────────────
+    // The Joqarı Keńes flow has NO official and NO scheduled date — the
+    // citizen registers + leaves a phone (and optional topic) and the
+    // Council calls them back. The talon shows a reference number + QR.
+    [ObservableProperty] private AppointmentStep _appointmentStep = AppointmentStep.Idle;
+    [ObservableProperty] private string _appointmentTopic = "";
+    [ObservableProperty] private string _appointmentPhoneMasked = "";
+    [ObservableProperty] private string _appointmentVerificationUrl = "";
+    [ObservableProperty] private string _appointmentId = "";
+    /// <summary>Human-readable reference number for the registration, e.g.
+    /// "KK-20260528-0042". Shown on the on-screen talon and printed receipt.</summary>
+    [ObservableProperty] private string _appointmentReferenceNo = "";
+    [ObservableProperty] private byte[]? _appointmentQrPng;
+    [ObservableProperty] private byte[]? _appointmentReceiptPdf;
+    [ObservableProperty] private bool _showAppointmentSuccess;
+
+    // ── Feedback (shaǵım / usınıs / minnetdarshılıq) state ──────────────────
+    [ObservableProperty] private ManualFeedbackStep _manualFeedbackStep = ManualFeedbackStep.Idle;
+    /// <summary>One of: "complaint", "suggestion", "gratitude".</summary>
+    [ObservableProperty] private string _feedbackType = "";
+    [ObservableProperty] private string _feedbackText = "";
+    [ObservableProperty] private string _feedbackPhone = "";
+    [ObservableProperty] private string _feedbackSubmittedId = "";
+    [ObservableProperty] private bool _showFeedbackSuccess;
 
     /// <summary>Result of the phone lookup that opened the manual flow.</summary>
     public bool LookupExists { get; set; }
@@ -296,7 +362,9 @@ public partial class SessionStore : ObservableObject
         KioskPage.Home => _home ??= new HomePage(),
         KioskPage.Submit => _submit ??= new SubmitPage(),
         KioskPage.Contacts => _contacts ??= new ContactsPage(),
+        KioskPage.Qabul => _qabul ??= new QabulPage(),
         KioskPage.ManualSubmit => _manualSubmit ??= new ManualSubmitPage(),
+        KioskPage.Feedback => _manualFeedback ??= new ManualFeedbackPage(),
         // Don't cache the AI page — its Loaded/Unloaded handlers manage the
         // voice runtime lifecycle, and a cached instance would skip Loaded
         // on re-entry, leaving the runtime in whatever state Unloaded left
@@ -334,6 +402,23 @@ public partial class SessionStore : ObservableObject
         LookupPersonal = null;
         ClearLocations();
 
+        AppointmentStep = AppointmentStep.Idle;
+        AppointmentTopic = "";
+        AppointmentPhoneMasked = "";
+        AppointmentVerificationUrl = "";
+        AppointmentId = "";
+        AppointmentReferenceNo = "";
+        AppointmentQrPng = null;
+        AppointmentReceiptPdf = null;
+        ShowAppointmentSuccess = false;
+
+        ManualFeedbackStep = ManualFeedbackStep.Idle;
+        FeedbackType = "";
+        FeedbackText = "";
+        FeedbackPhone = "";
+        FeedbackSubmittedId = "";
+        ShowFeedbackSuccess = false;
+
         LiveTranscript = "";
         Navigate(KioskPage.Home);
     }
@@ -362,6 +447,11 @@ public partial class SessionStore : ObservableObject
         {
             case "submit": Navigate(KioskPage.Submit); break;
             case "contacts": Navigate(KioskPage.Contacts); break;
+            // Voice agent's old "reception" hop now also means the merged
+            // qabul flow — there's no separate reception page anymore.
+            case "reception":
+            case "qabul": Navigate(KioskPage.Qabul); break;
+            case "feedback": Navigate(KioskPage.Feedback); break;
             case "ai": Navigate(KioskPage.Ai); break;
             default: Navigate(KioskPage.Home); break;
         }
@@ -408,6 +498,126 @@ public partial class SessionStore : ObservableObject
         ShowSubmitSuccess = true;
         // Auto-return to home after 6 s so the screen resets for the next visitor.
         DispatcherTimer.RunOnce(() => { ShowSubmitSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(6));
+    }
+
+    public void OnAppointmentProgress(AppointmentProgressMessage p)
+    {
+        // Stepper-only: advance the highlight + populate just the field that
+        // was captured by THIS user reply. Nothing is committed yet; the AI
+        // will call preview_appointment with topic + phone once both are in.
+        // The Council flow has only two stages — no official.
+        switch (p.Stage)
+        {
+            case "topic":
+                if (!string.IsNullOrEmpty(p.Topic)) AppointmentTopic = p.Topic;
+                if (AppointmentStep < AppointmentStep.Topic) AppointmentStep = AppointmentStep.Topic;
+                // No navigation here: the robot stays on screen while the
+                // agent collects by voice. We only switch to the Qabul page
+                // when the agent calls preview_appointment
+                // (OnAppointmentPreview) — same as the murajaat flow. Yanking
+                // the screen to a half-built manual form mid-conversation was
+                // why the experience felt non-interactive.
+                break;
+            case "phone":
+                if (!string.IsNullOrEmpty(p.PhoneMasked)) AppointmentPhoneMasked = p.PhoneMasked;
+                if (AppointmentStep < AppointmentStep.Phone) AppointmentStep = AppointmentStep.Phone;
+                break;
+        }
+    }
+
+    public void OnAppointmentPreview(AppointmentPreviewMessage p)
+    {
+        AppointmentPhoneMasked = p.PhoneMasked;
+        AppointmentTopic = p.Topic;
+        AppointmentStep = AppointmentStep.Preview;
+        Navigate(KioskPage.Qabul);
+    }
+
+    public void OnAppointmentSubmitted(AppointmentSubmittedMessage s)
+    {
+        AppointmentId = s.AppointmentId;
+        AppointmentReferenceNo = s.ReferenceNo;
+        AppointmentPhoneMasked = s.PhoneMasked;
+        AppointmentTopic = s.Topic;
+        AppointmentVerificationUrl = s.VerificationUrl;
+        // Decode QR + receipt PDF bytes. We log decode failures explicitly
+        // because a silent catch here used to mask a real production bug
+        // (the visitor sees a blank talon — no QR, no receipt — and there's
+        // no way to tell whether the backend sent bad base64 or the kiosk
+        // botched the parse). Now any decode error lands in stderr with
+        // both the exception message and the input length so we can root-
+        // cause it without guessing.
+        try
+        {
+            AppointmentQrPng = Convert.FromBase64String(s.QrPngBase64 ?? "");
+        }
+        catch (Exception ex)
+        {
+            AppointmentQrPng = null;
+            Console.Error.WriteLine(
+                $"[appointment] QR base64 decode failed: {ex.GetType().Name}: {ex.Message} (input_len={(s.QrPngBase64 ?? "").Length})");
+        }
+        try
+        {
+            AppointmentReceiptPdf = Convert.FromBase64String(s.ReceiptPdfBase64 ?? "");
+        }
+        catch (Exception ex)
+        {
+            AppointmentReceiptPdf = null;
+            Console.Error.WriteLine(
+                $"[appointment] Receipt PDF base64 decode failed: {ex.GetType().Name}: {ex.Message} (input_len={(s.ReceiptPdfBase64 ?? "").Length})");
+        }
+        // Voice flow's submit envelope can carry a fresh translations
+        // bundle — useful when the super admin renamed the org between
+        // the kiosk's last heartbeat and this submit. Empty dict on older
+        // backends is fine; UpdateOrgBranding falls through to OrgName.
+        if (s.OrgNameTranslations is not null && s.OrgNameTranslations.Count > 0)
+        {
+            UpdateOrgBranding(s.OrgNameTranslations,
+                string.IsNullOrEmpty(OrgName) ? "" : OrgName);
+        }
+        AppointmentStep = AppointmentStep.Done;
+        ShowAppointmentSuccess = true;
+        Navigate(KioskPage.Qabul);
+
+        // Auto-print the receipt if the settings allow it. Fire-and-forget —
+        // a printer failure must not block the UI from showing the reference
+        // number; the visitor can still read the on-screen QR.
+        if (AppointmentReceiptPdf is not null && KioskSettings.Current.AutoPrintReceipts)
+        {
+            var pdf = AppointmentReceiptPdf;
+            var printerName = KioskSettings.Current.PrinterName;
+            _ = Task.Run(() => ReceiptPrinter.PrintAsync(pdf, printerName));
+        }
+
+        // Auto-return to home after 12s — visitor needs time to read the
+        // reference number / scan the QR before the screen resets.
+        DispatcherTimer.RunOnce(() => { ShowAppointmentSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(12));
+    }
+
+    public void OnFeedbackPreview(FeedbackPreviewMessage p)
+    {
+        // Voice agent called preview_feedback — mirror the murajaat
+        // OnPreview pattern: stash the captured fields and bring the
+        // feedback page up to its review step.
+        FeedbackType = p.FeedbackType;
+        FeedbackText = p.Text;
+        FeedbackPhone = p.Phone;
+        ManualFeedbackStep = ManualFeedbackStep.Preview;
+        Navigate(KioskPage.Feedback);
+    }
+
+    public void OnFeedbackSubmitted(FeedbackSubmittedMessage s)
+    {
+        FeedbackSubmittedId = s.Id;
+        if (!string.IsNullOrEmpty(s.FeedbackType)) FeedbackType = s.FeedbackType;
+        if (!string.IsNullOrEmpty(s.Text)) FeedbackText = s.Text;
+        if (!string.IsNullOrEmpty(s.Phone)) FeedbackPhone = s.Phone;
+        ManualFeedbackStep = ManualFeedbackStep.Done;
+        ShowFeedbackSuccess = true;
+        Navigate(KioskPage.Feedback);
+        // Auto-return to home after 4 s so the screen resets for the next visitor.
+        DispatcherTimer.RunOnce(() => { ShowFeedbackSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(4));
     }
 
     public void OnAudioDone()

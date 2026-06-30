@@ -16,9 +16,11 @@ from .api import auth as auth_router
 from .api import health as health_router
 from .api import health_deep as health_deep_router
 from .api import kiosk_applications as kiosk_applications_router
+from .api import kiosk_appointments as kiosk_appointments_router
 from .api import kiosk_auth as kiosk_auth_router
 from .api import kiosk_diag as kiosk_diag_router
 from .api import kiosk_enrollment as kiosk_enrollment_router
+from .api import kiosk_feedback as kiosk_feedback_router
 from .api import kiosk_locations as kiosk_locations_router
 from .api import kiosk_updates as kiosk_updates_router
 from .api import kiosk_ws as kiosk_ws_router
@@ -136,6 +138,8 @@ def create_app() -> FastAPI:
     app.include_router(kiosk_auth_router.router)
     app.include_router(kiosk_enrollment_router.router)
     app.include_router(kiosk_applications_router.router)
+    app.include_router(kiosk_appointments_router.router)
+    app.include_router(kiosk_feedback_router.router)
     app.include_router(kiosk_locations_router.router)
     app.include_router(kiosk_diag_router.router)
     app.include_router(kiosk_updates_router.router)

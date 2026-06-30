@@ -161,4 +161,54 @@
     <!-- Preview labels -->
     <x:String x:Key="MurajatNameLabel">Ф.И.О.</x:String>
     <x:String x:Key="MurajatTextLabel">Текст обращения</x:String>
+
+    <!-- ===== Home tiles: Qabul + Feedback ===== -->
+    <x:String x:Key="HomeTileQabulTitle">Запись на личный приём</x:String>
+    <x:String x:Key="HomeTileQabulSubtitle">Оставьте номер телефона — Кенгаш свяжется с вами</x:String>
+    <x:String x:Key="HomeTileFeedbackTitle">Жалоба / предложение / благодарность</x:String>
+    <x:String x:Key="HomeTileFeedbackSubtitle">Оставьте отзыв — жалоба, предложение или благодарность</x:String>
+
+    <!-- ===== Qabul (reception registration) page ===== -->
+    <x:String x:Key="QabulPageTitle">Запись на личный приём</x:String>
+    <x:String x:Key="QabulRegisterIntro">Оставьте номер телефона — Кенгаш свяжется с вами.</x:String>
+    <x:String x:Key="QabulTopicLabel">Кратко опишите свой вопрос</x:String>
+    <x:String x:Key="QabulTopicHint">Одной-двумя фразами</x:String>
+    <x:String x:Key="QabulTopicSkip">Пропустить</x:String>
+    <x:String x:Key="QabulContinueButton">Продолжить</x:String>
+    <x:String x:Key="QabulEditTopic">Изменить тему</x:String>
+    <x:String x:Key="QabulPhoneLabel">Номер телефона</x:String>
+    <x:String x:Key="QabulConfirmButton">Подтвердить</x:String>
+    <x:String x:Key="QabulPhonePreviewTitle">Проверьте ваш номер телефона</x:String>
+    <x:String x:Key="QabulPhonePreviewHint">Перед отправкой убедитесь, что номер указан верно. Если ошибка — нажмите «Исправить».</x:String>
+    <x:String x:Key="QabulPhonePreviewEdit">Исправить</x:String>
+    <x:String x:Key="QabulPhonePreviewSend">Да, отправить</x:String>
+    <x:String x:Key="QabulVoicePreviewTitle">Подтверждение</x:String>
+    <x:String x:Key="QabulVoicePreviewTopicLabel">Тема</x:String>
+    <x:String x:Key="QabulVoicePreviewPhoneLabel">Телефон</x:String>
+    <x:String x:Key="QabulVoicePreviewReject">Нет, вернуть</x:String>
+    <x:String x:Key="QabulVoicePreviewConfirm">Подтверждаю</x:String>
+    <x:String x:Key="QabulTalonSubtitle">Талон записи на приём</x:String>
+    <x:String x:Key="QabulTalonCallback">Отдел обращений Жокаргы Кенеса свяжется с вами.</x:String>
+    <x:String x:Key="QabulTalonScanHint">Отсканируйте QR на телефоне.</x:String>
+    <x:String x:Key="QabulTalonReference">Номер обращения: </x:String>
+    <x:String x:Key="QabulTalonMasala">Тема: </x:String>
+    <x:String x:Key="QabulTalonTelefon">Телефон: </x:String>
+    <x:String x:Key="QabulConfirmErrorPhoneShort">Номер телефона неполный (минимум 9 цифр)</x:String>
+    <x:String x:Key="QabulConfirmSending">Отправляется...</x:String>
+    <x:String x:Key="QabulConfirmError">Ошибка. Проверьте интернет и попробуйте снова.</x:String>
+    <x:String x:Key="QabulPhoneHint">Введите ваш номер телефона</x:String>
+
+    <!-- ===== Feedback (жалоба / предложение / благодарность) page ===== -->
+    <x:String x:Key="FeedbackPageTitle">Оставить отзыв</x:String>
+    <x:String x:Key="FeedbackTypePrompt">Выберите тип отзыва</x:String>
+    <x:String x:Key="FeedbackTypeComplaint">Жалоба</x:String>
+    <x:String x:Key="FeedbackTypeSuggestion">Предложение</x:String>
+    <x:String x:Key="FeedbackTypeGratitude">Благодарность</x:String>
+    <x:String x:Key="FeedbackTextTitle">Напишите ваш отзыв</x:String>
+    <x:String x:Key="FeedbackTextHint">Что вы хотите сказать — изложите подробно</x:String>
+    <x:String x:Key="FeedbackTextErrorShort">Введите минимум 5 символов</x:String>
+    <x:String x:Key="FeedbackPhoneTitle">Контактный номер</x:String>
+    <x:String x:Key="FeedbackSuccessTitle">Ваш отзыв принят</x:String>
+    <x:String x:Key="FeedbackSuccessHint">Сотрудники Кенгаша рассмотрят ваш отзыв.</x:String>
+    <x:String x:Key="ManualMurajatSuccessId">№ {0}</x:String>
 </ResourceDictionary>
