@@ -26,22 +26,4 @@ public partial class HomePage : UserControl
         SessionStore.Current.SubmitStep = SubmitStep.Idle;
         SessionStore.Current.Navigate(KioskPage.ManualSubmit);
     }
-
-    private void OnTileQabul(object? sender, RoutedEventArgs e)
-    {
-        // Jeke qabılǵa jazılıw — reception registration. No official, no
-        // date; the citizen leaves a phone and the Council calls back. Reset
-        // the step to Idle so QabulPage treats this as a fresh touch entry —
-        // not a leftover voice-preview state from an abandoned AI session.
-        SessionStore.Current.AppointmentStep = AppointmentStep.Idle;
-        SessionStore.Current.Navigate(KioskPage.Qabul);
-    }
-
-    private void OnTileFeedback(object? sender, RoutedEventArgs e)
-    {
-        // Shaǵım / usınıs / minnetdarshılıq — feedback flow. Reset the step so
-        // a stale voice preview can't leak into the touch entry.
-        SessionStore.Current.ManualFeedbackStep = ManualFeedbackStep.Idle;
-        SessionStore.Current.Navigate(KioskPage.Feedback);
-    }
 }

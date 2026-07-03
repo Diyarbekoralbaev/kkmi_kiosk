@@ -199,11 +199,6 @@ public sealed class KioskRuntime : IAsyncDisposable
         ws.TranscriptReceived += t => Dispatcher.UIThread.Post(() => SessionStore.Current.OnTranscript(t.Text, t.Final, t.Speaker));
         ws.MurajatPreviewReceived += p => Dispatcher.UIThread.Post(() => SessionStore.Current.OnMurajatPreview(p));
         ws.MurajatSubmittedReceived += s => Dispatcher.UIThread.Post(() => SessionStore.Current.OnMurajatSubmitted(s));
-        ws.AppointmentProgressReceived += p => Dispatcher.UIThread.Post(() => SessionStore.Current.OnAppointmentProgress(p));
-        ws.AppointmentPreviewReceived += p => Dispatcher.UIThread.Post(() => SessionStore.Current.OnAppointmentPreview(p));
-        ws.AppointmentSubmittedReceived += s => Dispatcher.UIThread.Post(() => SessionStore.Current.OnAppointmentSubmitted(s));
-        ws.FeedbackPreviewReceived += p => Dispatcher.UIThread.Post(() => SessionStore.Current.OnFeedbackPreview(p));
-        ws.FeedbackSubmittedReceived += s => Dispatcher.UIThread.Post(() => SessionStore.Current.OnFeedbackSubmitted(s));
         ws.AudioDoneReceived += () => Dispatcher.UIThread.Post(() => SessionStore.Current.OnAudioDone());
         ws.ErrorReceived += e => Dispatcher.UIThread.Post(() => SessionStore.Current.OnServerError(e.Code, e.Message));
     }
