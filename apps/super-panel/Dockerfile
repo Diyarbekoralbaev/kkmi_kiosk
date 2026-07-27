@@ -27,5 +27,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
+# 127.0.0.1, not localhost: nginx.conf has `listen 80` (IPv4 only), while
+# alpine resolves `localhost` to ::1 first — so the probe got "connection
+# refused" and the container sat permanently unhealthy even though it served
+# every request fine. A healthcheck that always fails is worse than none: it
+# teaches everyone to ignore the word "unhealthy".
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-    CMD wget -qO- http://localhost/ >/dev/null || exit 1
+    CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1

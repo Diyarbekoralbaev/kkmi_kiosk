@@ -92,7 +92,7 @@ services:
     ports:
       - "127.0.0.1:8032:80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -107,7 +107,7 @@ services:
     ports:
       - "127.0.0.1:8033:80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null"]
       interval: 30s
       timeout: 3s
       retries: 3

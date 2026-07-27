@@ -85,7 +85,7 @@
             <StackPanel x:Name="NameStep" IsVisible="False" Spacing="20">
                 <TextBlock Text="{DynamicResource MurojatNamePrompt}" Classes="prompt" />
                 <TextBox x:Name="NameInput" Classes="field"
-                         Watermark="{DynamicResource MurojatNameWatermark}" />
+                         PlaceholderText="{DynamicResource MurojatNameWatermark}" />
                 <TextBlock x:Name="NameError" Classes="error" IsVisible="False"
                            Text="{DynamicResource MurojatNameError}" />
                 <controls:OnScreenKeyboard x:Name="NameKeyboard" />
@@ -97,7 +97,7 @@
             <StackPanel x:Name="PhoneStep" IsVisible="False" Spacing="20">
                 <TextBlock Text="{DynamicResource MurojatPhonePrompt}" Classes="prompt" />
                 <TextBox x:Name="PhoneInput" Classes="field phone" IsReadOnly="True"
-                         Watermark="90 123 45 67" />
+                         PlaceholderText="90 123 45 67" />
                 <TextBlock x:Name="PhoneError" Classes="error" IsVisible="False"
                            Text="{DynamicResource MurojatPhoneError}" />
                 <controls:NumericKeypad x:Name="PhoneKeypad" />
@@ -110,7 +110,7 @@
                 <TextBlock Text="{DynamicResource ReceptionReasonPrompt}" Classes="prompt" />
                 <TextBox x:Name="ReasonInput" Classes="field" Height="180"
                          AcceptsReturn="True" TextWrapping="Wrap"
-                         Watermark="{DynamicResource ReceptionReasonWatermark}" />
+                         PlaceholderText="{DynamicResource ReceptionReasonWatermark}" />
                 <TextBlock x:Name="ReasonError" Classes="error" IsVisible="False"
                            Text="{DynamicResource MurojatTextError}" />
                 <controls:OnScreenKeyboard x:Name="ReasonKeyboard" />
