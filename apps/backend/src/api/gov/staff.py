@@ -20,7 +20,6 @@ from ...core.security import hash_password, random_password
 from ...domain.user import (
     ORG_ROLES,
     ROLE_ORG_ADMIN,
-    ROLE_REVIEWER,
     User,
 )
 

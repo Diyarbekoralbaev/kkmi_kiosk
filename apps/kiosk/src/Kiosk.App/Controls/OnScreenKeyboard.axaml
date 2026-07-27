@@ -113,19 +113,19 @@
             <Setter Property="Background" Value="#94a3b8" />
         </Style>
         <Style Selector="Button.key.num">
-            <Setter Property="Background" Value="#e8eff7" />
-            <Setter Property="Foreground" Value="#0a4d8c" />
+            <Setter Property="Background" Value="{StaticResource KioskTileTint}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskPrimary}" />
             <Setter Property="FontSize" Value="22" />
         </Style>
         <Style Selector="Button.key.alt">
             <Setter Property="Background" Value="#e2e8f0" />
-            <Setter Property="Foreground" Value="#0a4d8c" />
+            <Setter Property="Foreground" Value="{StaticResource KioskPrimary}" />
             <Setter Property="FontSize" Value="22" />
         </Style>
         <!-- Caps-lock / Latin-mode visual ON state. Code-behind toggles
              the 'on' class on CapsKey / ModeKey when active. -->
         <Style Selector="Button.key.alt.on">
-            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
             <Setter Property="Foreground" Value="#ffffff" />
         </Style>
         <Style Selector="Button.key.alt.on:pointerover /template/ ContentPresenter">

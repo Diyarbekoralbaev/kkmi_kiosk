@@ -1,9 +1,9 @@
-"""Shared qabul (reception) registration logic — kiosk WS + manual endpoint.
+"""Shared reception (qabul) booking logic — kiosk WS + manual endpoint.
 
-For the Council there is no official, no fixed date, and no queue number: the
-citizen registers (phone + optional short reason) and staff call them back.
-A verification token + receipt PDF/QR are still produced so the kiosk can print
-and display a confirmation talon.
+The visitor books in to see a named member of the institute's leadership. The
+reception day/time come from that person's `OrgKbOfficial` row, so no date or
+queue number is stored here. A verification token + receipt PDF/QR are produced
+so the kiosk can print and display a confirmation talon.
 """
 from __future__ import annotations
 
@@ -69,18 +69,22 @@ async def create_appointment(
     *,
     org: Organization,
     visitor_phone: str,
+    visitor_name: str = "",
     topic_summary: str = "",
     source: str,
+    official_id: uuid.UUID | None = None,
     voice_session_id: uuid.UUID | None = None,
 ) -> CreatedAppointment:
-    """Insert a qabul registration. No official / date / queue — the citizen
-    is called back. Caller owns the transaction (flush, no commit)."""
+    """Insert a reception booking. Date and queue stay NULL — the official's
+    own reception day is the appointment time. Caller owns the transaction
+    (flush, no commit)."""
     token = mint_verification_token()
     appt = Appointment(
         id=uuid.uuid4(),
         org_id=org.id,
-        official_id=None,
+        official_id=official_id,
         session_id=voice_session_id,
+        visitor_name=(visitor_name or "").strip(),
         visitor_phone=normalize_phone(visitor_phone),
         topic_summary=(topic_summary or "").strip(),
         scheduled_date=None,

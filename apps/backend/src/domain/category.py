@@ -23,7 +23,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..core.db import Base, TimestampMixin
 
-
 SUPPORTED_LOCALES: tuple[str, ...] = ("uz", "kk", "ru")
 """Same locales as Organization.name_translations — keep in lockstep."""
 

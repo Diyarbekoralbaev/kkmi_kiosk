@@ -24,14 +24,26 @@ interface DefaultsResp {
   default_officials: unknown[]
 }
 
+// The prompt is assembled as BASE + exactly ONE focus block, chosen by the
+// menu the visitor tapped. Editing a base section changes every menu; editing
+// a focus section changes only that one.
 const SECTION_TITLES: Record<string, string> = {
-  identity: 'Identity — kim ekani',
-  language: 'Language — qaysi tilda gapirish',
-  tone: 'Tone — qanday gapirish + greeting',
-  tools: 'Tools — tool flow qoidalari',
-  guardrails: 'Guardrails — non-negotiable qoidalar',
-  knowledge_base: 'Knowledge Base — q&a (pasport, bola puli, yer va h.k.)',
+  // ── Base: sent with every menu ──
+  identity: 'Identity — assistent kim',
+  language: 'Language — 4 til, qoraqalpoq lotinda',
+  tone: 'Tone — qanday gapiradi',
+  guardrails: 'Guardrails — tibbiy chegara, maxfiylik, raqamlar',
+  institute_kb: 'Institut haqida — fakultetlar, kimga yuborish',
+  // ── Focus: bittasi menyu bo'yicha qo'shiladi ──
+  focus_maslahatchi: 'Fokus: AI Maslahatchi',
+  focus_library: 'Fokus: AI Kutubxona (hozircha tool yo\'q)',
+  focus_abituriyent: 'Fokus: AI Abituriyent',
+  focus_murojat: 'Fokus: AI Murojat',
+  focus_jadval: 'Fokus: Dars jadvali',
+  focus_qabul: 'Fokus: Rahbariyat qabuli',
 }
+
+const BASE_KEYS = ['identity', 'language', 'tone', 'guardrails', 'institute_kb']
 
 export function AiDefaultsPage() {
   const qc = useQueryClient()
@@ -136,6 +148,7 @@ export function AiDefaultsPage() {
                   key={s.section_key}
                   section={s}
                   title={SECTION_TITLES[s.section_key] ?? s.section_key}
+                  scope={BASE_KEYS.includes(s.section_key) ? 'base' : 'focus'}
                   onChange={(content) => {
                     const arr = [...draft.default_sections]
                     const i = arr.findIndex((x) => x.section_key === s.section_key)
@@ -151,7 +164,11 @@ export function AiDefaultsPage() {
           </div>
         </Card>
         <Card title="Tools">
-          <p className="mb-3 text-xs text-slate-500">Agentga ruxsat berilgan tool chaqiriqlari.</p>
+          <p className="mb-3 text-xs text-slate-500">
+            Qaysi tool qaysi menyuda ko'rinishi <code>ai/tools.py</code> dagi MENU_TOOLS
+            bilan belgilanadi. Bu yerdagi belgi — global o'chirgich: olib tashlansa,
+            tool hech qaysi menyuda ishlamaydi.
+          </p>
           <div className="grid grid-cols-2 gap-2">
             {draft.default_tools.map((t, idx) => (
               <label key={t.tool_key} className="flex items-center gap-2 text-sm rounded-lg border border-slate-800 px-3 py-2">
@@ -186,6 +203,7 @@ function SectionEditor({
   saving,
   original,
   idx,
+  scope,
 }: {
   section: SectionDef
   title: string
@@ -194,6 +212,9 @@ function SectionEditor({
   saving: boolean
   original: string
   idx: number
+  /** base = sent with every menu; focus = only its own menu. Worth showing:
+      a careless edit to a base section changes all six flows at once. */
+  scope: 'base' | 'focus'
 }) {
   const dirty = section.content !== original
   return (
@@ -202,6 +223,15 @@ function SectionEditor({
         <div className="flex items-center gap-3">
           <span className="text-xs text-slate-500">#{idx + 1}</span>
           <code className="text-xs uppercase tracking-widest text-slate-400">{section.section_key}</code>
+          <span
+            className={
+              scope === 'base'
+                ? 'rounded px-2 py-0.5 text-[10px] uppercase tracking-wider bg-amber-500/15 text-amber-300'
+                : 'rounded px-2 py-0.5 text-[10px] uppercase tracking-wider bg-slate-700/50 text-slate-400'
+            }
+          >
+            {scope === 'base' ? 'hamma menyu' : 'bitta menyu'}
+          </span>
           <span className="text-sm text-slate-300">{title}</span>
         </div>
         <button

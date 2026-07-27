@@ -65,6 +65,7 @@ interface AppRow {
   topic: string
   body: string
   phone: string
+  applicant_name: string
   status: Status
   kind: Kind
   feedback_type: FeedbackType | null
@@ -180,6 +181,7 @@ export function ApplicationsPage() {
               <tr>
                 <TH>Тема</TH>
                 {isFeedback && <TH>Тип</TH>}
+                <TH>Заявитель</TH>
                 <TH>Телефон</TH>
                 <TH>Статус</TH>
                 <TH>Дата</TH>
@@ -201,6 +203,7 @@ export function ApplicationsPage() {
                       <FeedbackTypeBadge type={a.feedback_type} />
                     </TD>
                   )}
+                  <TD className="text-ink">{a.applicant_name || '—'}</TD>
                   <TD className="font-mono text-ink-muted">{a.phone}</TD>
                   <TD>
                     <StatusBadge status={a.status} />
@@ -272,7 +275,13 @@ export function ApplicationDetailPage() {
     <Layout>
       <PageHeader
         title={data.topic}
-        description={`Телефон: ${data.phone} · ${new Date(data.created_at).toLocaleString('ru-RU')}`}
+        description={[
+          data.applicant_name,
+          `Телефон: ${data.phone}`,
+          new Date(data.created_at).toLocaleString('ru-RU'),
+        ]
+          .filter(Boolean)
+          .join(' · ')}
         actions={
           <Link to="/applications">
             <Button variant="ghost" leftIcon={<ArrowLeft className="h-4 w-4" />}>

@@ -52,7 +52,7 @@ export function LoginPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <img src="/gerb.png" alt="" className="mb-3 h-14 w-14 object-contain" />
           <div className="text-[11px] font-semibold uppercase tracking-widest text-ink-muted">
-            Кеңес
+            KKMI
           </div>
           <div className="mt-1 text-2xl font-semibold text-brand">
             Панель управления

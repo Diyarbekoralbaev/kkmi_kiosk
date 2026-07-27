@@ -52,7 +52,7 @@
                                    FontSize="22" FontWeight="SemiBold"
                                    Foreground="{StaticResource KioskTextMuted}" />
                         <TextBlock Grid.Column="1"
-                                   Text="{Binding AppealNumber}"
+                                   Text="{Binding SubmitReference}"
                                    FontSize="28" FontWeight="Bold"
                                    FontFamily="Consolas, Menlo, Courier New, monospace"
                                    Foreground="{StaticResource KioskText}"

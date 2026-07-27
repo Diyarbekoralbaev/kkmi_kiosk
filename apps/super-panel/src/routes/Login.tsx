@@ -49,7 +49,7 @@ export function LoginPage() {
     <div className="min-h-screen grid place-items-center bg-slate-950">
       <div className="w-full max-w-sm rounded-xl border border-slate-800 bg-slate-900/60 p-8">
         <div className="mb-6">
-          <div className="text-xs uppercase tracking-widest text-slate-500">Joqarı Keńes</div>
+          <div className="text-xs uppercase tracking-widest text-slate-500">KKMI</div>
           <div className="text-2xl font-semibold text-white">Super Admin</div>
         </div>
         {stage === 'password' ? (

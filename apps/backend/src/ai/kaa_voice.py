@@ -52,7 +52,7 @@ class KaaVoiceSession:
     ws_url: str
 
     _ws: Any = field(default=None, init=False)
-    _q: "asyncio.Queue[Event]" = field(default_factory=asyncio.Queue, init=False)
+    _q: asyncio.Queue[Event] = field(default_factory=asyncio.Queue, init=False)
     _closed: bool = field(default=False, init=False)
     _speaking: bool = field(default=False, init=False)
     _last_audio: float = field(default=0.0, init=False)

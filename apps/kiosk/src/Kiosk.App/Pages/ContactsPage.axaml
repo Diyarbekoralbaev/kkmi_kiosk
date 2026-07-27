@@ -7,10 +7,10 @@
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1920"
              x:Class="Kiosk.App.Pages.ContactsPage"
              x:DataType="state:SessionStore">
-    <Grid Background="#f4f7fb" RowDefinitions="Auto,*" Margin="56,80,56,180">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,80,56,180">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <TextBlock Grid.Column="0" Text="{DynamicResource ContactsPageTitle}"
-                       FontSize="44" FontWeight="Light" Foreground="#0a4d8c"
+                       FontSize="44" FontWeight="Light" Foreground="{StaticResource KioskPrimary}"
                        VerticalAlignment="Center"
                        TextWrapping="Wrap" MaxWidth="640" />
             <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
@@ -22,7 +22,7 @@
                         Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
                     <StackPanel Spacing="10">
                         <TextBlock Text="{DynamicResource ContactsAddressLabel}"
-                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                                   FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource KioskPrimary}" />
                         <TextBlock Text="{Binding OrgAddress}"
                                    FontSize="28" FontWeight="SemiBold"
                                    Foreground="#0f172a" TextWrapping="Wrap" />
@@ -32,7 +32,7 @@
                         Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
                     <StackPanel Spacing="10">
                         <TextBlock Text="{DynamicResource ContactsPhoneIconLabel}"
-                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                                   FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource KioskPrimary}" />
                         <TextBlock Text="{Binding HelplinePhone}"
                                    FontSize="28" FontWeight="SemiBold" Foreground="#0f172a" />
                     </StackPanel>
@@ -41,7 +41,7 @@
                         Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
                     <StackPanel Spacing="10">
                         <TextBlock Text="{DynamicResource ContactsEmailLabel}"
-                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                                   FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource KioskPrimary}" />
                         <TextBlock Text="{Binding OrgEmail}"
                                    FontSize="28" FontWeight="SemiBold" Foreground="#0f172a" />
                     </StackPanel>
@@ -50,7 +50,7 @@
                         Background="#ffffff" BorderBrush="#cbd5e1" BorderThickness="1">
                     <StackPanel Spacing="10">
                         <TextBlock Text="{DynamicResource ContactsHoursLabel}"
-                                   FontSize="18" FontWeight="SemiBold" Foreground="#0a4d8c" />
+                                   FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource KioskPrimary}" />
                         <TextBlock Text="{Binding OrgWorkHours}"
                                    FontSize="28" FontWeight="SemiBold" Foreground="#0f172a" />
                     </StackPanel>

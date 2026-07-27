@@ -8,6 +8,8 @@ import {
   User,
   LogOut,
   CalendarCheck,
+  UserCog,
+  RefreshCw,
 } from 'lucide-react'
 import { isReviewer, useAuth } from '../lib/auth'
 import { cn } from './ui/cn'
@@ -20,8 +22,10 @@ const ADMIN_NAV = [
   { to: '/dashboard', label: 'Дашборд', icon: LayoutDashboard },
   { to: '/applications', label: 'Обращения', icon: Inbox },
   { to: '/appointments', label: 'Приёмы', icon: CalendarCheck },
+  { to: '/leadership', label: 'Руководство', icon: UserCog },
   { to: '/sessions', label: 'Сессии', icon: Headphones },
   { to: '/staff', label: 'Сотрудники', icon: Users },
+  { to: '/hemis', label: 'HEMIS', icon: RefreshCw },
   { to: '/profile', label: 'Профиль', icon: User },
 ]
 
@@ -48,7 +52,7 @@ export function Layout({ children }: Props) {
           />
           <div className="min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
-              Кеңес
+              KKMI
             </div>
             <div className="truncate text-base font-semibold text-brand">
               {isReviewer(me) ? 'Кабинет ответственного' : 'Панель управления'}

@@ -1,0 +1,260 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:Kiosk.App.Controls"
+             xmlns:state="using:Kiosk.App.State"
+             xmlns:net="using:Kiosk.App.Net"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1224"
+             x:Class="Kiosk.App.Pages.SchedulePage"
+             x:DataType="state:SessionStore">
+    <!-- Timetables are per GROUP. The kiosk identifies nobody, so there is no
+         "my schedule" — the visitor either taps faculty → group, or says the
+         group name and the agent confirms the match before anything renders.
+         Both paths land on the same lesson list below.
+
+         Only one of the four panels is visible at a time; the code-behind owns
+         which. Voice can jump straight to Lessons by pushing show_schedule. -->
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                <TextBlock Text="{DynamicResource SchedulePageTitle}"
+                           FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
+                           Foreground="{StaticResource KioskPrimary}"
+                           TextWrapping="Wrap" MaxWidth="640" />
+                <TextBlock x:Name="Breadcrumb" FontSize="20"
+                           Foreground="{StaticResource KioskTextMuted}"
+                           TextWrapping="Wrap" MaxWidth="640" />
+            </StackPanel>
+            <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,28,0,0">
+
+            <!-- ① Faculty picker -->
+            <ScrollViewer x:Name="FacultyPanel">
+                <ItemsControl x:Name="FacultyList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="net:FacultyDto">
+                            <Button Click="OnFacultyClick" Tag="{Binding}" Classes="row">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                               FontSize="{StaticResource KioskFontH4}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource KioskText}"
+                                               VerticalAlignment="Center" TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Text="›" FontSize="34" FontWeight="Bold"
+                                               Foreground="{StaticResource KioskPrimary}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- ② Group picker. 244 groups across 4 faculties, so this scrolls. -->
+            <ScrollViewer x:Name="GroupPanel" IsVisible="False">
+                <ItemsControl x:Name="GroupList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="net:GroupDto">
+                            <Button Click="OnGroupClick" Tag="{Binding}" Classes="row">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="{StaticResource KioskFontH4}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource KioskText}"
+                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Specialty}"
+                                                   FontSize="{StaticResource KioskFontCaption}"
+                                                   Foreground="{StaticResource KioskTextMuted}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="{StaticResource KioskTileTint}"
+                                            CornerRadius="{StaticResource KioskRadiusChip}"
+                                            Padding="14,6" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Language}" FontSize="16"
+                                                   Foreground="{StaticResource KioskPrimary}" />
+                                    </Border>
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- ③ Voice candidates — shown when find_group returned more than
+                 one plausible match and the visitor should pick. -->
+            <ScrollViewer x:Name="ChoicesPanel" IsVisible="False">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="{DynamicResource ScheduleWhichGroup}"
+                               FontSize="{StaticResource KioskFontH3}" FontWeight="SemiBold"
+                               Foreground="{StaticResource KioskText}" TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding GroupChoices}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="net:GroupDto">
+                                <Button Click="OnGroupClick" Tag="{Binding}" Classes="row">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="{StaticResource KioskFontH4}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource KioskText}"
+                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Specialty}"
+                                                   FontSize="{StaticResource KioskFontCaption}"
+                                                   Foreground="{StaticResource KioskTextMuted}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ④ Lessons -->
+            <Grid x:Name="LessonPanel" IsVisible="False" RowDefinitions="Auto,*,Auto">
+
+                <!-- Day switcher -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,20">
+                    <Button x:Name="ScopeToday" Click="OnScopeToday" Classes="scope"
+                            Content="{DynamicResource ScheduleScopeToday}" />
+                    <Button x:Name="ScopeTomorrow" Click="OnScopeTomorrow" Classes="scope"
+                            Content="{DynamicResource ScheduleScopeTomorrow}" />
+                    <Button x:Name="ScopeWeek" Click="OnScopeWeek" Classes="scope"
+                            Content="{DynamicResource ScheduleScopeWeek}" />
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding Lessons}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="net:LessonDto">
+                                <Border Classes="lesson">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="20">
+                                        <!-- Time first: it is what a student
+                                             scans for, and fixed-width keeps
+                                             the column aligned down the list. -->
+                                        <StackPanel Grid.Column="0" Width="94" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Start}"
+                                                       FontSize="26" FontWeight="Bold"
+                                                       Foreground="{StaticResource KioskPrimary}" />
+                                            <TextBlock Text="{Binding End}"
+                                                       FontSize="16"
+                                                       Foreground="{StaticResource KioskTextMuted}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Subject}"
+                                                       FontSize="{StaticResource KioskFontH4}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource KioskText}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Teacher}"
+                                                       FontSize="{StaticResource KioskFontCaption}"
+                                                       Foreground="{StaticResource KioskTextMuted}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                                    HorizontalAlignment="Right" Spacing="4">
+                                            <Border Background="{StaticResource KioskAccentTint}"
+                                                    CornerRadius="{StaticResource KioskRadiusChip}"
+                                                    Padding="14,6">
+                                                <TextBlock Text="{Binding Room}" FontSize="18"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource KioskAccentDark}" />
+                                            </Border>
+                                            <TextBlock Text="{Binding Kind}"
+                                                       FontSize="{StaticResource KioskFontCaptionSm}"
+                                                       Foreground="{StaticResource KioskTextMuted}"
+                                                       HorizontalAlignment="Right" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Empty state. "Free day" and "the year isn't published yet"
+                     look identical but mean opposite things — over the summer
+                     the second is normal and must not read as a broken kiosk,
+                     so it gets its own message plus a way to still see data. -->
+                <Border Grid.Row="1" x:Name="EmptyState" IsVisible="False"
+                        Background="{StaticResource KioskCard}"
+                        BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                        CornerRadius="{StaticResource KioskRadiusCard}"
+                        Padding="48" VerticalAlignment="Top">
+                    <StackPanel Spacing="20" HorizontalAlignment="Center">
+                        <TextBlock x:Name="EmptyTitle"
+                                   FontSize="{StaticResource KioskFontH3}" FontWeight="SemiBold"
+                                   Foreground="{StaticResource KioskText}"
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+                        <TextBlock x:Name="EmptyBody"
+                                   FontSize="20"
+                                   Foreground="{StaticResource KioskTextMuted}"
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+                        <Button x:Name="LastYearButton" Click="OnShowLastYear"
+                                IsVisible="False" Classes="scope primary"
+                                HorizontalAlignment="Center"
+                                Content="{DynamicResource ScheduleShowLastYear}" />
+                    </StackPanel>
+                </Border>
+
+                <Button Grid.Row="2" Click="OnBackToGroups" Classes="scope"
+                        HorizontalAlignment="Left" Margin="0,20,0,0"
+                        Content="{DynamicResource ScheduleChangeGroup}" />
+            </Grid>
+        </Grid>
+    </Grid>
+
+    <UserControl.Styles>
+        <Style Selector="Button.row">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="26,20" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="MinHeight" Value="86" />
+        </Style>
+        <Style Selector="Button.row:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+
+        <Style Selector="Border.lesson">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="24,18" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+
+        <Style Selector="Button.scope">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="28,14" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="MinHeight" Value="60" />
+        </Style>
+        <Style Selector="Button.scope.primary">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.scope.active">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.scope.active:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

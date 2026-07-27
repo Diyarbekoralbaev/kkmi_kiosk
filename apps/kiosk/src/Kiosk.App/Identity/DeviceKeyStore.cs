@@ -20,7 +20,7 @@ namespace Kiosk.App.Identity;
 ///
 /// File location:
 ///   - Windows: DPAPI-encrypted (CurrentUser scope) at %APPDATA%\JoqariKenes\credentials.dat.
-///   - Linux (dev only): plain JSON at $XDG_DATA_HOME/joqari-kenes/credentials.json (0600).
+///   - Linux (dev only): plain JSON at $XDG_DATA_HOME/kkmi-kiosk/credentials.json (0600).
 /// </summary>
 public sealed class DeviceCredentials
 {
@@ -70,7 +70,7 @@ public static class DeviceKeyStore
             return Path.Combine(appData, "JoqariKenes", "credentials.dat");
         }
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(local, "joqari-kenes", "credentials.json");
+        return Path.Combine(local, "kkmi-kiosk", "credentials.json");
     }
 
     public static bool HasKey() => File.Exists(StorePath);

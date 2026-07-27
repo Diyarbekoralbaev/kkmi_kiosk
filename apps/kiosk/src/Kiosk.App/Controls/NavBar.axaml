@@ -37,12 +37,12 @@
             <Setter Property="Background" Value="#f1f5f9" />
         </Style>
         <Style Selector="Button.navbtn.primary">
-            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
         </Style>
         <Style Selector="Button.navbtn.primary:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -35,6 +35,10 @@ public sealed class KioskClient : IAsyncDisposable
 
     private readonly string _backendUrl;
     private readonly string _deviceId;
+    /// <summary>Which home tile the visitor opened. Sent as `?menu=` on the WS
+    /// URL; the backend uses it to pick the prompt's focus block and the tool
+    /// set the agent may call.</summary>
+    private readonly string _menu;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private CancellationTokenSource? _cts;
     private Task? _runTask;
@@ -46,8 +50,16 @@ public sealed class KioskClient : IAsyncDisposable
     public event Action<byte[]>? AudioReceived;
     public event Action<TranscriptMessage>? TranscriptReceived;
     public event Action<NavigateMessage>? NavigateReceived;
-    public event Action<MurajatPreviewMessage>? MurajatPreviewReceived;
-    public event Action<MurajatSubmittedMessage>? MurajatSubmittedReceived;
+    public event Action<MurojatPreviewMessage>? MurojatPreviewReceived;
+    public event Action<MurojatSubmittedMessage>? MurojatSubmittedReceived;
+    public event Action<ScheduleMessage>? ScheduleReceived;
+    public event Action<GroupChoicesMessage>? GroupChoicesReceived;
+    public event Action<DirectionsMessage>? DirectionsReceived;
+    public event Action<DirectionMessage>? DirectionReceived;
+    public event Action<LeadershipMessage>? LeadershipReceived;
+    public event Action<ReceptionPreviewMessage>? ReceptionPreviewReceived;
+    public event Action<ReceptionSubmittedMessage>? ReceptionSubmittedReceived;
+    public event Action<InfoCardMessage>? InfoCardReceived;
     public event Action? AudioDoneReceived;
     public event Action<ServerErrorMessage>? ErrorReceived;
     public event Action<ConnectionState>? StateChanged;
@@ -57,10 +69,11 @@ public sealed class KioskClient : IAsyncDisposable
     /// "this device needs to be re-enrolled" UI instead of a transient offline overlay.</summary>
     public event Action? Unauthorized;
 
-    public KioskClient(string backendUrl, string deviceId)
+    public KioskClient(string backendUrl, string deviceId, string menu)
     {
         _backendUrl = backendUrl;
         _deviceId = deviceId;
+        _menu = menu;
     }
 
     public void Start()
@@ -184,7 +197,10 @@ public sealed class KioskClient : IAsyncDisposable
                     .BuildAuthHeaderAsync(_backendUrl, _deviceId, ct)
                     .ConfigureAwait(false);
                 ws.Options.SetRequestHeader("X-Kiosk-Auth", authHeader);
-                var wsUri = new Uri(HttpToWs(_backendUrl) + "/ws/kiosk/voice");
+                var wsUri = new Uri(
+                    HttpToWs(_backendUrl)
+                    + "/ws/kiosk/voice?menu="
+                    + Uri.EscapeDataString(_menu));
                 await ws.ConnectAsync(wsUri, ct).ConfigureAwait(false);
 
                 _activeWs = ws;
@@ -270,13 +286,45 @@ public sealed class KioskClient : IAsyncDisposable
                     var n = JsonSerializer.Deserialize(json, KioskJsonContext.Default.NavigateMessage);
                     if (n is not null) NavigateReceived?.Invoke(n);
                     break;
-                case "murajat_preview":
-                    var p = JsonSerializer.Deserialize(json, KioskJsonContext.Default.MurajatPreviewMessage);
-                    if (p is not null) MurajatPreviewReceived?.Invoke(p);
+                case "murojat_preview":
+                    var p = JsonSerializer.Deserialize(json, KioskJsonContext.Default.MurojatPreviewMessage);
+                    if (p is not null) MurojatPreviewReceived?.Invoke(p);
                     break;
-                case "murajat_submitted":
-                    var s = JsonSerializer.Deserialize(json, KioskJsonContext.Default.MurajatSubmittedMessage);
-                    if (s is not null) MurajatSubmittedReceived?.Invoke(s);
+                case "murojat_submitted":
+                    var s = JsonSerializer.Deserialize(json, KioskJsonContext.Default.MurojatSubmittedMessage);
+                    if (s is not null) MurojatSubmittedReceived?.Invoke(s);
+                    break;
+                case "show_schedule":
+                    var sch = JsonSerializer.Deserialize(json, KioskJsonContext.Default.ScheduleMessage);
+                    if (sch is not null) ScheduleReceived?.Invoke(sch);
+                    break;
+                case "show_group_choices":
+                    var gc = JsonSerializer.Deserialize(json, KioskJsonContext.Default.GroupChoicesMessage);
+                    if (gc is not null) GroupChoicesReceived?.Invoke(gc);
+                    break;
+                case "show_directions":
+                    var ds = JsonSerializer.Deserialize(json, KioskJsonContext.Default.DirectionsMessage);
+                    if (ds is not null) DirectionsReceived?.Invoke(ds);
+                    break;
+                case "show_direction":
+                    var d1 = JsonSerializer.Deserialize(json, KioskJsonContext.Default.DirectionMessage);
+                    if (d1 is not null) DirectionReceived?.Invoke(d1);
+                    break;
+                case "show_leadership":
+                    var ld = JsonSerializer.Deserialize(json, KioskJsonContext.Default.LeadershipMessage);
+                    if (ld is not null) LeadershipReceived?.Invoke(ld);
+                    break;
+                case "reception_preview":
+                    var rp = JsonSerializer.Deserialize(json, KioskJsonContext.Default.ReceptionPreviewMessage);
+                    if (rp is not null) ReceptionPreviewReceived?.Invoke(rp);
+                    break;
+                case "reception_submitted":
+                    var rs = JsonSerializer.Deserialize(json, KioskJsonContext.Default.ReceptionSubmittedMessage);
+                    if (rs is not null) ReceptionSubmittedReceived?.Invoke(rs);
+                    break;
+                case "show_info_card":
+                    var ic = JsonSerializer.Deserialize(json, KioskJsonContext.Default.InfoCardMessage);
+                    if (ic is not null) InfoCardReceived?.Invoke(ic);
                     break;
                 case "audio_done":
                     AudioDoneReceived?.Invoke();

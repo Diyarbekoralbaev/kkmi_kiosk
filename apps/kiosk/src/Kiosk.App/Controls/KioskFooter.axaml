@@ -7,20 +7,24 @@
              x:Class="Kiosk.App.Controls.KioskFooter"
              x:DataType="state:SessionStore"
              Height="88">
-    <!-- Deep-blue footer band per 2026 mockup. Left: 3-button language
-         switcher (lifted out of the header). Right: per-org helpline
-         phone — hidden when SessionStore.HelplinePhone is empty. -->
+    <!-- Navy footer band. Left: 4-button language switcher (uz / qq / ru / en —
+         the institute teaches in all four, see HEMIS group `educationLang`).
+         Right: per-org helpline phone — hidden when SessionStore.HelplinePhone
+         is empty. Buttons are sized so all four plus the phone fit the 960px
+         content width; they auto-grow past MinWidth for the longer labels. -->
     <Border Background="{StaticResource KioskPrimaryDark}">
         <Grid ColumnDefinitions="Auto,*,Auto" Margin="60,0,60,0">
             <!-- Language toggle -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12"
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
                         VerticalAlignment="Center">
-                <Button x:Name="LangKkBtn" Click="OnLangKk" Classes="lang"
-                        Content="{DynamicResource LangKk}" />
                 <Button x:Name="LangUzBtn" Click="OnLangUz" Classes="lang"
                         Content="{DynamicResource LangUz}" />
+                <Button x:Name="LangKkBtn" Click="OnLangKk" Classes="lang"
+                        Content="{DynamicResource LangKk}" />
                 <Button x:Name="LangRuBtn" Click="OnLangRu" Classes="lang"
                         Content="{DynamicResource LangRu}" />
+                <Button x:Name="LangEnBtn" Click="OnLangEn" Classes="lang"
+                        Content="{DynamicResource LangEn}" />
             </StackPanel>
 
             <!-- Help phone (hidden if backend didn't return one).
@@ -56,16 +60,16 @@
         <Style Selector="Button.lang">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#3a5a82" />
+            <Setter Property="BorderBrush" Value="#3a52a0" />
             <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="Padding" Value="22,12" />
+            <Setter Property="Padding" Value="16,12" />
             <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontSize" Value="17" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="MinWidth" Value="140" />
+            <Setter Property="MinWidth" Value="100" />
         </Style>
         <Style Selector="Button.lang:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#1a4d8c" />
+            <Setter Property="Background" Value="#24409a" />
         </Style>
         <Style Selector="Button.lang.active">
             <Setter Property="Background" Value="White" />

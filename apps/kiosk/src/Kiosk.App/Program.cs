@@ -157,8 +157,12 @@ class Program
             return 2;
         }
         var seconds = args.Length >= 2 && int.TryParse(args[1], out var s) ? s : 10;
+        // Optional third arg picks the menu, since that decides which tools the
+        // backend declares — `--ws-test 20 jadval` is how you smoke-test the
+        // timetable flow end to end.
+        var menu = args.Length >= 3 ? args[2] : "maslahatchi";
 
-        await using var client = new KioskClient(creds.BackendUrl, creds.DeviceId);
+        await using var client = new KioskClient(creds.BackendUrl, creds.DeviceId, menu);
         var audioFrames = 0;
         var audioBytes = 0L;
         var transcripts = 0;
@@ -171,8 +175,19 @@ class Program
         client.AudioReceived += pcm => { Interlocked.Increment(ref audioFrames); Interlocked.Add(ref audioBytes, pcm.Length); };
         client.TranscriptReceived += t => { Interlocked.Increment(ref transcripts); Console.WriteLine($"[transcript {t.Speaker} final={t.Final}] {t.Text}"); };
         client.NavigateReceived += n => Console.WriteLine($"[navigate] {n.Screen}");
-        client.MurajatPreviewReceived += p => Console.WriteLine($"[murajat_preview] {p.Text}");
-        client.MurajatSubmittedReceived += sub => Console.WriteLine($"[murajat_submitted] {sub.AppealNumber}");
+        client.MurojatPreviewReceived += p => Console.WriteLine($"[murojat_preview] {p.Text}");
+        client.MurojatSubmittedReceived += sub => Console.WriteLine($"[murojat_submitted] {sub.Reference}");
+        client.GroupChoicesReceived += g =>
+            Console.WriteLine($"[group_choices] {g.Query} → {string.Join(", ", g.Items.ConvertAll(x => x.Name))}");
+        client.ScheduleReceived += sc =>
+            Console.WriteLine($"[schedule] {sc.Group?.Name} {sc.Scope} lessons={sc.Lessons.Count} empty={sc.EmptyReason}");
+        client.DirectionsReceived += d => Console.WriteLine($"[directions] {d.Items.Count}");
+        client.DirectionReceived += d => Console.WriteLine($"[direction] {d.Item?.Name}");
+        client.LeadershipReceived += l => Console.WriteLine($"[leadership] {l.Items.Count}");
+        client.ReceptionPreviewReceived += r => Console.WriteLine($"[reception_preview] {r.Official?.Name}");
+        client.ReceptionSubmittedReceived += r => Console.WriteLine($"[reception_submitted] {r.Reference}");
+        client.InfoCardReceived += c =>
+            Console.WriteLine($"[info_card] {c.Title} ({c.Bullets.Count})");
         client.AudioDoneReceived += () => Console.WriteLine($"[audio_done]");
         client.ErrorReceived += e => Console.WriteLine($"[error] {e.Code} {e.Message}");
 

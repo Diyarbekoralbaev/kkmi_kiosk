@@ -18,8 +18,8 @@ from ...domain.application import Application
 from ...domain.device import Device
 from ...domain.organization import (
     ORG_NAME_LOCALES,
-    OrgCredentials,
     Organization,
+    OrgCredentials,
     address_translations_for_response,
     name_translations_for_response,
     work_hours_translations_for_response,

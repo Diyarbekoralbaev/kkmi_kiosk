@@ -26,11 +26,10 @@ similar to gemini_live.py's GEMINI_PROXY.
 from __future__ import annotations
 
 import asyncio
-import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import structlog
@@ -120,8 +119,8 @@ async def get_weather(session: AsyncSession, org_id: uuid.UUID) -> dict | None:
                 raise ValueError("no current.temperature_2m in response")
             payload = {
                 "city": org.city_name,
-                "temp_c": int(round(float(temp))),
-                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "temp_c": round(float(temp)),
+                "fetched_at": datetime.now(UTC).isoformat(),
             }
             entry.payload = payload
             entry.fetched_at = time.monotonic()

@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # production if any of these are still in effect.
 INSECURE_DEFAULT_SECRET = "change-me-please"
 INSECURE_DEFAULT_BASE_URL = "http://localhost:5174"
-INSECURE_DEFAULT_DSN = "postgresql+asyncpg://kiosk:kiosk@postgres:5432/joqari_kenes"
+INSECURE_DEFAULT_DSN = "postgresql+asyncpg://kiosk:kiosk@postgres:5432/kkmi_kiosk"
 
 
 class Settings(BaseSettings):
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # Runtime
     env: str = Field(default="development")
     log_level: str = Field(default="INFO")
-    app_name: str = Field(default="joqari-kenes-backend")
+    app_name: str = Field(default="kkmi-kiosk-backend")
 
     # Database
     database_url: str = Field(
@@ -56,17 +56,19 @@ class Settings(BaseSettings):
     voice_backend: str = Field(default="gemini_live")
     kaa_ws_url: str = Field(default="")
 
-    # External murajat cabinet (cabinet.murajat.uz). The kiosk's appeals are
-    # stored THERE, not in our DB — the backend only proxies (look up a citizen
-    # by phone, submit an appeal, serve districts/quarters). The bearer token is
-    # minted on their server (`php artisan kiosk:token`) and lives ONLY here,
-    # never on a kiosk. Empty token → the murajat proxy is disabled (503).
-    murajat_api_base: str = Field(default="https://cabinet.murajat.uz")
-    kiosk_murajat_token: SecretStr = Field(default=SecretStr(""))
-    murajat_timeout: int = Field(default=30)
-
-    # Paths
-    archive_dir: Path = Field(default=Path("/app/archive"))
+    # HEMIS — the institute's instance of the national higher-education system.
+    # Read-only: the nightly sync mirrors schedules / groups / specialties into
+    # our Postgres so the kiosk never waits on an upstream call mid-conversation.
+    # The token is an admin-panel "API User" bearer token; backend-only, never
+    # on a kiosk. Empty token → sync is skipped and the schedule menu serves
+    # whatever was last mirrored.
+    hemis_api_base: str = Field(default="https://student.kkmi.uz/rest")
+    hemis_token: SecretStr = Field(default=SecretStr(""))
+    hemis_timeout: int = Field(default=60)
+    # Upstream allows 10 req/s. Stay under it — a nightly job has no reason to
+    # race, and tripping their limiter costs far more time than it saves.
+    hemis_rate_limit: float = Field(default=6.0)
+    hemis_concurrency: int = Field(default=4)
 
     # Public base URL — used to build the QR verification URL embedded in
     # qabul receipts. Should match the gov-panel domain in production.
@@ -95,29 +97,6 @@ class Settings(BaseSettings):
     # When a webhook fires for a new release, mark it published immediately.
     # Default: false (super-admin reviews drafts in the panel).
     kiosk_auto_publish_on_github_sync: bool = Field(default=False)
-
-    # Telegram notification bot — posts every new murajaat and qabul to
-    # two broadcast channels so the back-office staff see arrivals
-    # without polling the gov-panel. All three fields are optional:
-    # leaving the token empty disables the integration entirely (the
-    # post helper is a no-op so dev / staging don't try to call
-    # api.telegram.org). Channel IDs are the "-100XXXXXXXXXX" form
-    # Telegram assigns to channels — obtainable by forwarding any
-    # channel message to a chat-info bot.
-    telegram_bot_token: SecretStr = Field(default=SecretStr(""))
-    telegram_murajat_channel_id: str = Field(default="")
-    telegram_qabul_channel_id: str = Field(default="")
-    # Feedback (shaǵım/usınıs/minnetdarshılıq) channel. Empty → feedback posts
-    # fall back to the murajaat channel.
-    telegram_feedback_channel_id: str = Field(default="")
-    # Optional Cloudflare Worker relay — api.telegram.org is blocked
-    # from the Moscow prod IP, so prod overrides this to a workers.dev
-    # URL that forwards verbatim to api.telegram.org. Leave default to
-    # call Telegram directly (dev / unblocked hosts). When the relay is
-    # in use, `telegram_relay_token` must match the Worker's RELAY_TOKEN
-    # secret or the Worker rejects 401.
-    telegram_api_base: str = Field(default="https://api.telegram.org")
-    telegram_relay_token: SecretStr = Field(default=SecretStr(""))
 
     # Shared secret gating GET /health/deep. The status-page poller (Gatus)
     # sends it as the X-Health-Token header; public requests without it get

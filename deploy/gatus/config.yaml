@@ -19,8 +19,8 @@ storage:
   path: /data/data.db
 
 ui:
-  title: "Joqarı Keńes — sistema halaty"
-  header: "Joqarı Keńes — status"
+  title: "KKMI — sistema halaty"
+  header: "KKMI — status"
   logo: ""
 
 alerting:
@@ -36,7 +36,7 @@ alerting:
 endpoints:
   - name: "Backend API"
     group: "Core"
-    url: "https://kenes-api.gov.diyarbek.uz/health"
+    url: "https://kkmi-api.gov.diyarbek.uz/health"
     interval: 60s
     conditions:
       - "[STATUS] == 200"
@@ -45,7 +45,7 @@ endpoints:
 
   - name: "Gov panel"
     group: "Core"
-    url: "https://kenes-gov.gov.diyarbek.uz"
+    url: "https://kkmi-gov.gov.diyarbek.uz"
     interval: 60s
     conditions:
       - "[STATUS] == 200"
@@ -54,7 +54,7 @@ endpoints:
 
   - name: "Super panel"
     group: "Core"
-    url: "https://kenes-super.gov.diyarbek.uz"
+    url: "https://kkmi-super.gov.diyarbek.uz"
     interval: 120s
     conditions:
       - "[STATUS] == 200"
@@ -74,20 +74,6 @@ endpoints:
     interval: 120s
     headers:
       X-Kiosk-Auth: "${GEMINI_RELAY_TOKEN}"
-    conditions:
-      - "[STATUS] == 200"
-    ui:
-      hide-url: true
-      hide-conditions: true
-    alerts:
-      - type: ntfy
-
-  - name: "Telegram relay (Cloudflare)"
-    group: "Cloudflare relays"
-    url: "https://telegram-dust-3226.diyarbekoralbaev.workers.dev/"
-    interval: 120s
-    headers:
-      X-Relay-Auth: "${TELEGRAM_RELAY_TOKEN}"
     conditions:
       - "[STATUS] == 200"
     ui:
@@ -149,26 +135,6 @@ endpoints:
       # Network-flaky path (Moscow→relay→Google). Require 3 consecutive
       # failures (~3 min real problem) so a single ~8s latency spike on the
       # international hop doesn't false-page.
-      - type: ntfy
-        failure-threshold: 3
-        send-on-resolved: true
-
-  - name: "Telegram bot"
-    group: "Internal"
-    url: "http://backend:8000/health/deep"
-    interval: 60s
-    headers:
-      X-Health-Token: "${HEALTH_DEEP_TOKEN}"
-    conditions:
-      - "[STATUS] == 200"
-      - "[BODY].components.telegram.ok == true"
-    ui:
-      hide-url: true
-      hide-hostname: true
-      hide-conditions: true
-    alerts:
-      # Network-flaky path (Moscow→relay→api.telegram.org). 3 consecutive
-      # failures before paging — a single slow getMe must not page.
       - type: ntfy
         failure-threshold: 3
         send-on-resolved: true

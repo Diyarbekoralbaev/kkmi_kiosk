@@ -28,8 +28,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system app && useradd --system --gid app --no-create-home app
 
+# INSTALL_DEV=1 adds pytest/ruff/mypy. Only docker-compose.dev.yml sets it —
+# the production image stays lean. Without this `make test` had nothing to run:
+# the image installed the runtime extras only, so `exec backend pytest` failed
+# with "executable file not found".
+ARG INSTALL_DEV=0
+
 COPY pyproject.toml /app/
-RUN pip install --upgrade pip && pip install -e .
+RUN pip install --upgrade pip \
+ && if [ "$INSTALL_DEV" = "1" ]; then pip install -e ".[dev]"; else pip install -e .; fi
 
 COPY alembic.ini /app/
 COPY alembic /app/alembic

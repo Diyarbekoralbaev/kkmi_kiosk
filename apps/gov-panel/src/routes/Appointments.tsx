@@ -88,7 +88,7 @@ export function AppointmentsPage() {
         description={
           reviewer
             ? 'Заявки на обратный звонок, назначенные на вас. Внесите результат и обновите статус.'
-            : 'Заявки граждан на обратный звонок (Кенес перезвонит).'
+            : 'Заявки на приём к руководству института.'
         }
         actions={
           <div className="flex items-center gap-2">

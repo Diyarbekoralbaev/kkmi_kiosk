@@ -89,27 +89,128 @@ public sealed record TranscriptMessage
     [JsonPropertyName("speaker")] public string Speaker { get; init; } = "";
 }
 
-public sealed record MurajatPreviewMessage
+public sealed record MurojatPreviewMessage
 {
-    /// <summary>The appeal body the agent composed (single text, no topic).</summary>
-    [JsonPropertyName("text")] public string Text { get; init; } = "";
+    [JsonPropertyName("full_name")] public string FullName { get; init; } = "";
     [JsonPropertyName("phone")] public string Phone { get; init; } = "";
-    /// <summary>true = an existing citizen confirmed identity (only phone+text
-    /// shown). false = a new / «men emas» citizen (name is also shown).</summary>
-    [JsonPropertyName("confirmed")] public bool Confirmed { get; init; }
-    [JsonPropertyName("first_name")] public string FirstName { get; init; } = "";
-    [JsonPropertyName("last_name")] public string LastName { get; init; } = "";
+    /// <summary>Short subject the agent wrote for the staff list view.</summary>
+    [JsonPropertyName("topic")] public string Topic { get; init; } = "";
+    /// <summary>The appeal body, in the visitor's own words.</summary>
+    [JsonPropertyName("text")] public string Text { get; init; } = "";
 }
 
-public sealed record MurajatSubmittedMessage
+public sealed record MurojatSubmittedMessage
 {
-    /// <summary>The cabinet's appeal number, e.g. "25678/26".</summary>
-    [JsonPropertyName("appeal_number")] public string AppealNumber { get; init; } = "";
-    [JsonPropertyName("phone_masked")] public string PhoneMasked { get; init; } = "";
-    /// <summary>Localized org names so the success-talon header swaps language
-    /// without waiting for the next heartbeat.</summary>
-    [JsonPropertyName("org_name_translations")]
-    public Dictionary<string, string> OrgNameTranslations { get; init; } = new();
+    /// <summary>Human-facing reference, e.g. "M-1A2B3C4D".</summary>
+    [JsonPropertyName("reference")] public string Reference { get; init; } = "";
+    [JsonPropertyName("full_name")] public string FullName { get; init; } = "";
+}
+
+// ── Dars jadvali ─────────────────────────────────────────────────────────────
+
+public sealed record GroupDto
+{
+    [JsonPropertyName("id")] public int Id { get; init; }
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("specialty")] public string Specialty { get; init; } = "";
+    /// <summary>Teaching language: O'zbek | Qoraqalpoq | Rus | Ingliz.</summary>
+    [JsonPropertyName("language")] public string Language { get; init; } = "";
+}
+
+public sealed record LessonDto
+{
+    [JsonPropertyName("date")] public string Date { get; init; } = "";
+    /// <summary>ISO weekday, 1 = Monday.</summary>
+    [JsonPropertyName("weekday")] public int Weekday { get; init; }
+    [JsonPropertyName("start")] public string Start { get; init; } = "";
+    [JsonPropertyName("end")] public string End { get; init; } = "";
+    [JsonPropertyName("subject")] public string Subject { get; init; } = "";
+    [JsonPropertyName("teacher")] public string Teacher { get; init; } = "";
+    [JsonPropertyName("room")] public string Room { get; init; } = "";
+    [JsonPropertyName("building")] public string Building { get; init; } = "";
+    /// <summary>Ma'ruza | Amaliy | Laboratoriya | Seminar.</summary>
+    [JsonPropertyName("kind")] public string Kind { get; init; } = "";
+}
+
+public sealed record ScheduleMessage
+{
+    [JsonPropertyName("group")] public GroupDto? Group { get; init; }
+    [JsonPropertyName("scope")] public string Scope { get; init; } = "";
+    [JsonPropertyName("lessons")] public List<LessonDto> Lessons { get; init; } = new();
+    /// <summary>Why the list is empty, when it is: "no_lessons_that_day" (a free
+    /// day) or "year_not_published" (the new academic year is not in HEMIS yet —
+    /// normal over the summer). The two need opposite explanations on screen.</summary>
+    [JsonPropertyName("empty_reason")] public string EmptyReason { get; init; } = "";
+}
+
+public sealed record GroupChoicesMessage
+{
+    [JsonPropertyName("query")] public string Query { get; init; } = "";
+    [JsonPropertyName("items")] public List<GroupDto> Items { get; init; } = new();
+}
+
+// ── Abituriyent ──────────────────────────────────────────────────────────────
+
+public sealed record DirectionDto
+{
+    [JsonPropertyName("id")] public int Id { get; init; }
+    [JsonPropertyName("code")] public string Code { get; init; } = "";
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("faculty")] public string Faculty { get; init; } = "";
+    /// <summary>Bakalavr | Magistr | Ordinatura.</summary>
+    [JsonPropertyName("education_type")] public string EducationType { get; init; } = "";
+}
+
+public sealed record DirectionsMessage
+{
+    [JsonPropertyName("items")] public List<DirectionDto> Items { get; init; } = new();
+}
+
+public sealed record DirectionMessage
+{
+    [JsonPropertyName("item")] public DirectionDto? Item { get; init; }
+}
+
+// ── Rahbariyat qabuli ────────────────────────────────────────────────────────
+
+public sealed record OfficialDto
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("position")] public string Position { get; init; } = "";
+    /// <summary>ISO short day code ("mon".."sun"); the kiosk localizes it.</summary>
+    [JsonPropertyName("reception_day")] public string ReceptionDay { get; init; } = "";
+    [JsonPropertyName("reception_time")] public string ReceptionTime { get; init; } = "";
+}
+
+public sealed record LeadershipMessage
+{
+    [JsonPropertyName("items")] public List<OfficialDto> Items { get; init; } = new();
+}
+
+public sealed record ReceptionPreviewMessage
+{
+    [JsonPropertyName("full_name")] public string FullName { get; init; } = "";
+    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
+    [JsonPropertyName("reason")] public string Reason { get; init; } = "";
+    [JsonPropertyName("official")] public OfficialDto? Official { get; init; }
+}
+
+public sealed record ReceptionSubmittedMessage
+{
+    /// <summary>Human-facing reference, e.g. "Q-1A2B3C4D".</summary>
+    [JsonPropertyName("reference")] public string Reference { get; init; } = "";
+    /// <summary>URL encoded into the printed ticket's QR code.</summary>
+    [JsonPropertyName("verify_url")] public string VerifyUrl { get; init; } = "";
+    [JsonPropertyName("official")] public OfficialDto? Official { get; init; }
+}
+
+// ── Shared visual aid ────────────────────────────────────────────────────────
+
+public sealed record InfoCardMessage
+{
+    [JsonPropertyName("title")] public string Title { get; init; } = "";
+    [JsonPropertyName("bullets")] public List<string> Bullets { get; init; } = new();
 }
 
 public sealed record ServerErrorMessage

@@ -6,11 +6,12 @@ import { ApplicationsPage, ApplicationDetailPage } from './routes/Applications'
 import { AppointmentsPage, AppointmentDetailPage } from './routes/Appointments'
 import { SessionsPage, SessionDetailPage } from './routes/Sessions'
 import { StaffPage } from './routes/Staff'
+import { LeadershipPage } from './routes/Leadership'
+import { HemisSyncPage } from './routes/HemisSync'
 import { ProfilePage } from './routes/Profile'
-// QabulBook (online appointment booking) is intentionally not imported —
-// the route is disabled May 2026 per operator's decision so the kiosk is
-// the only booking surface and the per-day 25-visitor cap has one funnel.
-// The file is preserved at routes/public/QabulBook.tsx for quick revert.
+// Online appointment booking (the old QabulBook page) was removed — the kiosk
+// is the only booking surface, so the per-day visitor cap has a single funnel.
+// The verify route below stays live: kiosk-printed QR talons link to it.
 import QabulVerifyPage from './routes/public/QabulVerify'
 import { I18nProvider } from './routes/public/i18n'
 
@@ -36,7 +37,7 @@ function Protected({
   if (!ADMIN_ROLES.has(me.role)) {
     return (
       <div className="grid h-screen place-items-center bg-surface px-6 text-center text-ink">
-        У вас нет доступа к панели Кенеса.
+        У вас нет доступа к панели института.
       </div>
     )
   }
@@ -66,6 +67,8 @@ export default function App() {
       <Route path="/sessions" element={<Protected adminOnly><SessionsPage /></Protected>} />
       <Route path="/sessions/:id" element={<Protected adminOnly><SessionDetailPage /></Protected>} />
       <Route path="/staff" element={<Protected adminOnly><StaffPage /></Protected>} />
+      <Route path="/leadership" element={<Protected adminOnly><LeadershipPage /></Protected>} />
+      <Route path="/hemis" element={<Protected adminOnly><HemisSyncPage /></Protected>} />
       {/* Shared (admin + reviewer). Reviewers see only their assigned rows. */}
       <Route path="/applications" element={<Protected><ApplicationsPage /></Protected>} />
       <Route path="/applications/:id" element={<Protected><ApplicationDetailPage /></Protected>} />

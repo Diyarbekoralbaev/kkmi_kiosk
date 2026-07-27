@@ -5,11 +5,12 @@ using Kiosk.App.State;
 
 namespace Kiosk.App.Controls;
 
-/// <summary>Deep-blue footer band with the 3-language toggle on the left
-/// and the org's helpline phone on the right. The toggle moved here
-/// from the header in the 2026 redesign — header is for branding only
-/// now. Active button class is driven by the LocalizationService.LanguageChanged
-/// event so the visual state matches the actual loaded dictionary.</summary>
+/// <summary>Navy footer band with the 4-language toggle on the left
+/// (uz / qq / ru / en) and the org's helpline phone on the right. The toggle
+/// moved here from the header in the 2026 redesign — header is for branding
+/// only now. Active button class is driven by the
+/// LocalizationService.LanguageChanged event so the visual state matches the
+/// actual loaded dictionary.</summary>
 public partial class KioskFooter : UserControl
 {
     public KioskFooter()
@@ -32,9 +33,10 @@ public partial class KioskFooter : UserControl
 
     private void UpdateActiveLangClass(Language lang)
     {
-        SetActive(LangKkBtn, lang == Language.Kk);
         SetActive(LangUzBtn, lang == Language.Uz);
+        SetActive(LangKkBtn, lang == Language.Kk);
         SetActive(LangRuBtn, lang == Language.Ru);
+        SetActive(LangEnBtn, lang == Language.En);
     }
 
     private static void SetActive(Button btn, bool active)
@@ -49,4 +51,6 @@ public partial class KioskFooter : UserControl
         LocalizationService.SetLanguage(Language.Uz);
     private void OnLangRu(object? sender, RoutedEventArgs e) =>
         LocalizationService.SetLanguage(Language.Ru);
+    private void OnLangEn(object? sender, RoutedEventArgs e) =>
+        LocalizationService.SetLanguage(Language.En);
 }

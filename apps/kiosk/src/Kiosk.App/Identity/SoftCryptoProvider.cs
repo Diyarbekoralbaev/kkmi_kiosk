@@ -7,7 +7,7 @@ namespace Kiosk.App.Identity;
 
 /// <summary>
 /// DEV ONLY — Linux/macOS fallback: ECDSA P-256 with the private key stored
-/// as PKCS#8 PEM in $XDG_DATA_HOME/joqari-kenes/device-key.pem (mode 0600).
+/// as PKCS#8 PEM in $XDG_DATA_HOME/kkmi-kiosk/device-key.pem (mode 0600).
 ///
 /// **Not for production.** Production is Windows + TPM. This exists so we
 /// can develop and test on Ubuntu without a TPM emulator. The build pipeline
@@ -86,6 +86,6 @@ public sealed class SoftCryptoProvider : ICryptoProvider, IDisposable
         var baseDir = !string.IsNullOrEmpty(xdg)
             ? xdg
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
-        return Path.Combine(baseDir, "joqari-kenes", "device-key.pem");
+        return Path.Combine(baseDir, "kkmi-kiosk", "device-key.pem");
     }
 }

@@ -4,9 +4,9 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import structlog
 from fastapi import APIRouter, Query, Request, status
 from pydantic import BaseModel, Field
-import structlog
 from sqlalchemy import func, select
 
 from ...core import audit

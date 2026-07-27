@@ -8,10 +8,10 @@
         Title="Kiosk · PIN"
         Width="560" Height="820"
         WindowStartupLocation="CenterScreen"
-        Background="#f4f7fb"
+        Background="{StaticResource KioskBg}"
         CanResize="False">
     <StackPanel Margin="36,32" Spacing="18">
-        <TextBlock Text="{DynamicResource AdminPinTitle}" FontSize="26" FontWeight="Light" Foreground="#0a4d8c" />
+        <TextBlock Text="{DynamicResource AdminPinTitle}" FontSize="26" FontWeight="Light" Foreground="{StaticResource KioskPrimary}" />
         <TextBlock Text="{DynamicResource AdminPinPrompt}" FontSize="15" Foreground="#64748b" />
         <TextBox x:Name="PinBox" PasswordChar="*" FontSize="32" IsReadOnly="True"
                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
@@ -32,7 +32,7 @@
 
     <Window.Styles>
         <Style Selector="Button.primary">
-            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Padding" Value="20,16" />
             <Setter Property="FontSize" Value="16" />

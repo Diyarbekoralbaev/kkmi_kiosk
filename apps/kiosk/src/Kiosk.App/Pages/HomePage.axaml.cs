@@ -4,6 +4,9 @@ using Kiosk.App.State;
 
 namespace Kiosk.App.Pages;
 
+/// <summary>Home menu. Each tile resets any half-finished flow before
+/// navigating: a visitor who walked away mid-appeal leaves the step machine
+/// dirty, and the next person must not land in someone else's form.</summary>
 public partial class HomePage : UserControl
 {
     public HomePage()
@@ -11,19 +14,17 @@ public partial class HomePage : UserControl
         InitializeComponent();
     }
 
-    private void OnTileAi(object? sender, RoutedEventArgs e)
+    private static void Go(KioskPage page)
     {
-        // AI menen sóylesiw — opens the dedicated robot/voice page.
-        SessionStore.Current.Navigate(KioskPage.Ai);
+        var s = SessionStore.Current;
+        s.SubmitStep = SubmitStep.Idle;
+        s.Navigate(page);
     }
 
-    private void OnTileSubmit(object? sender, RoutedEventArgs e)
-    {
-        // Joqarı Keńeske murajat — touch-driven appeal flow (phone → lookup →
-        // confirm/full-form → text → preview). Reset the step to Idle so the
-        // page starts fresh — not a leftover voice-preview state from an
-        // abandoned AI session.
-        SessionStore.Current.SubmitStep = SubmitStep.Idle;
-        SessionStore.Current.Navigate(KioskPage.ManualSubmit);
-    }
+    private void OnTileAi(object? sender, RoutedEventArgs e) => Go(KioskPage.Ai);
+    private void OnTileLibrary(object? sender, RoutedEventArgs e) => Go(KioskPage.Library);
+    private void OnTileAbituriyent(object? sender, RoutedEventArgs e) => Go(KioskPage.Abituriyent);
+    private void OnTileMurojat(object? sender, RoutedEventArgs e) => Go(KioskPage.Murojat);
+    private void OnTileSchedule(object? sender, RoutedEventArgs e) => Go(KioskPage.Jadval);
+    private void OnTileReception(object? sender, RoutedEventArgs e) => Go(KioskPage.Qabul);
 }

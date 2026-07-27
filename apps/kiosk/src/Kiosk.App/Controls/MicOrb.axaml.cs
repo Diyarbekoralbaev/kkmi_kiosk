@@ -59,14 +59,16 @@ public partial class MicOrb : UserControl
 
         if (isOff)
         {
-            // Idle: tap to start. Cyan-teal so it reads as a CTA, not an error.
-            Core.Background = new SolidColorBrush(Color.Parse("#0a4d8c"));
-            Core.BorderBrush = new SolidColorBrush(Color.Parse("#f5b932"));
+            // Idle: tap to start. Accent ring so it reads as a CTA, not an error.
+            Core.Background = Palette.Brush("KioskPrimary");
+            Core.BorderBrush = Palette.Brush("KioskAccent");
             StatusLabel.Text = LocalizationService.Get("MicTapToStart");
             return;
         }
         if (s.ConnectionState != ConnectionState.Connected)
         {
+            // Deliberately off-palette greys: "not connected" must not look
+            // like any live brand state.
             Core.Background = new SolidColorBrush(Color.Parse("#374151"));
             Core.BorderBrush = new SolidColorBrush(Color.Parse("#4b5563"));
             StatusLabel.Text = LocalizationService.Get(
@@ -77,14 +79,14 @@ public partial class MicOrb : UserControl
         }
         if (s.IsSpeaking)
         {
-            Core.Background = new SolidColorBrush(Color.Parse("#0a4d8c"));
-            Core.BorderBrush = new SolidColorBrush(Color.Parse("#0a4d8c"));
+            Core.Background = Palette.Brush("KioskPrimary");
+            Core.BorderBrush = Palette.Brush("KioskPrimary");
             StatusLabel.Text = LocalizationService.Get("MicSpeaking");
         }
         else
         {
-            Core.Background = new SolidColorBrush(Color.Parse("#073966"));
-            Core.BorderBrush = new SolidColorBrush(Color.Parse("#0a4d8c"));
+            Core.Background = Palette.Brush("KioskPrimaryDark");
+            Core.BorderBrush = Palette.Brush("KioskPrimary");
             StatusLabel.Text = LocalizationService.Get("MicListening");
         }
     }
@@ -119,7 +121,10 @@ public partial class MicOrb : UserControl
                 StatusLabel.Text = LocalizationService.Get("MicStarting");
                 try
                 {
-                    await rt.StartAsync();
+                    // The menu is bound at connect time, so it has to come
+                    // from wherever the visitor already is.
+                    await rt.StartAsync(
+                        SessionStore.MenuFor(SessionStore.Current.CurrentPage));
                 }
                 catch (Exception ex)
                 {

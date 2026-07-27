@@ -19,7 +19,7 @@
                 <Button x:Name="ReenrollButton" Click="OnReenrollClicked"
                         Content="{DynamicResource RevokedButton}"
                         HorizontalAlignment="Center" Padding="32,12"
-                        Background="#0a4d8c" Foreground="White"
+                        Background="{StaticResource KioskPrimary}" Foreground="White"
                         BorderThickness="0" CornerRadius="8" FontSize="16" />
             </StackPanel>
         </Border>

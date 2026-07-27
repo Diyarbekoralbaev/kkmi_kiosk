@@ -1,44 +1,42 @@
-"""Build the final system prompt string for a kiosk's WS session, from DB.
+"""Assemble the system prompt for one kiosk WS session.
 
-Source of truth is the singleton `system_ai_defaults` row (super-admin owned).
-The prompt sections are read straight out of `default_sections` JSONB and
-concatenated in `order`. A per-org `OrgKbOfficial` block (hokim/orinbasarlar
-list) is appended at the end so the agent has the up-to-date officials KB
-for the current org.
+Source of truth is the singleton `system_ai_defaults` row, edited by the super
+admin. Its `default_sections` JSONB holds every section; this module picks the
+BASE ones plus the ONE focus block matching the menu the visitor tapped, and
+returns the tool set scoped to that same menu.
 
-Two dynamic blocks are prepended/appended at runtime (NOT stored in
-default_sections, since they change per session/org):
+Why menu-scoped rather than one prompt with everything: with all six flows
+described at once the model blended them — offering to file an appeal when
+asked about a timetable, calling `show_schedule` mid-appeal — and the
+guardrails drifted out of attention as the prompt grew. One flow at a time
+keeps the prompt short and the behaviour predictable.
 
-  - "ҲӘЗИРГИ ЎАҚЫТ" at the top: today's date + Karakalpak Cyrillic
-    weekday, so the agent computes "ертең / индин" against real time
-    instead of guessing. ("сана" is a Kazakh/Latin borrowing and not
-    used in Karakalpak — "ўақыт" is the operator-approved term.)
-  - "КЕҢЕС БАЙЛАНЫС" before the officials block: the current org's
-    helpline phone, email, address (per-locale → kk picked) so the
-    agent stops hallucinating phone numbers like the cross-government
-    1242 hotline.
+Two blocks are computed per session rather than stored:
 
-No per-org overrides. No filtering by `gov_editable`. No screen-by-screen
-section masking. The static prompt the agent sees is identical for every
-org — only the dynamic blocks + trailing officials block vary.
+  - "CURRENT TIME" at the top: today's date and weekday, so "tomorrow" and
+    "next week" resolve against the real calendar instead of a guess.
+  - "INSTITUTE CONTACT" after the static sections: the org's phone, email,
+    address and hours, so the agent stops inventing contact details.
 """
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 
 import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core import murajat
 from ..core.seed import ensure_system_ai_defaults
+from ..core.timezone import now_local
+from ..domain.ai_config import BASE_SECTION_KEYS, focus_key
 from ..domain.organization import (
     Organization,
     address_translations_for_response,
     work_hours_translations_for_response,
 )
+from .tools import DEFAULT_MENU, MENUS, tools_for_menu
 
 logger = structlog.get_logger(__name__)
 
@@ -54,48 +52,39 @@ class AgentConfig:
     max_output_tokens: int
     response_modalities: str
     enabled_tools: list[str]
+    menu: str
 
 
-# weekday() returns 0=Mon..6=Sun, matched to the Karakalpak Cyrillic names
-# so the runtime date block reads identical to anything the static prompt
-# already mentions.
-_WEEKDAY_INDEX_TO_KK = [
-    "дүйшемби",
-    "сейшемби",
-    "сәршемби",
-    "пийшемби",
-    "жума",
-    "шемби",
-    "жексенби",
-]
+def normalize_menu(raw: str | None) -> str:
+    """Coerce whatever arrived on the WS URL to a known menu."""
+    menu = (raw or "").strip().lower()
+    return menu if menu in MENUS else DEFAULT_MENU
 
 
 def _format_today_block(now: datetime | None = None) -> str:
-    """Today's date + weekday in Karakalpak Cyrillic. Computed once per
-    WS session — the agent uses it to resolve "ертең", "индин", "келеси
-    жума" against real time instead of guessing. Without this, Gemini
-    has no calendar; it would routinely place qabul on "пийшемби" when
-    the kiosk operator's clock says жума.
+    """Today's date and weekday in institute-local time.
 
-    Header is "ҲӘЗИРГИ ЎАҚЫТ" (current time) — the operator-approved
-    Karakalpak term. "сана" is a Kazakh/Latin borrowing not used in
-    natural Karakalpak speech, per native-speaker correction."""
-    now = now or datetime.now(UTC)
-    iso = now.date().isoformat()
-    weekday = _WEEKDAY_INDEX_TO_KK[now.weekday()]
+    Without this the model has no calendar at all, and "tomorrow's timetable"
+    silently becomes whichever day it feels like. Local time, not UTC: at 02:00
+    Tashkent the UTC date is still yesterday, which would show the wrong day's
+    classes to the night-shift cleaner who taps the screen.
+    """
+    local = now or now_local()
     return (
-        "===== ҲӘЗИРГИ ЎАҚЫТ =====\n"
-        f"Бүгинги күн: {iso} ({weekday})."
+        "===== CURRENT TIME =====\n"
+        f"Today is {local.date().isoformat()} ({local.strftime('%A')}), "
+        f"local time {local.strftime('%H:%M')} in Nukus (UTC+5).\n"
+        "Resolve \"today\", \"tomorrow\" and \"this week\" against this date."
     )
 
 
-def _pick_kk(d: dict[str, str]) -> str:
-    """Karakalpak Cyrillic is the agent's working script; pick the kk
-    translation if present, else any non-empty locale, else empty."""
-    v = d.get("kk")
+def _pick(d: dict[str, str], preferred: str = "uz") -> str:
+    """Institute records are predominantly Uzbek Latin, so that is the
+    fallback order for a prompt block the model reads once."""
+    v = d.get(preferred)
     if isinstance(v, str) and v.strip():
         return v
-    for k in ("ru", "uz"):
+    for k in ("uz", "en", "ru", "kk"):
         alt = d.get(k)
         if isinstance(alt, str) and alt.strip():
             return alt
@@ -103,98 +92,76 @@ def _pick_kk(d: dict[str, str]) -> str:
 
 
 def _format_org_contact_block(org: Organization) -> str:
-    """Inject the current org's helpline + email + address into the
-    prompt so the agent stops hallucinating phone numbers (the most
-    egregious one being 1242, which is the cross-government Uzbekistan
-    contact-centre and NOT a hokimiyat line). Empty fields render as
-    "—" rather than being omitted, so the agent never sees a half-empty
-    section and tries to fill it in itself."""
-    address = _pick_kk(address_translations_for_response(org)) or "—"
-    hours = _pick_kk(work_hours_translations_for_response(org)) or "—"
+    """The institute's real contact details.
+
+    Present so the agent has somewhere to read them FROM. Without it the model
+    fills the gap with plausible-looking invented numbers, which is worse than
+    saying it does not know. Empty fields render as "—" rather than being
+    omitted, so the agent never sees a half-empty section and completes it
+    itself.
+    """
+    address = _pick(address_translations_for_response(org)) or "—"
+    hours = _pick(work_hours_translations_for_response(org)) or "—"
     phone = (org.helpline_phone or "").strip() or "—"
     email = (org.email or "").strip() or "—"
     return (
-        "===== КЕҢЕС БАЙЛАНЫС =====\n"
-        f"Жәрдем телефоны: {phone}\n"
+        "===== INSTITUTE CONTACT =====\n"
+        f"Phone: {phone}\n"
         f"Email: {email}\n"
-        f"Мәнзил: {address}\n"
-        f"Жумыс ўақты: {hours}\n"
-        "Тек усы реквизитлерди айтың. 1242 (улыўма мәмлекетлик "
-        "хызметлер орайы) Кеңес номери ЕМЕС — Кеңес байланысы "
-        "сапатында айтпаң. Кеңес телефонын сорағанда жоқарыдағы "
-        "«Жәрдем телефоны»ды ғана айтың; ол бос болса «бизде жария "
-        "етилген жәрдем телефоны жоқ, орынлы келиң» деп жуўап бер."
+        f"Address: {address}\n"
+        f"Working hours: {hours}\n"
+        "Give ONLY these details. If one of them is «—», say the institute has "
+        "not published it rather than offering another number."
     )
 
 
-def _format_districts_block(districts: list[dict]) -> str:
-    """The 17 districts (id + name) so the agent maps a spoken tuman to its
-    district_id during a new-citizen murajat. Quarters are fetched per-district
-    at runtime via the get_quarters tool — 454 of them won't fit the prompt."""
-    lines = [
-        "===== ТУМАНЛАР (district_id) =====",
-        "Жаңа пуқараның мүрәжатын толтырғанда, оның жасайтуғын туманын усы "
-        "дизимнен таңла ҳәм id'син district_id ретинде қолла (қарақалпақша, "
-        "өзбекше яки русша айтса да ең жақынын таңла):",
-    ]
-    for d in districts:
-        did = d.get("id")
-        name = (d.get("name_qq") or d.get("name_uz") or "").strip()
-        uz = (d.get("name_uz") or "").strip()
-        suffix = f" / {uz}" if uz and uz != name else ""
-        lines.append(f"  {did} — {name}{suffix}")
-    lines.append(
-        "Туман белгили болғаннан кейин get_quarters(district_id) шақыр — ол сол "
-        "туманның мәкан (МПЖ/АПЖ) дизимин қайтарады; пуқара айтқан мәканды таңлап "
-        "quarter_id ди ал."
-    )
-    return "\n".join(lines)
-
-
-async def load_agent_config(session: AsyncSession, org_id: uuid.UUID) -> AgentConfig:
+async def load_agent_config(
+    session: AsyncSession, org_id: uuid.UUID, menu: str | None = None
+) -> AgentConfig:
     defaults = await ensure_system_ai_defaults(session)
+    resolved_menu = normalize_menu(menu)
 
-    sections = list(defaults.default_sections or [])
-    sections.sort(key=lambda s: int(s.get("order", 0)))
+    by_key = {
+        str(s.get("section_key", "")): s for s in (defaults.default_sections or [])
+    }
 
-    # Today block at the very top — so the agent reads "real time" before
-    # any guidance section. Without this it's the FIRST thing Gemini
-    # forgets when picking қабыл dates.
+    wanted = [*BASE_SECTION_KEYS, focus_key(resolved_menu)]
+    chosen = [by_key[k] for k in wanted if k in by_key]
+    chosen.sort(key=lambda s: int(s.get("order", 0)))
+
+    missing = [k for k in wanted if k not in by_key]
+    if missing:
+        # A section the super admin deleted, or a menu with no focus block yet.
+        # The session still runs on whatever is left rather than failing — a
+        # silent kiosk is worse than a slightly thinner prompt.
+        logger.warning(
+            "prompt_sections_missing", menu=resolved_menu, missing=missing
+        )
+
     pieces: list[str] = [_format_today_block()]
+    pieces.extend(
+        content for s in chosen if (content := str(s.get("content", "")).strip())
+    )
 
-    for sec in sections:
-        content = str(sec.get("content", "")).strip()
-        if content:
-            pieces.append(content)
-
-    # Org contact block — placed after the static sections but BEFORE the
-    # officials block so the agent reads "use these contacts" right
-    # before seeing the names it might want to forward visitors to.
     org = (
         await session.execute(select(Organization).where(Organization.id == org_id))
     ).scalar_one_or_none()
     if org is not None:
         pieces.append(_format_org_contact_block(org))
 
-    # Districts reference — only the murajat new-citizen flow needs it. Fetched
-    # (and cached) from the external cabinet; if it's unreachable or unconfigured
-    # we build the prompt without it rather than failing the whole session.
-    try:
-        districts = (await murajat.get_locations()).get("districts") or []
-        if districts:
-            pieces.append(_format_districts_block(districts))
-    except Exception as e:
-        logger.warning("districts_block_skipped", error=str(e), error_type=type(e).__name__)
-
-    system_prompt = "\n\n".join(pieces)
-    enabled_tools = [
+    # The menu decides which tools are RELEVANT; the super admin's `enabled`
+    # flag can still switch one off globally (e.g. to stop taking appeals for a
+    # week). A tool_key absent from default_tools is treated as enabled so a
+    # newly added tool works before anyone touches the panel.
+    disabled = {
         str(t.get("tool_key", ""))
         for t in (defaults.default_tools or [])
-        if t.get("enabled") and t.get("tool_key")
-    ]
+        if not t.get("enabled", True)
+    }
+    enabled_tools = [t for t in tools_for_menu(resolved_menu) if t not in disabled]
 
     return AgentConfig(
-        system_prompt=system_prompt,
+        system_prompt="\n\n".join(pieces),
         model=defaults.model,
         voice=defaults.voice,
         temperature=defaults.temperature,
@@ -203,4 +170,5 @@ async def load_agent_config(session: AsyncSession, org_id: uuid.UUID) -> AgentCo
         max_output_tokens=defaults.max_output_tokens,
         response_modalities=defaults.response_modalities,
         enabled_tools=enabled_tools,
+        menu=resolved_menu,
     )

@@ -1,0 +1,161 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:Kiosk.App.Controls"
+             xmlns:state="using:Kiosk.App.State"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1224"
+             x:Class="Kiosk.App.Pages.MurojatPage"
+             x:DataType="state:SessionStore">
+    <!-- File an appeal with the institute. Four steps: name → phone → text →
+         review.
+
+         The council build asked for district, neighbourhood, birth date and
+         gender because the appeal was forwarded to a government cabinet that
+         keyed citizens by those fields. The institute stores its own appeals,
+         so all of that is gone — a student writing to their dean should not be
+         filling in a passport form.
+
+         The voice flow lands on the Review step directly (the agent pushes
+         murojat_preview); both paths submit the same record. -->
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+            <TextBlock Grid.Column="0" Text="{DynamicResource MurojatPageTitle}"
+                       FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
+                       Foreground="{StaticResource KioskPrimary}"
+                       VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+            <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,28,0,0">
+
+            <!-- ① Name -->
+            <StackPanel x:Name="NameStep" Spacing="20">
+                <TextBlock Text="{DynamicResource MurojatNamePrompt}" Classes="prompt" />
+                <TextBox x:Name="NameInput" Classes="field"
+                         Watermark="{DynamicResource MurojatNameWatermark}" />
+                <TextBlock x:Name="NameError" Classes="error" IsVisible="False"
+                           Text="{DynamicResource MurojatNameError}" />
+                <controls:OnScreenKeyboard x:Name="NameKeyboard" />
+                <Button Click="OnNameNext" Classes="primary" HorizontalAlignment="Right"
+                        Content="{DynamicResource MurojatContinue}" />
+            </StackPanel>
+
+            <!-- ② Phone -->
+            <StackPanel x:Name="PhoneStep" IsVisible="False" Spacing="20">
+                <TextBlock Text="{DynamicResource MurojatPhonePrompt}" Classes="prompt" />
+                <!-- A TextBox, not a TextBlock: NumericKeypad drives a TextBox
+                     target, and reusing it keeps one input path. Read-only so
+                     the hardware keyboard (if one is ever plugged in for
+                     servicing) cannot put letters into a phone number. -->
+                <TextBox x:Name="PhoneInput" Classes="field phone" IsReadOnly="True"
+                         Watermark="90 123 45 67" />
+                <TextBlock x:Name="PhoneError" Classes="error" IsVisible="False"
+                           Text="{DynamicResource MurojatPhoneError}" />
+                <controls:NumericKeypad x:Name="PhoneKeypad" />
+                <Button Click="OnPhoneNext" Classes="primary" HorizontalAlignment="Right"
+                        Content="{DynamicResource MurojatContinue}" />
+            </StackPanel>
+
+            <!-- ③ Text -->
+            <StackPanel x:Name="TextStep" IsVisible="False" Spacing="20">
+                <TextBlock Text="{DynamicResource MurojatTextPrompt}" Classes="prompt" />
+                <TextBox x:Name="AppealTextInput" Classes="field" Height="220"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         Watermark="{DynamicResource MurojatTextWatermark}" />
+                <TextBlock x:Name="TextError" Classes="error" IsVisible="False"
+                           Text="{DynamicResource MurojatTextError}" />
+                <controls:OnScreenKeyboard x:Name="TextKeyboard" />
+                <Button Click="OnTextNext" Classes="primary" HorizontalAlignment="Right"
+                        Content="{DynamicResource MurojatContinue}" />
+            </StackPanel>
+
+            <!-- ④ Review -->
+            <ScrollViewer x:Name="ReviewStep" IsVisible="False">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="{DynamicResource MurojatReviewTitle}" Classes="prompt" />
+                    <Border Background="{StaticResource KioskCard}"
+                            BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                            CornerRadius="{StaticResource KioskRadiusCard}" Padding="32,28">
+                        <StackPanel Spacing="20">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource MurojatNameLabel}" Classes="label" />
+                                <TextBlock Text="{Binding SubmitName}" Classes="value" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource MurojatPhoneLabel}" Classes="label" />
+                                <TextBlock Text="{Binding SubmitPhone}" Classes="value" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource MurojatTextLabel}" Classes="label" />
+                                <TextBlock Text="{Binding SubmitText}" Classes="value"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock x:Name="SubmitStatus" Classes="error" IsVisible="False" />
+                    <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right">
+                        <Button Click="OnEdit" Classes="secondary"
+                                Content="{DynamicResource MurojatEdit}" />
+                        <Button x:Name="ConfirmButton" Click="OnConfirm" Classes="primary"
+                                Content="{DynamicResource MurojatConfirm}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.prompt">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontH3}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontCaption}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskTextMuted}" />
+        </Style>
+        <Style Selector="TextBlock.value">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontH4}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+        </Style>
+        <Style Selector="TextBlock.error">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontBodyLg}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskError}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBox.field">
+            <Setter Property="FontSize" Value="26" />
+            <Setter Property="Padding" Value="22,18" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="MinHeight" Value="72" />
+        </Style>
+        <Style Selector="TextBox.field.phone">
+            <Setter Property="FontSize" Value="40" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="MinHeight" Value="92" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="36,16" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="MinHeight" Value="68" />
+        </Style>
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="36,16" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="MinHeight" Value="68" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

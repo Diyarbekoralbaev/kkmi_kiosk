@@ -57,7 +57,7 @@ public partial class AiPage : UserControl
         try
         {
             if (rt is not null && !rt.IsActive)
-                await rt.StartAsync();
+                await rt.StartAsync(SessionStore.MenuFor(KioskPage.Ai));
             // Re-wire the analyser after StartAsync — rt.Analyser only
             // exists once AudioPlayback is constructed inside StartAsync.
             Robot.Analyser = rt?.Analyser;

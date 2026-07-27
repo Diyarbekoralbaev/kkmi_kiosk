@@ -1,4 +1,4 @@
-# Joqari Kenes — deployment credentials & server reference
+# KKMI — deployment credentials & server reference
 
 This is the **Joqari Keńes** (Supreme Council) kiosk platform — a clone of the
 Hokimiyat kiosk (`kiosk_gov`), deployed as a **separate, isolated stack**.
@@ -10,17 +10,18 @@ Hokimiyat kiosk (`kiosk_gov`), deployed as a **separate, isolated stack**.
 
 ## Isolation (already migrated in the repo)
 
-| Resource | kiosk_gov (existing — don't touch) | joqari_kenes (this) |
+| Resource | kiosk_gov (existing — don't touch) | kkmi_kiosk (this) |
 |---|---|---|
-| compose `name` | `kiosk-gov` | `joqari-kenes` |
-| volumes / network | `kiosk-gov_*` | `joqari-kenes_*` (auto) |
-| database | `kiosk_gov` | `joqari_kenes` |
-| prod host ports | 8001 / 8002 / 8003 / 8005 | **8011 / 8012 / 8013 / 8015** |
+| compose `name` | `kiosk-gov` | `kkmi-kiosk` |
+| volumes / network | `kiosk-gov_*` | `kkmi-kiosk_*` (auto) |
+| database | `kiosk_gov` | `kkmi_kiosk` |
+| prod host ports | 8001 / 8002 / 8003 / 8005 | **8031 / 8032 / 8033** |
 | dev postgres port | 5433 | **5443** |
-| kiosk key storage path | `…/kiosk-gov/` | `…/joqari-kenes/` |
+| kiosk key storage path | `…/kiosk-gov/` | `…/kkmi-kiosk/` |
 
-Prod host ports map: backend `8011`, super-panel `8012`, gov-panel `8013`,
-gatus(status) `8015`. The host nginx proxies the council domains to these.
+Prod host ports map: backend `8031`, super-panel `8032`, gov-panel `8033`,
+gatus(status) `8035` — not started, no status subdomain is allocated.
+The host nginx proxies the three kkmi domains to the first three.
 
 > Dev panel ports (5173/5174) were left unchanged — fine for running one dev
 > stack at a time. If you ever run both dev stacks simultaneously, shift these
@@ -39,7 +40,7 @@ Copy `.env.prod.example` → `.env.prod` on the server and fill every value.
 | `TELEGRAM_BOT_TOKEN` | **new** bot via @BotFather | ❌ new bot |
 | `TELEGRAM_MURAJAT_CHANNEL_ID` / `_QABUL_CHANNEL_ID` | new council channels, bot = admin | ❌ new |
 | `HEALTH_DEEP_TOKEN` | `openssl rand -hex 16` | ❌ new |
-| `NTFY_TOPIC` | `nukus-kenes-ops-$(openssl rand -hex 4)` | ❌ new |
+| `NTFY_TOPIC` | `kkmi-ops-$(openssl rand -hex 4)` | ❌ new |
 
 ### Cloudflare relays (Gemini + Telegram) — reusable, with one caveat
 
@@ -67,29 +68,29 @@ sit on Cloudflare's edge and forward. (See ARCHITECTURE.md / DEPLOY.md.)
 Replace with the council's own subdomains before deploy, e.g.:
 
 ```
-api.<kenes-domain>     → backend (8011)
-gov.<kenes-domain>     → gov/operator SPA (8013)
-super.<kenes-domain>   → super-admin SPA (8012)
-status.<kenes-domain>  → Gatus status page (8015)
+api.<kkmi-domain>     → backend (8031)
+gov.<kkmi-domain>     → gov/operator SPA (8033)
+super.<kkmi-domain>   → super-admin SPA (8032)
+(no status host — gatus lives behind the `status` compose profile)
 ```
 
-TLS: issue a multi-SAN cert named `joqari-kenes` (the nginx vhosts reference
-`/etc/letsencrypt/live/joqari-kenes/`). DNS for the council domain is on
+TLS: issue a multi-SAN cert named `kkmi-kiosk` (the nginx vhosts reference
+`/etc/letsencrypt/live/kkmi-kiosk/`). DNS for the council domain is on
 Timeweb (not Cloudflare) — HTTP-01 from Moscow can be flaky; DNS-01 is more
 reliable if the zone supports it.
 
 ## Server access
 
 - Existing prod (kiosk_gov, **do not disturb**): `root@72.56.246.212` (Moscow),
-  SSH key-based (no password). This server CAN host joqari_kenes alongside it —
+  SSH key-based (no password). This server CAN host kkmi_kiosk alongside it —
   the port/name/db isolation above keeps them separate.
-- Target server for joqari_kenes: **TBD** — confirm whether it co-locates on
+- Target server for kkmi_kiosk: **TBD** — confirm whether it co-locates on
   72.56.246.212 or gets its own box before deploying.
 
 ## Backup (restic → Cloudflare R2)
 
 kiosk_gov backs up DB + `.env.prod` + photos to R2 nightly (restic, keep-last
-7). Replicate for joqari_kenes with a **separate R2 bucket** (e.g.
-`joqari-kenes-backups`) and a **new restic password** (store it outside the
+7). Replicate for kkmi_kiosk with a **separate R2 bucket** (e.g.
+`joqari-kkmi-backups`) and a **new restic password** (store it outside the
 repo; losing it makes backups unreadable). See the kiosk_gov backup script as
 the template.

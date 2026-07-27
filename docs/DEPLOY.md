@@ -11,9 +11,9 @@ Server: `82.148.3.38` (Ubuntu 24.04, Servercore Tashkent — same-region as
 end users, low latency, clean peering).
 
 Domains (DNS at Timeweb, A records → server IP):
-- `api.kioska.dbc.uz` — backend (FastAPI + WS)
-- `super.kioska.dbc.uz` — super admin SPA
-- `gov.kioska.dbc.uz` — gov admin SPA + public booking/verify
+- `kkmi-api.diyarbek.uz` — backend (FastAPI + WS)
+- `kkmi-super.diyarbek.uz` — super admin SPA
+- `kkmi.diyarbek.uz` — gov admin SPA + public booking/verify
 
 ---
 
@@ -93,8 +93,8 @@ Fill in:
 | `GITHUB_WEBHOOK_SECRET` | `openssl rand -hex 16` |
 
 Already set in `.env.prod.example`:
-- `PUBLIC_BASE_URL=https://gov.kioska.dbc.uz`
-- `CORS_ORIGINS=["https://super.kioska.dbc.uz","https://gov.kioska.dbc.uz"]`
+- `PUBLIC_BASE_URL=https://kkmi.diyarbek.uz`
+- `CORS_ORIGINS=["https://kkmi-super.diyarbek.uz","https://kkmi.diyarbek.uz"]`
 - `KIOSK_GITHUB_REPO=diyarbekoralbaev/joqari_kenes`
 - `KIOSK_AUTO_PUBLISH_ON_GITHUB_SYNC=false` (super-admin must click Publish)
 
@@ -112,12 +112,12 @@ gov-panel `127.0.0.1:8003`. nginx proxies all three from 443.
 ### 6. Smoke test
 
 ```bash
-curl -fsS https://api.kioska.dbc.uz/health        # → {"status":"ok","db":"ok"}
-curl -fsS https://super.kioska.dbc.uz/  -o /dev/null -w "%{http_code}\n"   # → 200
-curl -fsS https://gov.kioska.dbc.uz/    -o /dev/null -w "%{http_code}\n"   # → 200
+curl -fsS https://kkmi-api.diyarbek.uz/health        # → {"status":"ok","db":"ok"}
+curl -fsS https://kkmi-super.diyarbek.uz/  -o /dev/null -w "%{http_code}\n"   # → 200
+curl -fsS https://kkmi.diyarbek.uz/    -o /dev/null -w "%{http_code}\n"   # → 200
 ```
 
-Login at `https://super.kioska.dbc.uz/login` with `SUPER_ADMIN_EMAIL` /
+Login at `https://kkmi-super.diyarbek.uz/login` with `SUPER_ADMIN_EMAIL` /
 `SUPER_ADMIN_PASSWORD` from `.env.prod`. First login enrolls TOTP (MFA
 required for super admin).
 
@@ -160,7 +160,7 @@ Pipeline:
    secret.
 4. `.nupkg` + `.exe` uploaded as a GitHub Release asset.
 5. GitHub fires a `release` webhook to
-   `https://api.kioska.dbc.uz/api/super/releases/github-webhook` →
+   `https://kkmi-api.diyarbek.uz/api/super/releases/github-webhook` →
    backend HMAC-verifies, downloads asset, inserts a draft row in
    `kiosk_releases`.
 6. Super-admin sees it in `/releases` → clicks **Publish** → online kiosks
@@ -168,12 +168,12 @@ Pipeline:
 
 ### Setting the cert pin secret
 
-The kiosk binary pins the leaf cert SHA-256 of `api.kioska.dbc.uz`. Re-run
+The kiosk binary pins the leaf cert SHA-256 of `kkmi-api.diyarbek.uz`. Re-run
 after Let's Encrypt rotates the cert (every ~60 days), then push a new build
 so existing kiosks can update before the old cert pin expires.
 
 ```bash
-PIN=$(bash scripts/extract-cert-pin.sh api.kioska.dbc.uz)
+PIN=$(bash scripts/extract-cert-pin.sh kkmi-api.diyarbek.uz)
 gh secret set KIOSK_CERT_PIN_SHA256 --repo Diyarbekoralbaev/joqari_kenes --body "$PIN"
 ```
 
@@ -183,7 +183,7 @@ gh secret set KIOSK_CERT_PIN_SHA256 --repo Diyarbekoralbaev/joqari_kenes --body 
 SECRET="$(awk -F= '/^GITHUB_WEBHOOK_SECRET=/{print $2}' /root/joqari_kenes/.env.prod)"
 gh api -X POST repos/Diyarbekoralbaev/joqari_kenes/hooks \
   -f "name=web" -F "active=true" -f "events[]=release" \
-  -f "config[url]=https://api.kioska.dbc.uz/api/super/releases/github-webhook" \
+  -f "config[url]=https://kkmi-api.diyarbek.uz/api/super/releases/github-webhook" \
   -f "config[content_type]=json" \
   -f "config[secret]=$SECRET" \
   -f "config[insecure_ssl]=0"

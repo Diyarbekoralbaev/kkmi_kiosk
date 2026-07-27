@@ -13,8 +13,8 @@ from .config import (
     get_settings,
 )
 from .db import AsyncSessionLocal
-from .seed import ensure_default_council_org, ensure_system_ai_defaults
 from .security import hash_password
+from .seed import ensure_default_institute_org, ensure_system_ai_defaults
 
 logger = structlog.get_logger(__name__)
 
@@ -66,7 +66,7 @@ async def run() -> None:
             # checks below short-circuit. Released automatically at commit.
             await session.execute(text("SELECT pg_advisory_xact_lock(728193)"))
             await ensure_system_ai_defaults(session)
-            await ensure_default_council_org(session)
+            await ensure_default_institute_org(session)
 
             existing_super = (
                 await session.execute(

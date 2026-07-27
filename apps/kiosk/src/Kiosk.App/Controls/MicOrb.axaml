@@ -13,16 +13,16 @@
         <Ellipse x:Name="PulseRing" Width="120" Height="120"
                  HorizontalAlignment="Center" VerticalAlignment="Top"
                  Margin="0,8,0,0"
-                 Stroke="#0a4d8c" StrokeThickness="2" Opacity="0.4" />
+                 Stroke="{StaticResource KioskPrimary}" StrokeThickness="2" Opacity="0.4" />
 
         <!-- Core orb -->
         <Border x:Name="Core" Width="84" Height="84"
                 HorizontalAlignment="Center" VerticalAlignment="Top"
                 Margin="0,26,0,0"
                 CornerRadius="42"
-                Background="#0a4d8c" BorderBrush="#073966" BorderThickness="2">
+                Background="{StaticResource KioskPrimary}" BorderBrush="{StaticResource KioskPrimaryDark}" BorderThickness="2">
             <Border.Effect>
-                <DropShadowEffect Color="#0a4d8c" BlurRadius="28" Opacity="0.55" />
+                <DropShadowEffect Color="{StaticResource KioskPrimaryColor}" BlurRadius="28" Opacity="0.55" />
             </Border.Effect>
             <TextBlock Text="🎤" FontSize="32"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -32,7 +32,7 @@
         <!-- Status label below orb -->
         <TextBlock x:Name="StatusLabel" Text="{DynamicResource MicListening}"
                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                   Foreground="#073966" FontSize="13" FontWeight="SemiBold"
+                   Foreground="{StaticResource KioskPrimaryDark}" FontSize="13" FontWeight="SemiBold"
                    Margin="0,0,0,2" />
     </Grid>
 </UserControl>

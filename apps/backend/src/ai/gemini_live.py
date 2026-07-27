@@ -214,7 +214,7 @@ class GeminiLiveSession:
 
         try:
             await asyncio.wait_for(self._setup_complete.wait(), timeout=10.0)
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             raise ProviderError("gemini_setup_timeout") from e
 
         logger.info("gemini_session_ready", model=self.config.model)
@@ -329,7 +329,11 @@ class GeminiLiveSession:
 
         is_31 = "3.1" in self.config.model and "live" in self.config.model
         rt_key = "realtime_input" if is_31 else "realtimeInput"
-        mime_key = "mimeType" if not is_31 else "mimeType"
+        # Only the envelope key went snake_case in 3.1 — the inner blob field
+        # stayed camelCase on both API versions. (This was previously written
+        # as a ternary with two identical branches, which read as if the two
+        # versions differed. They don't.)
+        mime_key = "mimeType"
 
         while len(self._input_buffer) >= _FRAME_BYTES:
             chunk = bytes(self._input_buffer[:_FRAME_BYTES])
@@ -546,7 +550,12 @@ class GeminiLiveSession:
         self._closed = True
         if self._recv_task is not None and not self._recv_task.done():
             self._recv_task.cancel()
-            with contextlib.suppress(Exception):
+            # CancelledError derives from BaseException, so suppress(Exception)
+            # does NOT catch it — awaiting the cancelled task here used to throw
+            # straight out of close(), out of the WS handler's finally block,
+            # and skip session finalisation entirely (every voice_sessions row
+            # kept a NULL ended_at and an empty transcript).
+            with contextlib.suppress(Exception, asyncio.CancelledError):
                 await self._recv_task
         if self._ws is not None:
             with contextlib.suppress(Exception):

@@ -11,12 +11,12 @@
             <StackPanel Spacing="20" HorizontalAlignment="Center">
                 <TextBlock Text="{DynamicResource OfflineTitle}"
                            FontSize="36" FontWeight="Light"
-                           Foreground="#0a4d8c" HorizontalAlignment="Center" />
+                           Foreground="{StaticResource KioskPrimary}" HorizontalAlignment="Center" />
                 <TextBlock Text="{DynamicResource OfflineHint}"
                            FontSize="18" Foreground="#64748b"
                            HorizontalAlignment="Center" />
                 <ProgressBar IsIndeterminate="True" Width="320" Height="4"
-                             Foreground="#0a4d8c" Background="#f4f7fb" />
+                             Foreground="{StaticResource KioskPrimary}" Background="{StaticResource KioskBg}" />
             </StackPanel>
         </Border>
     </Grid>

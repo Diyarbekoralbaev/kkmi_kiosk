@@ -12,34 +12,40 @@
              IL2026 spells this out: "defined in XAML are resolved compile time
              and are safe with trimming and AOT".
 
-             Order = priority (last wins on duplicate keys). kk (Cyrillic)
-             is LAST so Қарақалпақша is the default language;
+             Order = priority (last wins on duplicate keys). uz is LAST so
+             O'zbekcha is the default language — the institute's HEMIS content
+             (subject names, specialties) is predominantly Uzbek. en is present
+             for the institute's English-medium groups and foreign applicants.
              LocalizationService reorders this list at runtime to switch
              languages. -->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Kiosk.App/Localization/en.axaml" />
                 <ResourceInclude Source="avares://Kiosk.App/Localization/ru.axaml" />
-                <ResourceInclude Source="avares://Kiosk.App/Localization/uz.axaml" />
                 <ResourceInclude Source="avares://Kiosk.App/Localization/kk.axaml" />
+                <ResourceInclude Source="avares://Kiosk.App/Localization/uz.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ===== Theme tokens — referenced as {StaticResource KioskX} -->
-            <!-- Deep blue / amber palette per the 2026 redesign mockup
-                 (infokiosk.html). Single-file palette swap point for any
-                 future re-theming pass. -->
-            <Color x:Key="KioskPrimaryColor">#0a4d8c</Color>
-            <Color x:Key="KioskPrimaryDarkColor">#073966</Color>
-            <Color x:Key="KioskAccentColor">#f5b932</Color>
-            <Color x:Key="KioskAccentDarkColor">#d99b18</Color>
-            <Color x:Key="KioskBgColor">#f4f7fb</Color>
+            <!-- KKMI palette. Primary navy is lifted straight from the
+                 institute logo (#183078 dominates the "KMI" wordmark and the
+                 Karakalpakstan map outline). The logo's red is deliberately
+                 NOT the accent — it sits too close to the error colour, so
+                 it stays on the logo only and medical teal carries the accent
+                 role. Single-file swap point for any re-theming pass. -->
+            <Color x:Key="KioskPrimaryColor">#183078</Color>
+            <Color x:Key="KioskPrimaryDarkColor">#0f2154</Color>
+            <Color x:Key="KioskAccentColor">#0d9488</Color>
+            <Color x:Key="KioskAccentDarkColor">#0f766e</Color>
+            <Color x:Key="KioskBgColor">#f5f7fb</Color>
             <Color x:Key="KioskCardColor">#ffffff</Color>
             <Color x:Key="KioskTextColor">#1a2740</Color>
             <Color x:Key="KioskTextMutedColor">#5a6b85</Color>
             <Color x:Key="KioskBorderColor">#e2e8f0</Color>
             <Color x:Key="KioskErrorColor">#dc2626</Color>
-            <Color x:Key="KioskSuccessColor">#10b981</Color>
-            <Color x:Key="KioskTileTintColor">#e8eff7</Color>
-            <Color x:Key="KioskAccentTintColor">#fdf1d4</Color>
+            <Color x:Key="KioskSuccessColor">#16a34a</Color>
+            <Color x:Key="KioskTileTintColor">#e8edf8</Color>
+            <Color x:Key="KioskAccentTintColor">#d9f2ef</Color>
 
             <SolidColorBrush x:Key="KioskPrimary" Color="{StaticResource KioskPrimaryColor}" />
             <SolidColorBrush x:Key="KioskPrimaryDark" Color="{StaticResource KioskPrimaryDarkColor}" />

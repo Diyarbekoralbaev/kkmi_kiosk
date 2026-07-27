@@ -305,7 +305,7 @@ def _gh_headers() -> dict[str, str]:
     headers: dict[str, str] = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "joqari-kenes-backend",
+        "User-Agent": "kkmi-kiosk-backend",
     }
     token = settings.github_token.get_secret_value().strip()
     if token:

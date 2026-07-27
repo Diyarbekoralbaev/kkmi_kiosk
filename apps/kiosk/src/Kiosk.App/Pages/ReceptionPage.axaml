@@ -1,0 +1,234 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:Kiosk.App.Controls"
+             xmlns:state="using:Kiosk.App.State"
+             xmlns:net="using:Kiosk.App.Net"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1224"
+             x:Class="Kiosk.App.Pages.ReceptionPage"
+             x:DataType="state:SessionStore">
+    <!-- Book a reception with the institute's leadership.
+         The council build had no per-person booking — a visitor left a phone
+         and someone called back. Here the visitor picks who they want to see,
+         and that person's own reception day is the appointment time, so no
+         calendar or queue number is involved.
+
+         Steps: official → name → phone → reason → review. The voice flow lands
+         directly on Review via reception_preview. -->
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                <TextBlock Text="{DynamicResource ReceptionPageTitle}"
+                           FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
+                           Foreground="{StaticResource KioskPrimary}"
+                           TextWrapping="Wrap" MaxWidth="640" />
+                <TextBlock x:Name="Breadcrumb" FontSize="20"
+                           Foreground="{StaticResource KioskTextMuted}" TextWrapping="Wrap" />
+            </StackPanel>
+            <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,28,0,0">
+
+            <!-- ① Who to see -->
+            <Grid x:Name="OfficialStep" RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Text="{DynamicResource ReceptionChoosePrompt}"
+                           Classes="prompt" Margin="0,0,0,20" />
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding Leadership}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="net:OfficialDto">
+                                    <Button Click="OnOfficialClick" Tag="{Binding}" Classes="row">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="{StaticResource KioskFontH4}"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource KioskText}"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Position}"
+                                                           FontSize="{StaticResource KioskFontCaption}"
+                                                           Foreground="{StaticResource KioskTextMuted}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="{StaticResource KioskAccentTint}"
+                                                    CornerRadius="{StaticResource KioskRadiusChip}"
+                                                    Padding="16,8" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ReceptionTime}" FontSize="17"
+                                                           Foreground="{StaticResource KioskAccentDark}" />
+                                            </Border>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty state: nobody has been entered in the panel yet.
+                             Booking with no official is impossible by design, so
+                             say who to ask instead of showing a dead form. -->
+                        <Border x:Name="NoOfficials" IsVisible="False"
+                                Background="{StaticResource KioskCard}"
+                                BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                                CornerRadius="{StaticResource KioskRadiusCard}" Padding="48">
+                            <TextBlock Text="{DynamicResource ReceptionNoOfficials}"
+                                       FontSize="22" Foreground="{StaticResource KioskTextMuted}"
+                                       TextAlignment="Center" TextWrapping="Wrap" />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- ② Name -->
+            <StackPanel x:Name="NameStep" IsVisible="False" Spacing="20">
+                <TextBlock Text="{DynamicResource MurojatNamePrompt}" Classes="prompt" />
+                <TextBox x:Name="NameInput" Classes="field"
+                         Watermark="{DynamicResource MurojatNameWatermark}" />
+                <TextBlock x:Name="NameError" Classes="error" IsVisible="False"
+                           Text="{DynamicResource MurojatNameError}" />
+                <controls:OnScreenKeyboard x:Name="NameKeyboard" />
+                <Button Click="OnNameNext" Classes="primary" HorizontalAlignment="Right"
+                        Content="{DynamicResource MurojatContinue}" />
+            </StackPanel>
+
+            <!-- ③ Phone -->
+            <StackPanel x:Name="PhoneStep" IsVisible="False" Spacing="20">
+                <TextBlock Text="{DynamicResource MurojatPhonePrompt}" Classes="prompt" />
+                <TextBox x:Name="PhoneInput" Classes="field phone" IsReadOnly="True"
+                         Watermark="90 123 45 67" />
+                <TextBlock x:Name="PhoneError" Classes="error" IsVisible="False"
+                           Text="{DynamicResource MurojatPhoneError}" />
+                <controls:NumericKeypad x:Name="PhoneKeypad" />
+                <Button Click="OnPhoneNext" Classes="primary" HorizontalAlignment="Right"
+                        Content="{DynamicResource MurojatContinue}" />
+            </StackPanel>
+
+            <!-- ④ Reason -->
+            <StackPanel x:Name="ReasonStep" IsVisible="False" Spacing="20">
+                <TextBlock Text="{DynamicResource ReceptionReasonPrompt}" Classes="prompt" />
+                <TextBox x:Name="ReasonInput" Classes="field" Height="180"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         Watermark="{DynamicResource ReceptionReasonWatermark}" />
+                <TextBlock x:Name="ReasonError" Classes="error" IsVisible="False"
+                           Text="{DynamicResource MurojatTextError}" />
+                <controls:OnScreenKeyboard x:Name="ReasonKeyboard" />
+                <Button Click="OnReasonNext" Classes="primary" HorizontalAlignment="Right"
+                        Content="{DynamicResource MurojatContinue}" />
+            </StackPanel>
+
+            <!-- ⑤ Review -->
+            <ScrollViewer x:Name="ReviewStep" IsVisible="False">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="{DynamicResource MurojatReviewTitle}" Classes="prompt" />
+                    <Border Background="{StaticResource KioskCard}"
+                            BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                            CornerRadius="{StaticResource KioskRadiusCard}" Padding="32,28">
+                        <StackPanel Spacing="20">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource ReceptionOfficialLabel}" Classes="label" />
+                                <TextBlock Text="{Binding ReceptionOfficialName}" Classes="value" />
+                                <TextBlock Text="{Binding ReceptionOfficialPosition}"
+                                           FontSize="{StaticResource KioskFontCaption}"
+                                           Foreground="{StaticResource KioskTextMuted}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource ReceptionWhenLabel}" Classes="label" />
+                                <TextBlock x:Name="WhenValue" Classes="value" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource MurojatNameLabel}" Classes="label" />
+                                <TextBlock Text="{Binding SubmitName}" Classes="value" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource MurojatPhoneLabel}" Classes="label" />
+                                <TextBlock Text="{Binding SubmitPhone}" Classes="value" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{DynamicResource ReceptionReasonLabel}" Classes="label" />
+                                <TextBlock Text="{Binding ReceptionReason}" Classes="value"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock x:Name="SubmitStatus" Classes="error" IsVisible="False" />
+                    <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right">
+                        <Button Click="OnEdit" Classes="secondary"
+                                Content="{DynamicResource MurojatEdit}" />
+                        <Button x:Name="ConfirmButton" Click="OnConfirm" Classes="primary"
+                                Content="{DynamicResource MurojatConfirm}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.prompt">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontH3}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontCaption}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskTextMuted}" />
+        </Style>
+        <Style Selector="TextBlock.value">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontH4}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+        </Style>
+        <Style Selector="TextBlock.error">
+            <Setter Property="FontSize" Value="{StaticResource KioskFontBodyLg}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskError}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBox.field">
+            <Setter Property="FontSize" Value="26" />
+            <Setter Property="Padding" Value="22,18" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="MinHeight" Value="72" />
+        </Style>
+        <Style Selector="TextBox.field.phone">
+            <Setter Property="FontSize" Value="40" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="MinHeight" Value="92" />
+        </Style>
+        <Style Selector="Button.row">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="26,20" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="MinHeight" Value="92" />
+        </Style>
+        <Style Selector="Button.row:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="36,16" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="MinHeight" Value="68" />
+        </Style>
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="36,16" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="MinHeight" Value="68" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

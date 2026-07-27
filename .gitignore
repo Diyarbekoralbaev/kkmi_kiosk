@@ -326,3 +326,15 @@ apps/kiosk/**/obj/
 # Silero VAD ONNX is shipped with the kiosk binary; *.onnx above would hide it.
 !apps/kiosk/src/Kiosk.App/Assets/silero_vad.onnx
 
+# ── Secrets: every env variant, not just the bare `.env` ────────────────────
+# `.env` alone does NOT match `.env.prod` / `.env.local` / `.env.staging`, so a
+# production secrets file dropped next to the compose file would have been
+# committed. The negation keeps the checked-in templates visible.
+.env
+.env.*
+!.env.example
+!.env.prod.example
+
+# Kiosk device identity — private keys and enrolled credentials.
+*.pem
+credentials.json

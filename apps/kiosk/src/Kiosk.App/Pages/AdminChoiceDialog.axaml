@@ -7,10 +7,10 @@
         Title="Kiosk · Tańlań"
         Width="420" Height="380"
         WindowStartupLocation="CenterScreen"
-        Background="#f4f7fb"
+        Background="{StaticResource KioskBg}"
         CanResize="False">
     <StackPanel Margin="36" Spacing="18" VerticalAlignment="Center">
-        <TextBlock Text="{DynamicResource AdminChoiceTitle}" FontSize="22" FontWeight="Light" Foreground="#0a4d8c" />
+        <TextBlock Text="{DynamicResource AdminChoiceTitle}" FontSize="22" FontWeight="Light" Foreground="{StaticResource KioskPrimary}" />
         <TextBlock Text="{DynamicResource AdminChoicePrompt}"
                    FontSize="13" Foreground="#64748b" TextWrapping="Wrap" />
 
@@ -33,7 +33,7 @@
             <Setter Property="Foreground" Value="White" />
         </Style>
         <Style Selector="Button.primary">
-            <Setter Property="Background" Value="#0a4d8c" />
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
             <Setter Property="Foreground" Value="White" />
         </Style>
         <Style Selector="Button.ghost">

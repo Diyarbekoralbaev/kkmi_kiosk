@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios'
 
-const STORAGE_KEY = 'joqari_kenes_gov_tokens'
+const STORAGE_KEY = 'kkmi_gov_tokens'
 
 export interface Tokens {
   access_token: string

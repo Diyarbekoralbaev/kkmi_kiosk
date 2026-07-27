@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:Kiosk.App.Controls"
+             xmlns:state="using:Kiosk.App.State"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1224"
+             x:Class="Kiosk.App.Pages.LibraryPage"
+             x:DataType="state:SessionStore">
+    <!-- Placeholder. The institute's catalogue (an IRBIS installation) is not
+         reachable from the kiosk network, so there is no book data to show and
+         the agent has no tools on this menu at all — it can only say the
+         service is being prepared.
+
+         The tile stays on the home screen deliberately: the institute asked for
+         five services and hiding one would make the menu look incomplete. An
+         honest "coming soon" beats a missing tile or, worse, an assistant
+         inventing books from memory. -->
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+            <TextBlock Grid.Column="0" Text="{DynamicResource LibraryPageTitle}"
+                       FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
+                       Foreground="{StaticResource KioskPrimary}"
+                       VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+            <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
+        </Grid>
+
+        <Border Grid.Row="1" Margin="0,40,0,0" VerticalAlignment="Top"
+                Background="{StaticResource KioskCard}"
+                BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                CornerRadius="{StaticResource KioskRadiusCard}" Padding="56,64">
+            <StackPanel Spacing="28" HorizontalAlignment="Center">
+                <Border Width="140" Height="140" CornerRadius="70"
+                        Background="{StaticResource KioskTileTint}"
+                        HorizontalAlignment="Center">
+                    <Viewbox Width="76" Height="76">
+                        <Canvas Width="24" Height="24">
+                            <Path Stroke="{StaticResource KioskPrimary}" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Data="M12,7 C12,7 9,5 4,5 V19 C9,19 12,21 12,21 C12,21 15,19 20,19 V5 C15,5 12,7 12,7 Z" />
+                            <Line StartPoint="12,7" EndPoint="12,21"
+                                  Stroke="{StaticResource KioskPrimary}" StrokeThickness="1.6" />
+                        </Canvas>
+                    </Viewbox>
+                </Border>
+
+                <TextBlock Text="{DynamicResource LibraryComingSoonTitle}"
+                           FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
+                           Foreground="{StaticResource KioskText}"
+                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="720" />
+                <TextBlock Text="{DynamicResource LibraryComingSoonBody}"
+                           FontSize="22"
+                           Foreground="{StaticResource KioskTextMuted}"
+                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="720" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,11 +1,13 @@
-"""Citizen qabul (reception) registration record.
+"""Reception (qabul) booking with a member of the institute's leadership.
 
-The visitor leaves a phone (+ optional short reason); Council staff call them
-back to schedule. No official, no fixed date, no queue number — those columns
-are nullable legacy from the Hokimiyat version (always NULL for new rows). A
-receipt PDF + QR (carrying a verification token) are still generated on submit
-so the kiosk can print + display a confirmation talon without a second round
-trip.
+The visitor picks who they want to see from the leadership list, leaves their
+name, phone and a one-line reason, and gets a printed ticket. `official_id`
+points at the chosen person's `OrgKbOfficial` row, whose `reception_day` /
+`reception_time` say when to come — so `scheduled_date` and `queue_number` stay
+NULL (they are legacy from a per-date queueing scheme that was never used here).
+
+A receipt PDF + QR carrying `verification_token` are generated on submit so the
+kiosk prints a talon without a second round trip.
 """
 from __future__ import annotations
 
@@ -60,9 +62,8 @@ class Appointment(Base, TimestampMixin):
         nullable=False,
         index=True,
     )
-    # Officials were removed for the Council (no per-official booking). Kept
-    # nullable for backward-compat with historical rows; always NULL for new
-    # qabul registrations.
+    # Who the visitor is booked to see. Nullable only for historical rows from
+    # the council era, which had no per-official booking.
     official_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("org_kb_officials.id", ondelete="RESTRICT"),
@@ -75,6 +76,9 @@ class Appointment(Base, TimestampMixin):
         nullable=True,
     )
 
+    visitor_name: Mapped[str] = mapped_column(
+        String(255), default="", server_default="", nullable=False
+    )
     visitor_phone: Mapped[str] = mapped_column(String(32), nullable=False)
     topic_summary: Mapped[str] = mapped_column(Text, nullable=False)
 

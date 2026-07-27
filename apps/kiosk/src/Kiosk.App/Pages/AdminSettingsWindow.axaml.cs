@@ -90,7 +90,7 @@ public partial class AdminSettingsWindow : Window
         var displayName = PickedOrNull(MicCombo);
         if (string.IsNullOrEmpty(displayName))
         {
-            MicTestStatus.Foreground = Avalonia.Media.Brush.Parse("#dc2626");
+            MicTestStatus.Foreground = Palette.Brush("KioskError");
             MicTestStatus.Text = LocalizationService.Get("MicTestNoDevice");
             return;
         }
@@ -98,13 +98,13 @@ public partial class AdminSettingsWindow : Window
         var deviceIdx = AudioDeviceList.FindIndexByDisplayName(displayName, input: true);
         if (deviceIdx < 0)
         {
-            MicTestStatus.Foreground = Avalonia.Media.Brush.Parse("#dc2626");
+            MicTestStatus.Foreground = Palette.Brush("KioskError");
             MicTestStatus.Text = LocalizationService.Get("MicTestErrorOpen");
             return;
         }
 
         TestMicButton.IsEnabled = false;
-        MicTestStatus.Foreground = Avalonia.Media.Brush.Parse("#0a4d8c");
+        MicTestStatus.Foreground = Palette.Brush("KioskPrimary");
         MicTestStatus.Text = LocalizationService.Get("MicTestSpeakNow");
 
         // Capture every step to crash.log so a "test shows 0%" report can be
@@ -158,12 +158,12 @@ public partial class AdminSettingsWindow : Window
             // all zero. Surface a specific hint for that.
             if (maxRms >= 0.01f)
             {
-                MicTestStatus.Foreground = Avalonia.Media.Brush.Parse("#10b981");
+                MicTestStatus.Foreground = Palette.Brush("KioskSuccess");
                 MicTestStatus.Text = $"{LocalizationService.Get("MicTestPass")}  (peak {(int)(maxRms * 100)}%)";
             }
             else
             {
-                MicTestStatus.Foreground = Avalonia.Media.Brush.Parse("#dc2626");
+                MicTestStatus.Foreground = Palette.Brush("KioskError");
                 var hint = frameCount > 0
                     ? "  (frames received but all silent — check Windows Privacy → Microphone → Allow desktop apps)"
                     : "  (no frames — device may be busy)";
@@ -178,7 +178,7 @@ public partial class AdminSettingsWindow : Window
             while (realEx.InnerException is not null) realEx = realEx.InnerException;
             diagLines.Add($"  open: FAIL   {ex.GetType().Name}: {realEx.Message}");
             diagLines.Add($"  stack: {ex}");
-            MicTestStatus.Foreground = Avalonia.Media.Brush.Parse("#dc2626");
+            MicTestStatus.Foreground = Palette.Brush("KioskError");
             MicTestStatus.Text = $"{LocalizationService.Get("MicTestErrorOpen")}: {realEx.Message}";
         }
         finally

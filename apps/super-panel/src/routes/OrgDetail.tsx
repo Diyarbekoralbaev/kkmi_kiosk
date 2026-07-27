@@ -209,7 +209,7 @@ function NameTranslationsEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={uz}
             onChange={(e) => setUz(e.target.value)}
-            placeholder="Joqarı Keńes"
+            placeholder="Qoraqalpogʻiston tibbiyot instituti"
           />
         </Field>
         <Field label="Karakalpak (kk-Cyrl)">
@@ -217,7 +217,7 @@ function NameTranslationsEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={kk}
             onChange={(e) => setKk(e.target.value)}
-            placeholder="Жоқарғы Кеңес"
+            placeholder="Qaraqalpaqstan medicina instituti"
           />
         </Field>
         <Field label="Russian (ru)">
@@ -225,7 +225,7 @@ function NameTranslationsEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={ru}
             onChange={(e) => setRu(e.target.value)}
-            placeholder="Жокаргы Кенес"
+            placeholder="Каракалпакский медицинский институт"
           />
         </Field>
       </div>
@@ -328,7 +328,7 @@ function ContactInfoEditor({ org }: { org: OrgDetail }) {
             className="input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="info@kenes.uz"
+            placeholder="info@kkmi.uz"
           />
         </Field>
         <Field label="Yordam telefon raqami">

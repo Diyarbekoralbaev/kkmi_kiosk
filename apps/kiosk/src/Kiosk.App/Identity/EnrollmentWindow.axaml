@@ -8,10 +8,10 @@
         Width="560" Height="460"
         WindowStartupLocation="CenterScreen"
         CanResize="False"
-        Background="#f4f7fb">
+        Background="{StaticResource KioskBg}">
     <Grid Margin="48,40,48,32" RowDefinitions="Auto,8,Auto,28,Auto,4,Auto,20,Auto,4,Auto,28,Auto,16,Auto">
         <TextBlock Grid.Row="0" Text="{DynamicResource EnrollmentTitle}"
-                   FontSize="28" FontWeight="Light" Foreground="#0a4d8c" />
+                   FontSize="28" FontWeight="Light" Foreground="{StaticResource KioskPrimary}" />
         <TextBlock Grid.Row="2" Foreground="#94a3b8" FontSize="13"
                    Text="{DynamicResource EnrollmentIntro}"
                    TextWrapping="Wrap" />
@@ -35,7 +35,7 @@
                 Content="{DynamicResource EnrollmentButton}"
                 IsDefault="True"
                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                Background="#0a4d8c" Foreground="White"
+                Background="{StaticResource KioskPrimary}" Foreground="White"
                 BorderThickness="0" CornerRadius="6"
                 Padding="0,14" FontSize="16" FontWeight="SemiBold" />
 

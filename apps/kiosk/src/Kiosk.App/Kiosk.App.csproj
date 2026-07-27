@@ -38,7 +38,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <!-- Avalonia bundles AvaloniaResource items into the assembly as
-         avares:// URIs. The gerb is referenced from KioskHeader.axaml. -->
-    <AvaloniaResource Include="Assets\karakalpakstan-gerb.png" />
+         avares:// URIs. The institute logo is referenced from KioskHeader.axaml. -->
+    <AvaloniaResource Include="Assets\kkmi-logo.png" />
   </ItemGroup>
 </Project>

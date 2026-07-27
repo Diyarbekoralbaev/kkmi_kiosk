@@ -8,13 +8,13 @@
              x:DataType="state:SessionStore"
              Height="260">
     <!-- Header band: light gradient bottom→white, top row clock+weather,
-         bottom row centred 150px gerb + 2-line brand title. The lang
+         bottom row centred institute logo + 2-line brand title. The lang
          toggle now lives in the footer, per the 2026 redesign mockup. -->
     <Border BorderBrush="{StaticResource KioskBorder}" BorderThickness="0,0,0,1">
         <Border.Background>
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
                 <GradientStop Offset="0" Color="#ffffff" />
-                <GradientStop Offset="1" Color="#f4f7fb" />
+                <GradientStop Offset="1" Color="{StaticResource KioskBgColor}" />
             </LinearGradientBrush>
         </Border.Background>
 
@@ -50,8 +50,10 @@
             <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="24"
                         HorizontalAlignment="Center" VerticalAlignment="Center"
                         Margin="0,16,0,0">
-                <Image Source="avares://Kiosk.App/Assets/karakalpakstan-gerb.png"
-                       Width="120" Height="120"
+                <!-- Horizontal lockup (≈1.52:1), so height is pinned and the
+                     width follows — a fixed square box would letterbox it. -->
+                <Image Source="avares://Kiosk.App/Assets/kkmi-logo.png"
+                       Height="110" Stretch="Uniform"
                        VerticalAlignment="Center" />
                 <StackPanel VerticalAlignment="Center" Spacing="2" MaxWidth="780">
                     <TextBlock Text="{Binding OrgName, FallbackValue=''}"

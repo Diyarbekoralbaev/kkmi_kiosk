@@ -1,4 +1,4 @@
-.PHONY: help up down logs migrate seed lint test backend-shell psql
+.PHONY: help up down logs migrate seed lint test backend-shell psql hemis-sync
 
 COMPOSE := docker compose -f docker-compose.dev.yml
 
@@ -12,6 +12,7 @@ help:
 	@echo "  lint        - Run ruff inside backend container"
 	@echo "  backend-shell - sh into backend container"
 	@echo "  psql        - Open psql to dev postgres"
+	@echo "  hemis-sync  - Mirror HEMIS into Postgres (~95s, hits the live API)"
 
 up:
 	$(COMPOSE) up --build
@@ -35,4 +36,7 @@ backend-shell:
 	$(COMPOSE) exec backend bash
 
 psql:
-	$(COMPOSE) exec postgres psql -U kiosk -d joqari_kenes
+	$(COMPOSE) exec postgres psql -U kiosk -d kkmi_kiosk
+
+hemis-sync:
+	$(COMPOSE) run --rm hemis-sync

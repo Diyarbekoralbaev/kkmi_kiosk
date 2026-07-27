@@ -5,21 +5,18 @@
 
     <!-- Header / footer / language labels -->
     <x:String x:Key="HeaderTagline">AI-ассистент «Умной приёмной»</x:String>
-    <x:String x:Key="LangUz">Ўзбекша</x:String>
+    <x:String x:Key="LangUz">O‘zbekcha</x:String>
     <x:String x:Key="LangRu">Русский</x:String>
-    <x:String x:Key="LangKk">Қарақалпақша</x:String>
-    <x:String x:Key="FooterRights">Все права защищены.</x:String>
+    <x:String x:Key="LangKk">Qaraqalpaqsha</x:String>
+    <x:String x:Key="LangEn">English</x:String>
     <x:String x:Key="HelpLabel">Помощь:</x:String>
 
     <!-- Home page (2 services: AI + Murajat) -->
     <x:String x:Key="HomeGreetingChip">Добро пожаловать!</x:String>
     <x:String x:Key="HomeQuestion">Чем мы можем вам помочь?</x:String>
-    <x:String x:Key="HomeQuestionHighlight">помочь</x:String>
     <x:String x:Key="HomeSubtitle">Поговорите с AI-ассистентом или оставьте обращение в Кенгаш.</x:String>
     <x:String x:Key="HomeTileAiTitle">Поговорить с AI</x:String>
     <x:String x:Key="HomeTileAiSubtitle">Получите быстрые ответы от искусственного интеллекта</x:String>
-    <x:String x:Key="HomeTileSubmitTitle">Обращение в Кенгаш</x:String>
-    <x:String x:Key="HomeTileSubmitSubtitle">Оформите жалобу или предложение в электронном виде</x:String>
 
     <!-- NavBar -->
     <x:String x:Key="NavBack">Назад</x:String>
@@ -42,21 +39,13 @@
     <x:String x:Key="MicError">Ошибка</x:String>
 
     <!-- Submit page (AI voice preview) -->
-    <x:String x:Key="SubmitPageTitle">Подать обращение</x:String>
-    <x:String x:Key="SubmitNameLabel">Ф.И.О.</x:String>
-    <x:String x:Key="SubmitTextLabel">Текст обращения</x:String>
-    <x:String x:Key="SubmitPhoneLabel">Телефон</x:String>
 
     <!-- Contacts page -->
     <x:String x:Key="ContactsPageTitle">Контакты</x:String>
     <x:String x:Key="ContactsAddressLabel">📍  Адрес</x:String>
-    <x:String x:Key="ContactsAddressValue">—</x:String>
     <x:String x:Key="ContactsPhoneIconLabel">☎  Телефон</x:String>
-    <x:String x:Key="ContactsPhoneValue">(+998 61) 222 12 34</x:String>
     <x:String x:Key="ContactsEmailLabel">✉  Эл. почта</x:String>
-    <x:String x:Key="ContactsEmailValue">—</x:String>
     <x:String x:Key="ContactsHoursLabel">🕐  Часы работы</x:String>
-    <x:String x:Key="ContactsHoursValue">Пн–Пт  09:00 – 18:00</x:String>
 
     <!-- Offline overlay -->
     <x:String x:Key="OfflineTitle">Нет соединения</x:String>
@@ -120,45 +109,68 @@
     <x:String x:Key="EnrollmentCodeLabel">Код регистрации</x:String>
     <x:String x:Key="EnrollmentButton">Зарегистрировать</x:String>
 
-    <!-- Manual murajat flow (ManualSubmitPage) -->
-    <x:String x:Key="ManualSubmitPageTitle">Подать обращение</x:String>
-    <x:String x:Key="ManualBackButton">Назад</x:String>
-    <x:String x:Key="ManualEditButton">Изменить</x:String>
-    <x:String x:Key="ManualConfirmButton">Подтвердить и отправить</x:String>
-    <x:String x:Key="ManualMurajatPreviewTitle">Проверьте данные</x:String>
-    <x:String x:Key="ManualMurajatPhoneTitle">Контактный номер</x:String>
-    <x:String x:Key="ManualMurajatSubmitting">Отправка...</x:String>
-    <x:String x:Key="ManualMurajatSubmitError">Не удалось отправить. Попробуйте ещё раз.</x:String>
-
     <!-- Phone step -->
-    <x:String x:Key="MurajatPhoneHint">Введите ваш номер телефона</x:String>
-    <x:String x:Key="MurajatPhoneError">Номер телефона неполный (минимум 9 цифр)</x:String>
-    <x:String x:Key="MurajatContinue">Продолжить</x:String>
 
     <!-- Identity confirm step -->
-    <x:String x:Key="MurajatConfirmQuestion">Вы {0}?</x:String>
-    <x:String x:Key="MurajatConfirmYes">Да, это я</x:String>
-    <x:String x:Key="MurajatConfirmNo">Нет, это не я</x:String>
 
     <!-- Full personal form -->
-    <x:String x:Key="MurajatFormTitle">Заполните ваши данные</x:String>
-    <x:String x:Key="MurajatFirstName">Имя</x:String>
-    <x:String x:Key="MurajatLastName">Фамилия</x:String>
-    <x:String x:Key="MurajatBirthDate">Дата рождения (ГГГГ-ММ-ДД)</x:String>
-    <x:String x:Key="MurajatGender">Пол</x:String>
-    <x:String x:Key="MurajatGenderMale">Мужской</x:String>
-    <x:String x:Key="MurajatGenderFemale">Женский</x:String>
-    <x:String x:Key="MurajatDistrict">Район / город</x:String>
-    <x:String x:Key="MurajatQuarter">Махалля (МФЙ)</x:String>
-    <x:String x:Key="MurajatAddress">Адрес</x:String>
-    <x:String x:Key="MurajatFormError">Заполните все данные полностью</x:String>
 
     <!-- Appeal text step -->
-    <x:String x:Key="MurajatTextTitle">Текст вашего обращения</x:String>
-    <x:String x:Key="MurajatTextHint">Что произошло, что просите — изложите подробно</x:String>
-    <x:String x:Key="MurajatTextError">Введите минимум 5 символов</x:String>
 
     <!-- Preview labels -->
-    <x:String x:Key="MurajatNameLabel">Ф.И.О.</x:String>
-    <x:String x:Key="MurajatTextLabel">Текст обращения</x:String>
+
+    <!-- ═══ Institute screens ═══ -->
+    <x:String x:Key="HomeTileLibraryTitle">ИИ-библиотека</x:String>
+    <x:String x:Key="HomeTileLibrarySubtitle">Книги и учебная литература</x:String>
+    <x:String x:Key="HomeTileAbituriyentTitle">ИИ-абитуриент</x:String>
+    <x:String x:Key="HomeTileAbituriyentSubtitle">Направления обучения и приём</x:String>
+    <x:String x:Key="HomeTileMurojatTitle">ИИ-обращение</x:String>
+    <x:String x:Key="HomeTileMurojatSubtitle">Отправить обращение, жалобу или предложение</x:String>
+    <x:String x:Key="HomeTileScheduleTitle">Расписание занятий</x:String>
+    <x:String x:Key="HomeTileScheduleSubtitle">Расписание по группам</x:String>
+    <x:String x:Key="HomeTileReceptionTitle">Приём руководства</x:String>
+    <x:String x:Key="HomeTileReceptionSubtitle">Записаться на приём к ректору и проректорам</x:String>
+    <x:String x:Key="LibraryPageTitle">ИИ-библиотека</x:String>
+    <x:String x:Key="LibraryComingSoonTitle">Библиотечный сервис готовится</x:String>
+    <x:String x:Key="LibraryComingSoonBody">Каталог книг пока не подключён к киоску. Пожалуйста, обратитесь к сотрудникам библиотеки.</x:String>
+    <x:String x:Key="AbituriyentPageTitle">Направления обучения</x:String>
+    <x:String x:Key="AbituriyentQuotaNote">Квоты, проходные баллы и сумма контракта ежегодно объявляются приёмной комиссией — за точной информацией обращайтесь туда.</x:String>
+    <x:String x:Key="SchedulePageTitle">Расписание занятий</x:String>
+    <x:String x:Key="ScheduleChooseFaculty">Выберите факультет</x:String>
+    <x:String x:Key="ScheduleWhichGroup">Какая группа?</x:String>
+    <x:String x:Key="ScheduleScopeToday">Сегодня</x:String>
+    <x:String x:Key="ScheduleScopeTomorrow">Завтра</x:String>
+    <x:String x:Key="ScheduleScopeWeek">Неделя</x:String>
+    <x:String x:Key="ScheduleChangeGroup">Другая группа</x:String>
+    <x:String x:Key="ScheduleNoLessonsTitle">В этот день занятий нет</x:String>
+    <x:String x:Key="ScheduleNoLessonsBody">Попробуйте выбрать другой день.</x:String>
+    <x:String x:Key="ScheduleYearNotPublishedTitle">Расписание нового учебного года ещё не опубликовано</x:String>
+    <x:String x:Key="ScheduleYearNotPublishedBody">Расписание обычно вносится в систему перед началом учебного года.</x:String>
+    <x:String x:Key="ScheduleShowLastYear">Показать последнюю учебную неделю</x:String>
+    <x:String x:Key="MurojatPageTitle">Отправить обращение</x:String>
+    <x:String x:Key="MurojatNamePrompt">Ваше имя и фамилия</x:String>
+    <x:String x:Key="MurojatNameWatermark">Например: Алиев Алишер</x:String>
+    <x:String x:Key="MurojatNameError">Введите имя и фамилию полностью</x:String>
+    <x:String x:Key="MurojatPhonePrompt">Ваш номер телефона</x:String>
+    <x:String x:Key="MurojatPhoneError">Номер телефона неполный (9 цифр)</x:String>
+    <x:String x:Key="MurojatTextPrompt">Текст обращения</x:String>
+    <x:String x:Key="MurojatTextWatermark">Что произошло и о чём вы просите — опишите подробно</x:String>
+    <x:String x:Key="MurojatTextError">Введите минимум 5 символов</x:String>
+    <x:String x:Key="MurojatReviewTitle">Проверьте данные</x:String>
+    <x:String x:Key="MurojatNameLabel">Ф.И.О.</x:String>
+    <x:String x:Key="MurojatPhoneLabel">Телефон</x:String>
+    <x:String x:Key="MurojatTextLabel">Текст обращения</x:String>
+    <x:String x:Key="MurojatContinue">Продолжить</x:String>
+    <x:String x:Key="MurojatEdit">Изменить</x:String>
+    <x:String x:Key="MurojatConfirm">Подтвердить и отправить</x:String>
+    <x:String x:Key="MurojatSubmitError">Не удалось отправить. Попробуйте ещё раз.</x:String>
+    <x:String x:Key="MurojatVoiceConfirmPhrase">Да, верно</x:String>
+    <x:String x:Key="ReceptionPageTitle">Приём руководства</x:String>
+    <x:String x:Key="ReceptionChoosePrompt">К кому вы хотите попасть?</x:String>
+    <x:String x:Key="ReceptionNoOfficials">График приёма пока не внесён. Обратитесь в секретариат.</x:String>
+    <x:String x:Key="ReceptionOfficialLabel">Принимает</x:String>
+    <x:String x:Key="ReceptionWhenLabel">Время приёма</x:String>
+    <x:String x:Key="ReceptionReasonPrompt">Причина обращения</x:String>
+    <x:String x:Key="ReceptionReasonWatermark">Кратко опишите</x:String>
+    <x:String x:Key="ReceptionReasonLabel">Причина</x:String>
 </ResourceDictionary>

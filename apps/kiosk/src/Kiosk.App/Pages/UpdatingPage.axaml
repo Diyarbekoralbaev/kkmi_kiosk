@@ -3,10 +3,10 @@
              xmlns:state="using:Kiosk.App.State"
              x:Class="Kiosk.App.Pages.UpdatingPage"
              x:DataType="state:SessionStore">
-    <Grid Background="#f4f7fb">
+    <Grid Background="{StaticResource KioskBg}">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="32" MaxWidth="640">
             <TextBlock Text="{DynamicResource UpdatingTitle}"
-                       FontSize="48" FontWeight="Light" Foreground="#0a4d8c"
+                       FontSize="48" FontWeight="Light" Foreground="{StaticResource KioskPrimary}"
                        HorizontalAlignment="Center" />
             <TextBlock Text="{DynamicResource UpdatingBody}"
                        FontSize="18" Foreground="#64748b"
@@ -17,7 +17,7 @@
                     CornerRadius="999" Padding="2" Width="520" Height="20">
                 <Grid>
                     <Border x:Name="ProgressFill"
-                            Background="#0a4d8c"
+                            Background="{StaticResource KioskPrimary}"
                             CornerRadius="999"
                             HorizontalAlignment="Left"
                             Width="0" />
@@ -26,7 +26,7 @@
 
             <TextBlock x:Name="StatusLine"
                        Text="{DynamicResource UpdatingStatusPreparing}"
-                       FontSize="14" Foreground="#0a4d8c"
+                       FontSize="14" Foreground="{StaticResource KioskPrimary}"
                        HorizontalAlignment="Center" />
 
             <TextBlock x:Name="VersionLine"

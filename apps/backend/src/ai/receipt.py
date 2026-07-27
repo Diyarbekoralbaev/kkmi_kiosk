@@ -12,7 +12,6 @@ the host (dev/test).
 from __future__ import annotations
 
 import io
-import textwrap
 from datetime import date
 
 import qrcode
@@ -266,7 +265,7 @@ def _build_ops(
     """Drawing-op list. Each op signature: (c_or_None, y) -> new_y. Passing
     None for c is the measure pass that sizes the page. `locale` selects
     the label strings + date format (`uz` | `kk` | `ru`)."""
-    L = _strings(locale)
+    strings = _strings(locale)
     ops: list = []
 
     def line(s: str, *, style: str = "regular", size: int = 9,
@@ -360,10 +359,10 @@ def _build_ops(
         baseline (≈ 2mm below its visible descender), then advance 4.8mm
         so the next text's baseline sits ~2mm visually below the line
         (after accounting for the next text's ~2.8mm ascender)."""
-        DY_BEFORE = -1 * mm     # gap above the line, slightly relaxed
-        DY_AFTER = 5.5 * mm     # gap below the line — both sides ~2-2.5mm visual
+        dy_before = -1 * mm     # gap above the line, slightly relaxed
+        dy_after = 5.5 * mm     # gap below the line — both sides ~2-2.5mm visual
         def op(c, y):
-            yy = y - DY_BEFORE
+            yy = y - dy_before
             if c is not None:
                 c.saveState()
                 c.setDash(dash_on, dash_off)
@@ -371,7 +370,7 @@ def _build_ops(
                 c.setStrokeGray(0.45)
                 c.line(MARGIN_X, yy, PAGE_W - MARGIN_X, yy)
                 c.restoreState()
-            return yy - DY_AFTER
+            return yy - dy_after
         ops.append(op)
 
     def qr(png: bytes, *, size_mm: float, dy_before: float = 2 * mm,
@@ -392,7 +391,7 @@ def _build_ops(
     # `localized_name` falls back to org.name when the translations dict is
     # empty so old orgs without translations still print sensibly.
     from ..domain.organization import localized_name as _localized_name
-    org_title = (_localized_name(org, locale) or "").upper().strip() or L["org_fallback"]
+    org_title = (_localized_name(org, locale) or "").upper().strip() or strings["org_fallback"]
     header_size = _fit_font_size(org_title, "bold", max_size=15, min_size=11)
     if pdfmetrics.stringWidth(org_title, _font("bold"), header_size) > CONTENT_W:
         for chunk in _wrap_to_width(org_title, "bold", header_size):
@@ -403,22 +402,22 @@ def _build_ops(
              dy=header_size * 1.15)
     gap(0.5 * mm)
 
-    line(L["subtitle"], style="regular", size=10, align="center", dy=4.5 * mm)
+    line(strings["subtitle"], style="regular", size=10, align="center", dy=4.5 * mm)
 
     hrule()
 
     # ── 2) Body — reference number / masala ───────────────────────────────
     ref_no = f"Q-{appointment.id.hex[:8].upper()}"
-    label_value(L["ref_label"], ref_no, size=10, dy=4.5 * mm)
+    label_value(strings["ref_label"], ref_no, size=10, dy=4.5 * mm)
 
     topic = (appointment.topic_summary or "").strip()
     if topic:
-        label_value(L["masala_label"], topic, size=10, dy=4.5 * mm)
+        label_value(strings["masala_label"], topic, size=10, dy=4.5 * mm)
 
     hrule()
 
     # ── 3) Phone ──────────────────────────────────────────────────────────
-    label_value(L["telefon_label"], _format_phone_pretty(appointment.visitor_phone),
+    label_value(strings["telefon_label"], _format_phone_pretty(appointment.visitor_phone),
                 size=10, dy=4.5 * mm)
 
     hrule()
@@ -428,7 +427,7 @@ def _build_ops(
     qr(qr_png, size_mm=32, dy_before=1 * mm, dy_after=3 * mm)
 
     # Footer message — wrap to two centered lines if it overflows.
-    for chunk in _wrap_to_width(L["footer"], "regular", 9):
+    for chunk in _wrap_to_width(strings["footer"], "regular", 9):
         line(chunk, style="regular", size=9, align="center", dy=4 * mm)
 
     return ops

@@ -17,12 +17,12 @@ from fastapi import APIRouter, Header, Request
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
+from ..ai.weather import get_weather
 from ..core import audit
 from ..core.deps import DbSession
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
 from ..core.errors import AuthError, ValidationError
 from ..core.security import hash_device_secret
-from ..ai.weather import get_weather
 from ..domain.ai_config import OrgKbOfficial
 from ..domain.device import Device, DeviceEnrollmentCode, DeviceKey
 from ..domain.organization import (

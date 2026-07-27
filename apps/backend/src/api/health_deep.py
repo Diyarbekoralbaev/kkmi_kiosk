@@ -10,7 +10,7 @@ Ungated in dev (token empty).
 
 This is the check that today's incident showed `/health` could not catch:
 `/health` returned 200 while the Gemini relay WS was dead. Here we actually
-exercise the relay handshake, the telegram relay, redis, disk, and TLS.
+exercise the relay handshake, redis, disk, and TLS.
 """
 from __future__ import annotations
 
@@ -20,9 +20,8 @@ import shutil
 import socket
 import ssl
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-import httpx
 import websockets
 from fastapi import APIRouter, Header, Response, status
 from sqlalchemy import func, select, text
@@ -36,7 +35,7 @@ router = APIRouter(tags=["health"])
 # A kiosk counts as "online" if it checked in within this window.
 _KIOSK_ONLINE_WINDOW_MIN = 5
 # Public host whose leaf cert expiry we sample for the TLS check.
-_TLS_HOST = "kenes-api.kioska.dbc.uz"
+_TLS_HOST = "kkmi-api.kioska.dbc.uz"
 # Disk fullness above this fraction trips the disk check.
 _DISK_WARN_PCT = 85.0
 # Direct (no-relay) Gemini Live endpoint — mirrors ai/gemini_live.py.
@@ -47,7 +46,7 @@ _GEMINI_ENDPOINT = (
 
 # Components that count toward the overall status. `kiosks` is intentionally
 # excluded — it is informational ("last online"), never an outage signal.
-_CRITICAL = ("postgres", "redis", "gemini", "telegram", "tls", "disk")
+_CRITICAL = ("postgres", "redis", "gemini", "tls", "disk")
 
 # The status page renders one row per component, so Gatus polls this endpoint
 # once per component (≈7×). Without caching that would fire 7 Gemini WS
@@ -123,31 +122,8 @@ async def _check_gemini() -> dict:
             "latency_ms": round((time.perf_counter() - t) * 1000),
             "via": "relay" if headers else "direct",
         }
-    except (asyncio.TimeoutError, TimeoutError):
+    except TimeoutError:
         return {"ok": False, "error": "ws_handshake_timeout"}
-    except Exception as e:
-        return {"ok": False, "error": type(e).__name__}
-
-
-async def _check_telegram() -> dict:
-    """getMe through the same relay path the bot uses. Unconfigured token =
-    not a failure (dev/staging) — reported ok with a note."""
-    s = get_settings()
-    token = s.telegram_bot_token.get_secret_value() if s.telegram_bot_token else ""
-    if not token:
-        return {"ok": True, "note": "disabled"}
-    base = (s.telegram_api_base or "https://api.telegram.org").rstrip("/")
-    relay_token = (
-        s.telegram_relay_token.get_secret_value() if s.telegram_relay_token else ""
-    )
-    headers = {"X-Relay-Auth": relay_token} if relay_token else None
-    t = time.perf_counter()
-    try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{base}/bot{token}/getMe", headers=headers)
-        if r.status_code == 200 and r.json().get("ok") is True:
-            return {"ok": True, "latency_ms": round((time.perf_counter() - t) * 1000)}
-        return {"ok": False, "error": f"status_{r.status_code}"}
     except Exception as e:
         return {"ok": False, "error": type(e).__name__}
 
@@ -160,9 +136,9 @@ def _check_tls_sync(host: str, port: int = 443) -> dict:
                 cert = ssock.getpeercert()
         # notAfter format: 'May 18 09:08:10 2026 GMT'
         exp = datetime.strptime(cert["notAfter"], "%b %d %H:%M:%S %Y %Z").replace(
-            tzinfo=timezone.utc
+            tzinfo=UTC
         )
-        days = (exp - datetime.now(timezone.utc)).days
+        days = (exp - datetime.now(UTC)).days
         return {"ok": days > 14, "days_left": days}
     except Exception as e:
         return {"ok": False, "error": type(e).__name__}
@@ -214,7 +190,7 @@ async def _check_kiosks(session) -> dict:
     """Informational only — never flips overall status. Counts active devices
     that checked in within the online window."""
     try:
-        cutoff = datetime.now(timezone.utc) - timedelta(minutes=_KIOSK_ONLINE_WINDOW_MIN)
+        cutoff = datetime.now(UTC) - timedelta(minutes=_KIOSK_ONLINE_WINDOW_MIN)
         total = (
             await session.execute(
                 select(func.count()).select_from(Device).where(Device.status == "active")
@@ -260,10 +236,9 @@ async def health_deep(
         postgres = await _check_postgres(session)
         kiosks = await _check_kiosks(session)
         # Independent network checks run concurrently.
-        redis_r, gemini_r, telegram_r, tls_r, disk_r, backup_r = await asyncio.gather(
+        redis_r, gemini_r, tls_r, disk_r, backup_r = await asyncio.gather(
             _check_redis(),
             _check_gemini(),
-            _check_telegram(),
             _check_tls(),
             _check_disk(),
             _check_backup(),
@@ -272,7 +247,6 @@ async def health_deep(
             "postgres": postgres,
             "redis": redis_r,
             "gemini": gemini_r,
-            "telegram": telegram_r,
             "tls": tls_r,
             "disk": disk_r,
             "backup": backup_r,

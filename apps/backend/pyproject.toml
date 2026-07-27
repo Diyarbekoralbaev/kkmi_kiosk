@@ -1,7 +1,7 @@
 [project]
-name = "joqari-kenes-backend"
+name = "kkmi-kiosk-backend"
 version = "0.1.0"
-description = "Multi-tenant SaaS backend for kiosk gov agent (FastAPI + Postgres)"
+description = "Backend for the KKMI AI kiosk (FastAPI + Postgres + HEMIS)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -51,7 +51,19 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "RUF"]
-ignore = ["E501"]
+ignore = [
+    "E501",
+    # The AI prompt sections, seed data and receipt strings are written in
+    # Uzbek/Karakalpak/Russian Cyrillic. RUF001-003 flag every Cyrillic
+    # character that resembles a Latin one — 105 of 146 findings were this,
+    # all false positives on a deliberately multilingual codebase.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    # FastAPI's dependency-injection idiom is `x = Depends(...)` in the
+    # signature default. Flagging it would mean rewriting every endpoint.
+    "B008",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

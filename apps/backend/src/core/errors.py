@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = structlog.get_logger(__name__)
-_stdlib = logging.getLogger("joqari_kenes.errors")
+_stdlib = logging.getLogger("kkmi.errors")
 
 
 class AppError(Exception):

@@ -1,0 +1,183 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- English. Added for KKMI: the institute runs English-medium groups
+         (HEMIS `educationLang` = "Ingliz", e.g. group "120 A lesh ENG") and
+         admits foreign applicants, so the kiosk needs a fourth language.
+         _Locale_en is the unique sentinel LocalizationService.SetLanguage
+         uses to find THIS dict among Application.Resources.MergedDictionaries —
+         querying by Source URI doesn't work because the XAML compiler resolves
+         <ResourceInclude> entries at compile time and the runtime objects may
+         not expose a stable Source. -->
+    <x:String x:Key="_Locale_en">en</x:String>
+
+    <!-- Header / footer / language labels -->
+    <x:String x:Key="HeaderTagline">"Smart reception" AI assistant</x:String>
+    <x:String x:Key="LangUz">O‘zbekcha</x:String>
+    <x:String x:Key="LangRu">Русский</x:String>
+    <x:String x:Key="LangKk">Qaraqalpaqsha</x:String>
+    <x:String x:Key="LangEn">English</x:String>
+    <x:String x:Key="HelpLabel">Help:</x:String>
+
+    <!-- Home page (2 services: AI + appeal) -->
+    <x:String x:Key="HomeGreetingChip">Welcome!</x:String>
+    <x:String x:Key="HomeQuestion">How can we help you?</x:String>
+    <x:String x:Key="HomeSubtitle">Talk to the AI assistant or submit an appeal.</x:String>
+    <x:String x:Key="HomeTileAiTitle">Talk to the AI</x:String>
+    <x:String x:Key="HomeTileAiSubtitle">Get quick answers to your questions</x:String>
+
+    <!-- NavBar -->
+    <x:String x:Key="NavBack">Back</x:String>
+    <x:String x:Key="NavHome">Main menu</x:String>
+
+    <!-- AI assistant page -->
+    <x:String x:Key="AiPageTitle">AI assistant</x:String>
+    <x:String x:Key="AiPageStatusConnecting">Connecting...</x:String>
+    <x:String x:Key="AiPageStatusListening">Go ahead, I'm listening</x:String>
+    <x:String x:Key="AiPageHint">Ask your question or describe your request. The robot is listening.</x:String>
+
+    <!-- MicOrb -->
+    <x:String x:Key="MicListening">Listening</x:String>
+    <x:String x:Key="MicTapToStart">Tap to start</x:String>
+    <x:String x:Key="MicDisconnected">Not connected</x:String>
+    <x:String x:Key="MicConnecting">Connecting</x:String>
+    <x:String x:Key="MicSpeaking">You're speaking</x:String>
+    <x:String x:Key="MicStopping">Stopping...</x:String>
+    <x:String x:Key="MicStarting">Starting...</x:String>
+    <x:String x:Key="MicError">Error</x:String>
+
+    <!-- Submit page (AI voice preview) -->
+
+    <!-- Contacts page -->
+    <x:String x:Key="ContactsPageTitle">Contact</x:String>
+    <x:String x:Key="ContactsAddressLabel">📍  Address</x:String>
+    <x:String x:Key="ContactsPhoneIconLabel">☎  Phone</x:String>
+    <x:String x:Key="ContactsEmailLabel">✉  Email</x:String>
+    <x:String x:Key="ContactsHoursLabel">🕐  Working hours</x:String>
+
+    <!-- Offline overlay -->
+    <x:String x:Key="OfflineTitle">No connection</x:String>
+    <x:String x:Key="OfflineHint">Reconnecting...</x:String>
+
+    <!-- Revoked overlay -->
+    <x:String x:Key="RevokedTitle">This kiosk is not authorised</x:String>
+    <x:String x:Key="RevokedBody">This device's access key was revoked by an administrator. An operator must enter a new code.</x:String>
+    <x:String x:Key="RevokedButton">Enter a new code</x:String>
+
+    <!-- Submit success overlay (shared by voice + manual) -->
+    <x:String x:Key="SubmitSuccessTitle">Your appeal has been received</x:String>
+    <x:String x:Key="SubmitSuccessBody">Institute staff will review your appeal.</x:String>
+    <x:String x:Key="SubmitSuccessIdLabel">Number:</x:String>
+
+    <!-- Updating page -->
+    <x:String x:Key="UpdatingTitle">Updating the system</x:String>
+    <x:String x:Key="UpdatingBody">It will restart shortly. Please wait...</x:String>
+    <x:String x:Key="UpdatingStatusPreparing">Preparing...</x:String>
+    <x:String x:Key="UpdatingVersionLabel">Version: </x:String>
+    <x:String x:Key="UpdatingDownloadingLabel">Downloading...</x:String>
+    <x:String x:Key="UpdatingMandatory">Mandatory update...</x:String>
+    <x:String x:Key="UpdatingApplying">Applying...</x:String>
+    <x:String x:Key="UpdatingFailed">Update failed — running the previous version.</x:String>
+
+    <!-- Admin PIN dialog -->
+    <x:String x:Key="AdminPinTitle">Admin settings</x:String>
+    <x:String x:Key="AdminPinPrompt">Enter the PIN code</x:String>
+    <x:String x:Key="AdminPinIncorrect">Incorrect PIN</x:String>
+    <x:String x:Key="AdminPinCancel">Cancel</x:String>
+    <x:String x:Key="AdminPinConfirm">Enter</x:String>
+
+    <!-- Admin choice dialog -->
+    <x:String x:Key="AdminChoiceTitle">Choose</x:String>
+    <x:String x:Key="AdminChoicePrompt">Exit the application or open settings</x:String>
+    <x:String x:Key="AdminExit">Exit</x:String>
+    <x:String x:Key="AdminSettings">Settings</x:String>
+    <x:String x:Key="AdminCancel">Cancel</x:String>
+
+    <!-- Admin settings window -->
+    <x:String x:Key="AdminSettingsTitle">Admin settings</x:String>
+    <x:String x:Key="AdminSettingsIntro">Choose the microphone, speaker and printer. Restart the audio session after making changes.</x:String>
+    <x:String x:Key="AdminSettingsMicLabel">Audio input (microphone)</x:String>
+    <x:String x:Key="AdminSettingsSpeakerLabel">Audio output (speaker)</x:String>
+    <x:String x:Key="AdminSettingsVolume">Volume</x:String>
+    <x:String x:Key="AdminSettingsPrinter">Printer</x:String>
+    <x:String x:Key="AdminSettingsAutoPrint">Print the reception ticket automatically</x:String>
+    <x:String x:Key="AdminSettingsTestPrint">Test print</x:String>
+    <x:String x:Key="AdminSettingsTestMic">Test the microphone</x:String>
+    <x:String x:Key="MicTestSpeakNow">Speak now (3 seconds)...</x:String>
+    <x:String x:Key="MicTestPass">The microphone works</x:String>
+    <x:String x:Key="MicTestSilent">No sound detected — try another device</x:String>
+    <x:String x:Key="MicTestErrorOpen">Could not open the device</x:String>
+    <x:String x:Key="MicTestNoDevice">No microphone selected</x:String>
+    <x:String x:Key="AdminSettingsSave">Save</x:String>
+
+    <!-- Enrollment window -->
+    <x:String x:Key="EnrollmentTitle">Kiosk enrollment</x:String>
+    <x:String x:Key="EnrollmentIntro">First-time setup. Enter the enrollment code from the super panel.</x:String>
+    <x:String x:Key="EnrollmentBackendLabel">Server address</x:String>
+    <x:String x:Key="EnrollmentCodeLabel">Enrollment code</x:String>
+    <x:String x:Key="EnrollmentButton">Enroll</x:String>
+
+    <!-- Phone step -->
+
+    <!-- Identity confirm step -->
+
+    <!-- Full personal form -->
+
+    <!-- Appeal text step -->
+
+    <!-- Preview labels -->
+
+    <!-- ═══ Institute screens ═══ -->
+    <x:String x:Key="HomeTileLibraryTitle">AI Library</x:String>
+    <x:String x:Key="HomeTileLibrarySubtitle">Books and study materials</x:String>
+    <x:String x:Key="HomeTileAbituriyentTitle">AI Admissions</x:String>
+    <x:String x:Key="HomeTileAbituriyentSubtitle">Programmes and admission</x:String>
+    <x:String x:Key="HomeTileMurojatTitle">AI Appeals</x:String>
+    <x:String x:Key="HomeTileMurojatSubtitle">Send an appeal, complaint or suggestion</x:String>
+    <x:String x:Key="HomeTileScheduleTitle">Class Timetable</x:String>
+    <x:String x:Key="HomeTileScheduleSubtitle">Timetable by group</x:String>
+    <x:String x:Key="HomeTileReceptionTitle">Leadership Reception</x:String>
+    <x:String x:Key="HomeTileReceptionSubtitle">Book a meeting with the rector or vice-rectors</x:String>
+    <x:String x:Key="LibraryPageTitle">AI Library</x:String>
+    <x:String x:Key="LibraryComingSoonTitle">The library service is being prepared</x:String>
+    <x:String x:Key="LibraryComingSoonBody">The book catalogue is not connected to this kiosk yet. Please ask the library staff.</x:String>
+    <x:String x:Key="AbituriyentPageTitle">Study programmes</x:String>
+    <x:String x:Key="AbituriyentQuotaNote">Quotas, pass marks and tuition are published each year by the admissions committee — ask them for exact figures.</x:String>
+    <x:String x:Key="SchedulePageTitle">Class timetable</x:String>
+    <x:String x:Key="ScheduleChooseFaculty">Choose a faculty</x:String>
+    <x:String x:Key="ScheduleWhichGroup">Which group?</x:String>
+    <x:String x:Key="ScheduleScopeToday">Today</x:String>
+    <x:String x:Key="ScheduleScopeTomorrow">Tomorrow</x:String>
+    <x:String x:Key="ScheduleScopeWeek">Week</x:String>
+    <x:String x:Key="ScheduleChangeGroup">Change group</x:String>
+    <x:String x:Key="ScheduleNoLessonsTitle">No classes on this day</x:String>
+    <x:String x:Key="ScheduleNoLessonsBody">Try another day.</x:String>
+    <x:String x:Key="ScheduleYearNotPublishedTitle">The new academic year's timetable is not published yet</x:String>
+    <x:String x:Key="ScheduleYearNotPublishedBody">It is usually loaded shortly before the academic year starts.</x:String>
+    <x:String x:Key="ScheduleShowLastYear">Show the last week with classes</x:String>
+    <x:String x:Key="MurojatPageTitle">Send an appeal</x:String>
+    <x:String x:Key="MurojatNamePrompt">Your full name</x:String>
+    <x:String x:Key="MurojatNameWatermark">For example: Aliyev Alisher</x:String>
+    <x:String x:Key="MurojatNameError">Please enter your full name</x:String>
+    <x:String x:Key="MurojatPhonePrompt">Your phone number</x:String>
+    <x:String x:Key="MurojatPhoneError">The phone number is incomplete (9 digits)</x:String>
+    <x:String x:Key="MurojatTextPrompt">Your appeal</x:String>
+    <x:String x:Key="MurojatTextWatermark">What happened and what are you asking for — describe it in detail</x:String>
+    <x:String x:Key="MurojatTextError">Enter at least 5 characters</x:String>
+    <x:String x:Key="MurojatReviewTitle">Check your details</x:String>
+    <x:String x:Key="MurojatNameLabel">Full name</x:String>
+    <x:String x:Key="MurojatPhoneLabel">Phone</x:String>
+    <x:String x:Key="MurojatTextLabel">Appeal text</x:String>
+    <x:String x:Key="MurojatContinue">Continue</x:String>
+    <x:String x:Key="MurojatEdit">Edit</x:String>
+    <x:String x:Key="MurojatConfirm">Confirm and send</x:String>
+    <x:String x:Key="MurojatSubmitError">Could not send. Please try again.</x:String>
+    <x:String x:Key="MurojatVoiceConfirmPhrase">Yes, correct</x:String>
+    <x:String x:Key="ReceptionPageTitle">Leadership reception</x:String>
+    <x:String x:Key="ReceptionChoosePrompt">Who would you like to see?</x:String>
+    <x:String x:Key="ReceptionNoOfficials">The reception schedule has not been entered yet. Please ask the secretariat.</x:String>
+    <x:String x:Key="ReceptionOfficialLabel">You will meet</x:String>
+    <x:String x:Key="ReceptionWhenLabel">Reception time</x:String>
+    <x:String x:Key="ReceptionReasonPrompt">Reason for your visit</x:String>
+    <x:String x:Key="ReceptionReasonWatermark">Describe it briefly</x:String>
+    <x:String x:Key="ReceptionReasonLabel">Reason</x:String>
+</ResourceDictionary>

@@ -79,6 +79,11 @@ class Application(Base, TimestampMixin):
     topic: Mapped[str] = mapped_column(String(500), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     phone: Mapped[str] = mapped_column(String(32), default="", nullable=False)
+    applicant_name: Mapped[str] = mapped_column(
+        String(255), default="", server_default="", nullable=False
+    )
+    """Who filed it. Empty only on rows migrated from the era when appeals were
+    forwarded to an external cabinet that owned the citizen registry."""
     status: Mapped[str] = mapped_column(String(32), default=STATUS_NEW, nullable=False)
     kind: Mapped[str] = mapped_column(
         String(16), default=KIND_MURAJAAT, server_default=KIND_MURAJAAT, nullable=False

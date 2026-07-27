@@ -422,15 +422,19 @@ public partial class MainWindow : Window
         }
     }
 
-    private void NavHome(object? sender, RoutedEventArgs e) =>
-        SessionStore.Current.Navigate(KioskPage.Home);
+    // DEBUG-only shortcuts (the bar is stripped from Release builds). They reset
+    // the step machine so a half-finished form from the previous jump doesn't
+    // leak into the next page.
+    private static void DebugNav(KioskPage page)
+    {
+        SessionStore.Current.SubmitStep = SubmitStep.Idle;
+        SessionStore.Current.Navigate(page);
+    }
 
-    private void NavManualSubmit(object? sender, RoutedEventArgs e) =>
-        SessionStore.Current.Navigate(KioskPage.ManualSubmit);
-
-    private void NavSubmit(object? sender, RoutedEventArgs e) =>
-        SessionStore.Current.Navigate(KioskPage.Submit);
-
-    private void NavContacts(object? sender, RoutedEventArgs e) =>
-        SessionStore.Current.Navigate(KioskPage.Contacts);
+    private void NavHome(object? sender, RoutedEventArgs e) => DebugNav(KioskPage.Home);
+    private void NavJadval(object? sender, RoutedEventArgs e) => DebugNav(KioskPage.Jadval);
+    private void NavMurojat(object? sender, RoutedEventArgs e) => DebugNav(KioskPage.Murojat);
+    private void NavQabul(object? sender, RoutedEventArgs e) => DebugNav(KioskPage.Qabul);
+    private void NavAbituriyent(object? sender, RoutedEventArgs e) => DebugNav(KioskPage.Abituriyent);
+    private void NavContacts(object? sender, RoutedEventArgs e) => DebugNav(KioskPage.Contacts);
 }

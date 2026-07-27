@@ -7,10 +7,10 @@ using Kiosk.App.Settings;
 
 namespace Kiosk.App.Localization;
 
-public enum Language { Uz, Ru, Kk }
+public enum Language { Uz, Ru, Kk, En }
 
 /// <summary>
-/// Runtime language switcher. All 3 language ResourceDictionaries are
+/// Runtime language switcher. All 4 language ResourceDictionaries are
 /// declared statically in <c>App.axaml</c>'s MergedDictionaries (mandatory
 /// for AOT — runtime-constructed <see cref="ResourceInclude"/> gets
 /// stripped by the trimmer and crashes with XamlLoadException). This service
@@ -81,6 +81,7 @@ public static class LocalizationService
     {
         "ru" => Language.Ru,
         "kk" => Language.Kk,
+        "en" => Language.En,
         _ => Language.Uz,
     };
 
@@ -88,6 +89,7 @@ public static class LocalizationService
     {
         Language.Ru => "ru",
         Language.Kk => "kk",
+        Language.En => "en",
         _ => "uz",
     };
 
@@ -124,25 +126,36 @@ public static class LocalizationService
         (Language.Ru, "fri") => "Пятница",
         (Language.Ru, "sat") => "Суббота",
         (Language.Ru, "sun") => "Воскресенье",
-        // Karakalpak Cyrillic (default locale from 2026 redesign).
-        (Language.Kk, "mon") => "Дүйшемби",
-        (Language.Kk, "tue") => "Сейшемби",
-        (Language.Kk, "wed") => "Сәршемби",
-        (Language.Kk, "thu") => "Бейсемби",
-        (Language.Kk, "fri") => "Жума",
-        (Language.Kk, "sat") => "Шемби",
-        (Language.Kk, "sun") => "Жексемби",
+        // Karakalpak LATIN, not Cyrillic: the institute writes Karakalpak in
+        // Latin everywhere (HEMIS kafedra and group names — "Medicinalıq
+        // ximiya kafedrası", "Joqarı miyirbiykelik isi-233"), and those strings
+        // land on the same screen as these labels. Cyrillic UI chrome next to
+        // Latin data reads as two different systems.
+        (Language.Kk, "mon") => "Dúyshembi",
+        (Language.Kk, "tue") => "Seyshembi",
+        (Language.Kk, "wed") => "Sárshembi",
+        (Language.Kk, "thu") => "Beysembi",
+        (Language.Kk, "fri") => "Juma",
+        (Language.Kk, "sat") => "Shembi",
+        (Language.Kk, "sun") => "Jeksembi",
+        // English — the institute runs English-medium groups (e.g. "120 A lesh ENG").
+        (Language.En, "mon") => "Monday",
+        (Language.En, "tue") => "Tuesday",
+        (Language.En, "wed") => "Wednesday",
+        (Language.En, "thu") => "Thursday",
+        (Language.En, "fri") => "Friday",
+        (Language.En, "sat") => "Saturday",
+        (Language.En, "sun") => "Sunday",
         _ => isoDay ?? "",
     };
 
-    /// <summary>Date string for the kiosk header clock — "12-май, 2026-жыл"
-    /// in Kk (Cyrillic), "12 мая 2026" in Ru, "12-may, 2026" in Uz.
-    /// .NET's CultureInfo for kk-* renders Cyrillic but month names don't
-    /// quite match the Karakalpak transliteration on Windows ICU builds,
-    /// so we hand-roll the Kk variant.</summary>
+    /// <summary>Date string for the kiosk header clock — "12-may, 2026-jıl"
+    /// in Kk (Latin), "12 мая 2026" in Ru, "12-may, 2026" in Uz,
+    /// "May 12, 2026" in En. .NET has no usable culture for Karakalpak Latin,
+    /// so the Kk month names are hand-rolled.</summary>
     private static readonly string[] _monthsKk = {
-        "январь", "февраль", "март", "апрель", "май", "июнь",
-        "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь",
+        "yanvar", "fevral", "mart", "aprel", "may", "iyun",
+        "iyul", "avgust", "sentyabr", "oktyabr", "noyabr", "dekabr",
     };
     private static readonly string[] _monthsRu = {
         "января", "февраля", "марта", "апреля", "мая", "июня",
@@ -151,6 +164,10 @@ public static class LocalizationService
     private static readonly string[] _monthsUz = {
         "yanvar", "fevral", "mart", "aprel", "may", "iyun",
         "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr",
+    };
+    private static readonly string[] _monthsEn = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
     };
 
     public static string FormatDate(DateTime when, Language lang)
@@ -161,7 +178,8 @@ public static class LocalizationService
         {
             Language.Ru => $"{when.Day} {_monthsRu[idx]} {when.Year}",
             Language.Uz => $"{when.Day}-{_monthsUz[idx]}, {when.Year}",
-            _ => $"{when.Day}-{_monthsKk[idx]}, {when.Year}-жыл",
+            Language.En => $"{_monthsEn[idx]} {when.Day}, {when.Year}",
+            _ => $"{when.Day}-{_monthsKk[idx]}, {when.Year}-jıl",
         };
     }
 }

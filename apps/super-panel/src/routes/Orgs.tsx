@@ -181,7 +181,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input"
             value={nameUz}
             onChange={(e) => setNameUz(e.target.value)}
-            placeholder="Joqarı Keńes"
+            placeholder="Qoraqalpogʻiston tibbiyot instituti"
             required
           />
         </div>
@@ -191,7 +191,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input"
             value={nameKk}
             onChange={(e) => setNameKk(e.target.value)}
-            placeholder="Жоқарғы Кеңес"
+            placeholder="Qaraqalpaqstan medicina instituti"
             required
           />
         </div>
@@ -201,7 +201,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input"
             value={nameRu}
             onChange={(e) => setNameRu(e.target.value)}
-            placeholder="Жокаргы Кенес"
+            placeholder="Каракалпакский медицинский институт"
             required
           />
         </div>
@@ -223,7 +223,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             className="input font-mono"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="joqari-kenes"
+            placeholder="kkmi"
           />
         </div>
         <div>
@@ -271,7 +271,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </div>
         <div>
           <Label>Email</Label>
-          <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@kenes.uz" />
+          <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@kkmi.uz" />
         </div>
         <div>
           <Label>Yordam telefon raqami</Label>

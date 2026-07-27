@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from sqlalchemy import DateTime, MetaData, func
 from sqlalchemy.ext.asyncio import (
@@ -28,7 +28,9 @@ NAMING_CONVENTION = {
 class Base(AsyncAttrs, DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
-    type_annotation_map: dict[Any, Any] = {}
+    # ClassVar, not an instance field — SQLAlchemy reads this off the class to
+    # resolve `Mapped[...]` annotations into column types.
+    type_annotation_map: ClassVar[dict[Any, Any]] = {}
 
 
 def _utcnow() -> datetime:

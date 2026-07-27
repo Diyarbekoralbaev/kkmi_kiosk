@@ -34,7 +34,7 @@ public partial class NumericKeypad : UserControl
         {
             case "back":
                 // Remove the LAST DIGIT, not the last character. The phone
-                // box (ManualSubmitPage) renders a formatted mask like "+998 12 -
+                // box renders a formatted mask like "+998 12 -
                 // 345 - __ - __" where unentered slots are "_" placeholders
                 // — naïve `t[..^1]` would just eat the "_" and the user
                 // would have to press back twice per actual digit. AdminPin's

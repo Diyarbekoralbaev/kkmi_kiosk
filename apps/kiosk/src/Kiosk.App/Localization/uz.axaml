@@ -10,21 +10,18 @@
 
     <!-- Header / footer / language labels -->
     <x:String x:Key="HeaderTagline">«Aqlli qabulxona» AI yordamchisi</x:String>
-    <x:String x:Key="LangUz">Ўзбекша</x:String>
+    <x:String x:Key="LangUz">O‘zbekcha</x:String>
     <x:String x:Key="LangRu">Русский</x:String>
-    <x:String x:Key="LangKk">Қарақалпақша</x:String>
-    <x:String x:Key="FooterRights">Barcha huquqlar himoyalangan.</x:String>
+    <x:String x:Key="LangKk">Qaraqalpaqsha</x:String>
+    <x:String x:Key="LangEn">English</x:String>
     <x:String x:Key="HelpLabel">Yordam:</x:String>
 
     <!-- Home page (2 services: AI + Murajat) -->
     <x:String x:Key="HomeGreetingChip">Xush kelibsiz!</x:String>
     <x:String x:Key="HomeQuestion">Sizga qanday yordam bera olamiz?</x:String>
-    <x:String x:Key="HomeQuestionHighlight">yordam</x:String>
     <x:String x:Key="HomeSubtitle">AI yordamchi bilan suhbatlashing yoki Kengashga murojaat qoldiring.</x:String>
     <x:String x:Key="HomeTileAiTitle">AI bilan suhbatlashish</x:String>
     <x:String x:Key="HomeTileAiSubtitle">Savollaringizga sun'iy intellektdan tezda javob oling</x:String>
-    <x:String x:Key="HomeTileSubmitTitle">Kengashga murojaat</x:String>
-    <x:String x:Key="HomeTileSubmitSubtitle">Arzingizni yoki taklifingizni elektron shaklda yuboring</x:String>
 
     <!-- NavBar -->
     <x:String x:Key="NavBack">Orqaga</x:String>
@@ -47,21 +44,13 @@
     <x:String x:Key="MicError">Xatolik</x:String>
 
     <!-- Submit page (AI voice preview) -->
-    <x:String x:Key="SubmitPageTitle">Murojaat yuborish</x:String>
-    <x:String x:Key="SubmitNameLabel">F.I.O.</x:String>
-    <x:String x:Key="SubmitTextLabel">Murojaat matni</x:String>
-    <x:String x:Key="SubmitPhoneLabel">Telefon</x:String>
 
     <!-- Contacts page -->
     <x:String x:Key="ContactsPageTitle">Aloqa</x:String>
     <x:String x:Key="ContactsAddressLabel">📍  Manzil</x:String>
-    <x:String x:Key="ContactsAddressValue">—</x:String>
     <x:String x:Key="ContactsPhoneIconLabel">☎  Telefon</x:String>
-    <x:String x:Key="ContactsPhoneValue">(+998 61) 222 12 34</x:String>
     <x:String x:Key="ContactsEmailLabel">✉  Elektron pochta</x:String>
-    <x:String x:Key="ContactsEmailValue">—</x:String>
     <x:String x:Key="ContactsHoursLabel">🕐  Ish vaqti</x:String>
-    <x:String x:Key="ContactsHoursValue">Du–Ju  09:00 – 18:00</x:String>
 
     <!-- Offline overlay -->
     <x:String x:Key="OfflineTitle">Aloqa yo'q</x:String>
@@ -125,45 +114,68 @@
     <x:String x:Key="EnrollmentCodeLabel">Ro'yxat kodi</x:String>
     <x:String x:Key="EnrollmentButton">Ro'yxatdan o'tish</x:String>
 
-    <!-- Manual murajat flow (ManualSubmitPage) -->
-    <x:String x:Key="ManualSubmitPageTitle">Murojaat yuborish</x:String>
-    <x:String x:Key="ManualBackButton">Orqaga</x:String>
-    <x:String x:Key="ManualEditButton">O'zgartirish</x:String>
-    <x:String x:Key="ManualConfirmButton">Tasdiqlash va yuborish</x:String>
-    <x:String x:Key="ManualMurajatPreviewTitle">Ma'lumotlarni tekshiring</x:String>
-    <x:String x:Key="ManualMurajatPhoneTitle">Aloqa telefon raqami</x:String>
-    <x:String x:Key="ManualMurajatSubmitting">Yuborilmoqda...</x:String>
-    <x:String x:Key="ManualMurajatSubmitError">Yuborib bo'lmadi. Qayta urinib ko'ring.</x:String>
-
     <!-- Phone step -->
-    <x:String x:Key="MurajatPhoneHint">Telefon raqamingizni kiriting</x:String>
-    <x:String x:Key="MurajatPhoneError">Telefon raqami to'liq emas (kamida 9 raqam)</x:String>
-    <x:String x:Key="MurajatContinue">Davom etish</x:String>
 
     <!-- Identity confirm step -->
-    <x:String x:Key="MurajatConfirmQuestion">Siz {0} misiz?</x:String>
-    <x:String x:Key="MurajatConfirmYes">Ha, bu men</x:String>
-    <x:String x:Key="MurajatConfirmNo">Yo'q, men emas</x:String>
 
     <!-- Full personal form -->
-    <x:String x:Key="MurajatFormTitle">Ma'lumotlaringizni to'ldiring</x:String>
-    <x:String x:Key="MurajatFirstName">Ismingiz</x:String>
-    <x:String x:Key="MurajatLastName">Familiyangiz</x:String>
-    <x:String x:Key="MurajatBirthDate">Tug'ilgan sana (YYYY-MM-DD)</x:String>
-    <x:String x:Key="MurajatGender">Jinsi</x:String>
-    <x:String x:Key="MurajatGenderMale">Erkak</x:String>
-    <x:String x:Key="MurajatGenderFemale">Ayol</x:String>
-    <x:String x:Key="MurajatDistrict">Tuman / shahar</x:String>
-    <x:String x:Key="MurajatQuarter">Mahalla (MFY)</x:String>
-    <x:String x:Key="MurajatAddress">Manzil</x:String>
-    <x:String x:Key="MurajatFormError">Barcha ma'lumotlarni to'liq to'ldiring</x:String>
 
     <!-- Appeal text step -->
-    <x:String x:Key="MurajatTextTitle">Murojaatingiz matni</x:String>
-    <x:String x:Key="MurajatTextHint">Nima bo'ldi, nima so'raysiz — batafsil yozing</x:String>
-    <x:String x:Key="MurajatTextError">Kamida 5 ta harf kiriting</x:String>
 
     <!-- Preview labels -->
-    <x:String x:Key="MurajatNameLabel">F.I.O.</x:String>
-    <x:String x:Key="MurajatTextLabel">Murojaat matni</x:String>
+
+    <!-- ═══ Institute screens ═══ -->
+    <x:String x:Key="HomeTileLibraryTitle">AI Kutubxona</x:String>
+    <x:String x:Key="HomeTileLibrarySubtitle">Kitoblar va o‘quv adabiyotlari</x:String>
+    <x:String x:Key="HomeTileAbituriyentTitle">AI Abituriyent</x:String>
+    <x:String x:Key="HomeTileAbituriyentSubtitle">Ta’lim yo‘nalishlari va qabul</x:String>
+    <x:String x:Key="HomeTileMurojatTitle">AI Murojat</x:String>
+    <x:String x:Key="HomeTileMurojatSubtitle">Murojaat, shikoyat yoki taklif yuborish</x:String>
+    <x:String x:Key="HomeTileScheduleTitle">Dars jadvali</x:String>
+    <x:String x:Key="HomeTileScheduleSubtitle">Guruhlar bo‘yicha dars jadvali</x:String>
+    <x:String x:Key="HomeTileReceptionTitle">Rahbariyat qabuli</x:String>
+    <x:String x:Key="HomeTileReceptionSubtitle">Rektor va prorektorlar qabuliga yozilish</x:String>
+    <x:String x:Key="LibraryPageTitle">AI Kutubxona</x:String>
+    <x:String x:Key="LibraryComingSoonTitle">Kutubxona xizmati tayyorlanmoqda</x:String>
+    <x:String x:Key="LibraryComingSoonBody">Kitoblar katalogi hozircha kioskka ulanmagan. Iltimos, kutubxona xodimlariga murojaat qiling.</x:String>
+    <x:String x:Key="AbituriyentPageTitle">Ta’lim yo‘nalishlari</x:String>
+    <x:String x:Key="AbituriyentQuotaNote">Kvotalar, o‘tish ballari va kontrakt summasi har yili qabul komissiyasi tomonidan e’lon qilinadi — aniq ma’lumot uchun qabul komissiyasiga murojaat qiling.</x:String>
+    <x:String x:Key="SchedulePageTitle">Dars jadvali</x:String>
+    <x:String x:Key="ScheduleChooseFaculty">Fakultetni tanlang</x:String>
+    <x:String x:Key="ScheduleWhichGroup">Qaysi guruh?</x:String>
+    <x:String x:Key="ScheduleScopeToday">Bugun</x:String>
+    <x:String x:Key="ScheduleScopeTomorrow">Ertaga</x:String>
+    <x:String x:Key="ScheduleScopeWeek">Hafta</x:String>
+    <x:String x:Key="ScheduleChangeGroup">Boshqa guruh</x:String>
+    <x:String x:Key="ScheduleNoLessonsTitle">Bu kuni dars yo‘q</x:String>
+    <x:String x:Key="ScheduleNoLessonsBody">Boshqa kunni tanlab ko‘ring.</x:String>
+    <x:String x:Key="ScheduleYearNotPublishedTitle">Yangi o‘quv yili jadvali hali e’lon qilinmagan</x:String>
+    <x:String x:Key="ScheduleYearNotPublishedBody">Jadval odatda o‘quv yili boshlanishidan oldin tizimga kiritiladi.</x:String>
+    <x:String x:Key="ScheduleShowLastYear">Oxirgi darsli haftani ko‘rish</x:String>
+    <x:String x:Key="MurojatPageTitle">Murojaat yuborish</x:String>
+    <x:String x:Key="MurojatNamePrompt">Ismingiz va familiyangiz</x:String>
+    <x:String x:Key="MurojatNameWatermark">Masalan: Aliyev Alisher</x:String>
+    <x:String x:Key="MurojatNameError">Ism va familiyangizni to‘liq kiriting</x:String>
+    <x:String x:Key="MurojatPhonePrompt">Telefon raqamingiz</x:String>
+    <x:String x:Key="MurojatPhoneError">Telefon raqami to‘liq emas (9 ta raqam)</x:String>
+    <x:String x:Key="MurojatTextPrompt">Murojaatingiz matni</x:String>
+    <x:String x:Key="MurojatTextWatermark">Nima bo‘ldi va nima so‘raysiz — batafsil yozing</x:String>
+    <x:String x:Key="MurojatTextError">Kamida 5 ta harf kiriting</x:String>
+    <x:String x:Key="MurojatReviewTitle">Ma’lumotlarni tekshiring</x:String>
+    <x:String x:Key="MurojatNameLabel">F.I.O.</x:String>
+    <x:String x:Key="MurojatPhoneLabel">Telefon</x:String>
+    <x:String x:Key="MurojatTextLabel">Murojaat matni</x:String>
+    <x:String x:Key="MurojatContinue">Davom etish</x:String>
+    <x:String x:Key="MurojatEdit">O‘zgartirish</x:String>
+    <x:String x:Key="MurojatConfirm">Tasdiqlash va yuborish</x:String>
+    <x:String x:Key="MurojatSubmitError">Yuborib bo‘lmadi. Qayta urinib ko‘ring.</x:String>
+    <x:String x:Key="MurojatVoiceConfirmPhrase">Ha, to‘g‘ri</x:String>
+    <x:String x:Key="ReceptionPageTitle">Rahbariyat qabuli</x:String>
+    <x:String x:Key="ReceptionChoosePrompt">Kim bilan uchrashmoqchisiz?</x:String>
+    <x:String x:Key="ReceptionNoOfficials">Qabul jadvali hozircha kiritilmagan. Kotibiyatga murojaat qiling.</x:String>
+    <x:String x:Key="ReceptionOfficialLabel">Kim qabul qiladi</x:String>
+    <x:String x:Key="ReceptionWhenLabel">Qabul vaqti</x:String>
+    <x:String x:Key="ReceptionReasonPrompt">Murojaat sababi</x:String>
+    <x:String x:Key="ReceptionReasonWatermark">Qisqacha yozing</x:String>
+    <x:String x:Key="ReceptionReasonLabel">Sabab</x:String>
 </ResourceDictionary>

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -8,76 +7,27 @@ using Kiosk.App.Identity;
 
 namespace Kiosk.App.Net;
 
-// ── Appeal (murajat) — the backend forwards it to cabinet.murajat.uz ──
+// ── Appeal (murojat) — stored in the institute's own database ──
+//
+// The council build forwarded appeals to an external government cabinet that
+// owned a citizen registry, so the payload carried district, quarter, birth
+// date and gender. The institute keeps its own appeals and none of those mean
+// anything for a student writing to their dean: name, phone, text.
 public sealed record AppealRequest
 {
+    [JsonPropertyName("full_name")] public string FullName { get; init; } = "";
     [JsonPropertyName("phone")] public string Phone { get; init; } = "";
     [JsonPropertyName("text")] public string Text { get; init; } = "";
-    [JsonPropertyName("confirmed")] public bool Confirmed { get; init; }
-    // Personal fields — sent only for a new / «men emas» citizen
-    // (confirmed=false). null fields are omitted (WhenWritingNull in the
-    // JSON context) so a confirmed citizen's request stays phone+text only.
-    [JsonPropertyName("first_name")] public string? FirstName { get; init; }
-    [JsonPropertyName("last_name")] public string? LastName { get; init; }
-    [JsonPropertyName("birth_date")] public string? BirthDate { get; init; }
-    [JsonPropertyName("gender")] public int? Gender { get; init; }
-    [JsonPropertyName("district_id")] public int? DistrictId { get; init; }
-    [JsonPropertyName("quarter_id")] public int? QuarterId { get; init; }
-    [JsonPropertyName("address")] public string? Address { get; init; }
+    /// <summary>Optional short subject for the staff list view. The touch form
+    /// leaves it null and the backend derives one from the text; the voice flow
+    /// has the agent write it.</summary>
+    [JsonPropertyName("topic")] public string? Topic { get; init; }
 }
 
 public sealed record AppealResponse
 {
-    [JsonPropertyName("appeal_number")] public string AppealNumber { get; init; } = "";
+    [JsonPropertyName("reference")] public string Reference { get; init; } = "";
     [JsonPropertyName("status")] public string Status { get; init; } = "";
-}
-
-// ── Citizen lookup by phone (cabinet shape, proxied verbatim) ──
-public sealed record PersonalDto
-{
-    [JsonPropertyName("id")] public long Id { get; init; }
-    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
-    [JsonPropertyName("first_name")] public string FirstName { get; init; } = "";
-    [JsonPropertyName("last_name")] public string LastName { get; init; } = "";
-    [JsonPropertyName("full_name")] public string FullName { get; init; } = "";
-    [JsonPropertyName("birth_date")] public string BirthDate { get; init; } = "";
-    // Cabinet returns these as strings ("1"), not ints.
-    [JsonPropertyName("gender")] public string Gender { get; init; } = "";
-    [JsonPropertyName("district_id")] public string DistrictId { get; init; } = "";
-    [JsonPropertyName("quarter_id")] public string QuarterId { get; init; } = "";
-    [JsonPropertyName("address")] public string Address { get; init; } = "";
-}
-
-public sealed record PersonalLookupResponse
-{
-    [JsonPropertyName("exists")] public bool Exists { get; init; }
-    [JsonPropertyName("personal")] public PersonalDto? Personal { get; init; }
-}
-
-// ── Districts + quarters reference (kiosk caches in-memory for the form) ──
-public sealed record DistrictDto
-{
-    [JsonPropertyName("id")] public int Id { get; init; }
-    [JsonPropertyName("name_uz")] public string NameUz { get; init; } = "";
-    [JsonPropertyName("name_oz")] public string NameOz { get; init; } = "";
-    [JsonPropertyName("name_ru")] public string NameRu { get; init; } = "";
-    [JsonPropertyName("name_qq")] public string NameQq { get; init; } = "";
-}
-
-public sealed record QuarterDto
-{
-    [JsonPropertyName("id")] public int Id { get; init; }
-    [JsonPropertyName("district_id")] public int DistrictId { get; init; }
-    [JsonPropertyName("name_uz")] public string NameUz { get; init; } = "";
-    [JsonPropertyName("name_oz")] public string NameOz { get; init; } = "";
-    [JsonPropertyName("name_ru")] public string NameRu { get; init; } = "";
-    [JsonPropertyName("name_qq")] public string NameQq { get; init; } = "";
-}
-
-public sealed record LocationsResponse
-{
-    [JsonPropertyName("districts")] public List<DistrictDto> Districts { get; init; } = new();
-    [JsonPropertyName("quarters")] public List<QuarterDto> Quarters { get; init; } = new();
 }
 
 public sealed record CrashLogRequest
@@ -85,18 +35,65 @@ public sealed record CrashLogRequest
     [JsonPropertyName("text")] public string Text { get; init; } = "";
 }
 
+// ── Timetable + programmes (touch drill-down; the voice flow gets the same
+//    data through WS tool calls, off the same HEMIS mirror) ──
+
+public sealed record FacultyDto
+{
+    [JsonPropertyName("id")] public int Id { get; init; }
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("code")] public string Code { get; init; } = "";
+}
+
+public sealed record FacultyListResponse
+{
+    [JsonPropertyName("items")] public List<FacultyDto> Items { get; init; } = new();
+}
+
+public sealed record GroupListResponse
+{
+    [JsonPropertyName("items")] public List<GroupDto> Items { get; init; } = new();
+}
+
+public sealed record LessonListResponse
+{
+    [JsonPropertyName("group")] public GroupDto? Group { get; init; }
+    [JsonPropertyName("scope")] public string Scope { get; init; } = "";
+    [JsonPropertyName("lessons")] public List<LessonDto> Lessons { get; init; } = new();
+    [JsonPropertyName("empty_reason")] public string EmptyReason { get; init; } = "";
+}
+
+public sealed record DirectionListResponse
+{
+    [JsonPropertyName("items")] public List<DirectionDto> Items { get; init; } = new();
+}
+
+// ── Reception booking (touch twin of the voice submit_reception tool) ──
+
+public sealed record ReceptionRequest
+{
+    [JsonPropertyName("official_id")] public string OfficialId { get; init; } = "";
+    [JsonPropertyName("full_name")] public string FullName { get; init; } = "";
+    [JsonPropertyName("phone")] public string Phone { get; init; } = "";
+    [JsonPropertyName("reason")] public string Reason { get; init; } = "";
+}
+
+public sealed record ReceptionResponse
+{
+    [JsonPropertyName("reference")] public string Reference { get; init; } = "";
+    [JsonPropertyName("verify_url")] public string VerifyUrl { get; init; } = "";
+    [JsonPropertyName("reception_day")] public string ReceptionDay { get; init; } = "";
+    [JsonPropertyName("reception_time")] public string ReceptionTime { get; init; } = "";
+}
+
 /// <summary>
-/// HTTP client for the kiosk's manual murajat flow. The backend proxies every
-/// call to the external Council cabinet (cabinet.murajat.uz); nothing is stored
-/// in our DB. Each request is signed with the device's TPM-bound key via
-/// <see cref="SignedHttpClient"/>.
+/// HTTP client for the kiosk's touch flows. Each request is signed with the
+/// device's TPM-bound key via <see cref="SignedHttpClient"/>.
 /// </summary>
 public static class KioskApi
 {
-    /// <summary>POST /api/kiosk/appeal — submit the appeal. For a confirmed
-    /// existing citizen pass phone + text + Confirmed=true; for a new citizen
-    /// pass Confirmed=false plus all personal fields. Returns null on failure;
-    /// backend logs the real error.</summary>
+    /// <summary>POST /api/kiosk/appeal — file an appeal from the touch form.
+    /// Returns null on failure; the backend logs the real error.</summary>
     public static async Task<AppealResponse?> SubmitAppealAsync(AppealRequest req)
     {
         var creds = DeviceKeyStore.Load();
@@ -120,33 +117,80 @@ public static class KioskApi
         }
     }
 
-    /// <summary>GET /api/kiosk/personal?phone= — look up a citizen so the form
-    /// can ask «Siz {name} misiz?». Returns null on failure (treat as not
-    /// found and collect full details).</summary>
-    public static async Task<PersonalLookupResponse?> LookupPersonalAsync(string phone)
+    /// <summary>Shared GET helper. Every read here is optional decoration for a
+    /// touch screen, so a failure returns null and the page shows its empty
+    /// state rather than an error the visitor can do nothing about.</summary>
+    private static async Task<T?> GetAsync<T>(
+        string path, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> typeInfo)
+        where T : class
     {
         var creds = DeviceKeyStore.Load();
         if (creds is null) return null;
         try
         {
-            var resp = await SignedHttpClient.GetAsync(
-                creds.BackendUrl, $"/api/kiosk/personal?phone={Uri.EscapeDataString(phone)}");
+            var resp = await SignedHttpClient.GetAsync(creds.BackendUrl, path);
             if (!resp.IsSuccessStatusCode)
             {
-                Console.Error.WriteLine($"[api] LookupPersonalAsync HTTP {(int)resp.StatusCode}");
+                Console.Error.WriteLine($"[api] GET {path} HTTP {(int)resp.StatusCode}");
                 return null;
             }
-            return await resp.Content.ReadFromJsonAsync(KioskJsonContext.Default.PersonalLookupResponse);
+            return await resp.Content.ReadFromJsonAsync(typeInfo);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[api] LookupPersonalAsync: {ex.Message}");
+            Console.Error.WriteLine($"[api] GET {path}: {ex.Message}");
+            return null;
+        }
+    }
+
+    public static Task<FacultyListResponse?> GetFacultiesAsync() =>
+        GetAsync("/api/kiosk/schedule/faculties", KioskJsonContext.Default.FacultyListResponse);
+
+    public static Task<GroupListResponse?> GetGroupsAsync(int facultyId) =>
+        GetAsync($"/api/kiosk/schedule/groups?faculty_id={facultyId}",
+                 KioskJsonContext.Default.GroupListResponse);
+
+    /// <summary><paramref name="scope"/>: today | tomorrow | week | last_taught_week.</summary>
+    public static Task<LessonListResponse?> GetLessonsAsync(int groupId, string scope) =>
+        GetAsync($"/api/kiosk/schedule/lessons?group_id={groupId}&scope={Uri.EscapeDataString(scope)}",
+                 KioskJsonContext.Default.LessonListResponse);
+
+    public static Task<DirectionListResponse?> GetDirectionsAsync() =>
+        GetAsync("/api/kiosk/schedule/directions", KioskJsonContext.Default.DirectionListResponse);
+
+    /// <summary>GET /api/kiosk/officials — the leadership list. Returns a bare
+    /// JSON array (not an {items} envelope) — that endpoint predates the
+    /// wrapped convention used by the schedule reads.</summary>
+    public static Task<List<OfficialDto>?> GetOfficialsAsync() =>
+        GetAsync("/api/kiosk/officials", KioskJsonContext.Default.ListOfficialDto);
+
+    /// <summary>POST /api/kiosk/reception — book a reception from the touch
+    /// form. Returns null on failure; the backend logs the real error.</summary>
+    public static async Task<ReceptionResponse?> SubmitReceptionAsync(ReceptionRequest req)
+    {
+        var creds = DeviceKeyStore.Load();
+        if (creds is null) return null;
+        try
+        {
+            var resp = await SignedHttpClient.PostJsonAsync(
+                creds.BackendUrl, "/api/kiosk/reception",
+                req, KioskJsonContext.Default.ReceptionRequest);
+            if (!resp.IsSuccessStatusCode)
+            {
+                Console.Error.WriteLine($"[api] SubmitReceptionAsync HTTP {(int)resp.StatusCode}");
+                return null;
+            }
+            return await resp.Content.ReadFromJsonAsync(KioskJsonContext.Default.ReceptionResponse);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[api] SubmitReceptionAsync: {ex.Message}");
             return null;
         }
     }
 
     /// <summary>POST /api/kiosk/crashlog — upload the local crash.log after a
-    /// crash + watchdog restart so we can see the exact exception remotely.
+    /// crash + watchdog restart so the exact exception is visible remotely.
     /// Fire-and-forget; never throws.</summary>
     public static async Task UploadCrashLogAsync(string text)
     {
@@ -161,30 +205,6 @@ public static class KioskApi
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[api] UploadCrashLogAsync: {ex.Message}");
-        }
-    }
-
-    /// <summary>GET /api/kiosk/locations — districts + quarters for the form's
-    /// dropdowns. Fetched once on open and cached in memory. Returns null on
-    /// failure.</summary>
-    public static async Task<LocationsResponse?> GetLocationsAsync()
-    {
-        var creds = DeviceKeyStore.Load();
-        if (creds is null) return null;
-        try
-        {
-            var resp = await SignedHttpClient.GetAsync(creds.BackendUrl, "/api/kiosk/locations");
-            if (!resp.IsSuccessStatusCode)
-            {
-                Console.Error.WriteLine($"[api] GetLocationsAsync HTTP {(int)resp.StatusCode}");
-                return null;
-            }
-            return await resp.Content.ReadFromJsonAsync(KioskJsonContext.Default.LocationsResponse);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[api] GetLocationsAsync: {ex.Message}");
-            return null;
         }
     }
 }

@@ -29,14 +29,35 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..core.db import Base, TimestampMixin
 
-SECTION_KEYS = (
+# The prompt is assembled as BASE + one FOCUS block, chosen by the menu the
+# visitor entered from (see ai/prompt_builder.load_agent_config). Splitting it
+# this way keeps the prompt short: with all six flows described at once the
+# model started blending them — offering to file an appeal when asked about a
+# timetable — and the guardrails fell out of attention.
+BASE_SECTION_KEYS = (
     "identity",
     "language",
     "tone",
-    "tools",
     "guardrails",
-    "knowledge_base",
+    "institute_kb",
 )
+
+FOCUS_SECTION_KEYS = (
+    "focus_maslahatchi",
+    "focus_library",
+    "focus_abituriyent",
+    "focus_murojat",
+    "focus_jadval",
+    "focus_qabul",
+)
+
+SECTION_KEYS = BASE_SECTION_KEYS + FOCUS_SECTION_KEYS
+
+
+def focus_key(menu: str) -> str:
+    """Menu name → its prompt section key ("jadval" → "focus_jadval")."""
+    return f"focus_{menu}"
+
 
 DAY_KEYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 

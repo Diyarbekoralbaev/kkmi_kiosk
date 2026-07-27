@@ -51,6 +51,7 @@ class ApplicationOut(BaseModel):
     topic: str
     body: str
     phone: str
+    applicant_name: str
     status: str
     kind: str
     feedback_type: str | None
@@ -91,6 +92,7 @@ def _to_out(a: Application, slug_lookup: dict[uuid.UUID, str]) -> ApplicationOut
         topic=a.topic,
         body=a.body,
         phone=a.phone,
+        applicant_name=a.applicant_name,
         status=a.status,
         kind=a.kind,
         feedback_type=a.feedback_type,

@@ -8,7 +8,7 @@ using Kiosk.App.State;
 namespace Kiosk.App.Controls;
 
 /// <summary>Sticky header: clock+date on the top-left, weather (city + °C)
-/// on the top-right, big gerb + 2-line title centred underneath. Mirrors
+/// on the top-right, institute logo + 2-line title centred underneath. Mirrors
 /// the 2026 mockup (`infokiosk.html`). The language toggle moved to the
 /// footer; the header is purely informational.
 ///

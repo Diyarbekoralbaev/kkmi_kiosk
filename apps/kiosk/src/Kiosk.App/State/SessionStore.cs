@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,30 +9,36 @@ using Kiosk.App.Pages;
 
 namespace Kiosk.App.State;
 
+/// <summary>The six home tiles plus the shared chrome screens.
+///
+/// Each tile maps to a backend "menu" (see <see cref="MenuFor"/>) that decides
+/// which prompt focus block and which tools the agent gets for that session.
+/// </summary>
 public enum KioskPage
 {
     Home,
-    /// <summary>AI voice murajat preview/result page. The agent drives it
-    /// over the WS (MurajatPreview → Review, MurajatSubmitted → Done).</summary>
-    Submit,
-    Contacts,
+    /// <summary>AI Maslahatchi — general Q&amp;A with the 3D robot.</summary>
     Ai,
-    /// <summary>Manual touch-driven murajat flow (NEW). Reached by tapping the
-    /// Home Murajat tile. Phone → (lookup) → confirm/full-form → text →
-    /// preview → submit. Distinct from the AI voice flow above.</summary>
-    ManualSubmit,
+    /// <summary>AI Library — "coming soon" until the catalogue is connected.</summary>
+    Library,
+    /// <summary>AI Abituriyent — degree programmes for applicants.</summary>
+    Abituriyent,
+    /// <summary>AI Murojat — file an appeal to the institute.</summary>
+    Murojat,
+    /// <summary>Dars jadvali — group timetables from the HEMIS mirror.</summary>
+    Jadval,
+    /// <summary>Rahbariyat qabuli — book a reception with the leadership.</summary>
+    Qabul,
+    Contacts,
 }
 
-/// <summary>Step machine shared by the AI voice preview page (Review/Done
-/// only) and the manual touch murajat flow (the full machine). One enum so
-/// the two paths read the same SubmitStep; only one page is ever visible at
-/// a time and each resets the state on entry.</summary>
+/// <summary>Step machine shared by the touch forms (murojat, reception). Only
+/// one form is ever on screen and each resets on entry.</summary>
 public enum SubmitStep
 {
     Idle,
     Phone,
-    Confirm,
-    Form,
+    Name,
     Text,
     Review,
     Done,
@@ -48,9 +53,12 @@ public partial class SessionStore : ObservableObject
     public static SessionStore Current { get; } = new();
 
     private HomePage? _home;
-    private SubmitPage? _submit;
+    private LibraryPage? _library;
+    private AbituriyentPage? _abituriyent;
+    private MurojatPage? _murojat;
+    private SchedulePage? _jadval;
+    private ReceptionPage? _qabul;
     private ContactsPage? _contacts;
-    private ManualSubmitPage? _manualSubmit;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentView))]
@@ -59,137 +67,119 @@ public partial class SessionStore : ObservableObject
     [ObservableProperty] private ConnectionState _connectionState = ConnectionState.Disconnected;
     [ObservableProperty] private bool _showOfflineOverlay;
 
-    /// <summary>True when backend rejected this device's key (revoked or unknown).
-    /// UI flips to the "this kiosk needs re-enrollment" overlay instead of the
-    /// transient offline one — they have very different operator actions.</summary>
+    /// <summary>True when the backend rejected this device's key (revoked or
+    /// unknown). Flips to the "needs re-enrolment" overlay rather than the
+    /// transient offline one — very different operator actions.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowOfflineOverlay))]
     private bool _isRevoked;
 
-    /// <summary>Tracks whether the user has STARTED the voice session via the MicOrb.
-    /// The offline overlay is suppressed when voice is intentionally off — otherwise
-    /// every Stop would briefly flash "Bayranıs joq" which is wrong UX.</summary>
+    /// <summary>Whether the visitor has STARTED a voice session. The offline
+    /// overlay is suppressed while voice is intentionally off — disconnected is
+    /// the EXPECTED state for an idle kiosk waiting for someone to walk up.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowOfflineOverlay))]
     private bool _isVoiceActive;
 
-    /// <summary>RMS of the last captured audio frame, normalized to [0, 1]. Drives the MicOrb pulse.</summary>
+    /// <summary>RMS of the last captured frame, normalised to [0,1]. Drives the MicOrb pulse.</summary>
     [ObservableProperty] private float _inputLevel;
-    /// <summary>True while the local VAD says the user is speaking. Drives the orb's "active" visual.</summary>
+    /// <summary>True while the local VAD says the visitor is speaking.</summary>
     [ObservableProperty] private bool _isSpeaking;
-
-    // ── Murajat (appeal) state — shared by the AI voice preview page and the
-    // manual touch flow. A murajat is a single free-text body + phone, plus
-    // optional personal fields collected for a new / «men emas» citizen. ───────
-    [ObservableProperty] private SubmitStep _submitStep = SubmitStep.Idle;
-    [ObservableProperty] private string _submitText = "";
-    [ObservableProperty] private string _submitPhone = "";
-    /// <summary>true = an existing citizen confirmed identity (phone + text
-    /// only). false = a new / «men emas» citizen (personal fields are sent).</summary>
-    [ObservableProperty] private bool _submitConfirmed;
-    [ObservableProperty] private string _submitFirstName = "";
-    [ObservableProperty] private string _submitLastName = "";
-    /// <summary>The cabinet's appeal number, e.g. "25678/26". Shown on the
-    /// success talon.</summary>
-    [ObservableProperty] private string _appealNumber = "";
-    [ObservableProperty] private bool _showSubmitSuccess;
-
-    // ── Manual-form-only collected fields (new / «men emas» citizen) ───────────
-    [ObservableProperty] private string _submitBirthDate = "";
-    /// <summary>1 = male, 0 = female; null = not chosen yet.</summary>
-    [ObservableProperty] private int? _submitGender;
-    [ObservableProperty] private int? _submitDistrictId;
-    [ObservableProperty] private int? _submitQuarterId;
-    [ObservableProperty] private string _submitAddress = "";
-
-    /// <summary>Result of the phone lookup that opened the manual flow.</summary>
-    public bool LookupExists { get; set; }
-    public PersonalDto? LookupPersonal { get; set; }
-
-    // ── Locations reference cache (in-memory only, never persisted) ────────────
-    public List<DistrictDto> Districts { get; private set; } = new();
-    public List<QuarterDto> Quarters { get; private set; } = new();
-    public bool LocationsLoaded { get; private set; }
-
-    /// <summary>Stash the districts + quarters reference for the manual form.
-    /// Loaded once when the manual page opens; cleared on session reset.</summary>
-    public void SetLocations(LocationsResponse resp)
-    {
-        Districts = resp.Districts ?? new();
-        Quarters = resp.Quarters ?? new();
-        LocationsLoaded = true;
-    }
-
-    private void ClearLocations()
-    {
-        Districts = new();
-        Quarters = new();
-        LocationsLoaded = false;
-    }
-
-    /// <summary>Quarters that belong to the selected district id.</summary>
-    public List<QuarterDto> QuartersForDistrict(int districtId) =>
-        Quarters.Where(q => q.DistrictId == districtId).ToList();
 
     [ObservableProperty] private string _liveTranscript = "";
 
-    /// <summary>Org name shown in the header / talon. Hydrated from
-    /// <c>DeviceCredentials.OrgName</c> at startup (persisted from the
-    /// previous successful heartbeat), then refreshed on every heartbeat
-    /// so a super-panel rename propagates without re-enrollment.
-    /// Language-aware: <see cref="UpdateOrgBranding"/> recomputes this
-    /// from <see cref="OrgNameTranslations"/> using
-    /// <see cref="Localization.LocalizationService.Current"/>; the
-    /// LanguageChanged subscription in the static constructor refreshes it
-    /// when the visitor taps a language tile.</summary>
+    /// <summary>Backend menu name for a page. Pages with no agent (Home,
+    /// Contacts) never open a session, so they map to the general assistant
+    /// purely as a safe default.</summary>
+    public static string MenuFor(KioskPage page) => page switch
+    {
+        KioskPage.Library => "library",
+        KioskPage.Abituriyent => "abituriyent",
+        KioskPage.Murojat => "murojat",
+        KioskPage.Jadval => "jadval",
+        KioskPage.Qabul => "qabul",
+        _ => "maslahatchi",
+    };
+
+    // ── Murojat (appeal) ──────────────────────────────────────────────────────
+    [ObservableProperty] private SubmitStep _submitStep = SubmitStep.Idle;
+    [ObservableProperty] private string _submitName = "";
+    [ObservableProperty] private string _submitPhone = "";
+    [ObservableProperty] private string _submitTopic = "";
+    [ObservableProperty] private string _submitText = "";
+    /// <summary>Reference shown on the success talon, e.g. "M-1A2B3C4D".</summary>
+    [ObservableProperty] private string _submitReference = "";
+    [ObservableProperty] private bool _showSubmitSuccess;
+
+    // ── Reception (qabul) ─────────────────────────────────────────────────────
+    [ObservableProperty] private string _receptionOfficialId = "";
+    [ObservableProperty] private string _receptionOfficialName = "";
+    [ObservableProperty] private string _receptionOfficialPosition = "";
+    [ObservableProperty] private string _receptionDay = "";
+    [ObservableProperty] private string _receptionTime = "";
+    [ObservableProperty] private string _receptionReason = "";
+    [ObservableProperty] private string _receptionReference = "";
+    public ObservableCollection<OfficialDto> Leadership { get; } = new();
+
+    // ── Timetable ─────────────────────────────────────────────────────────────
+    [ObservableProperty] private string _scheduleGroupName = "";
+    [ObservableProperty] private string _scheduleScope = "";
+    /// <summary>"" | "no_lessons_that_day" | "year_not_published". The last one
+    /// is normal over the summer break and must not read as a broken kiosk.</summary>
+    [ObservableProperty] private string _scheduleEmptyReason = "";
+    public ObservableCollection<LessonDto> Lessons { get; } = new();
+    public ObservableCollection<GroupDto> GroupChoices { get; } = new();
+
+    // ── Abituriyent ───────────────────────────────────────────────────────────
+    public ObservableCollection<DirectionDto> Directions { get; } = new();
+    [ObservableProperty] private DirectionDto? _selectedDirection;
+
+    // ── Info card (shared visual aid the agent pushes while talking) ──────────
+    [ObservableProperty] private string _infoCardTitle = "";
+    [ObservableProperty] private bool _showInfoCard;
+    public ObservableCollection<string> InfoCardBullets { get; } = new();
+
+    // ── Org branding ──────────────────────────────────────────────────────────
+
+    /// <summary>Institute name in the header / talon. Hydrated from the last
+    /// persisted heartbeat at startup, then refreshed on every heartbeat so a
+    /// panel rename propagates without re-enrolment. Language-aware — see
+    /// <see cref="UpdateOrgBranding"/>.</summary>
     [ObservableProperty] private string _orgName = "";
 
-    /// <summary>Localized variants: {"uz": ..., "kk": ..., "ru": ...}. Driven
-    /// by <see cref="UpdateOrgBranding"/>. The setter does NOT recompute
-    /// <see cref="OrgName"/> on its own — callers always pair this with
-    /// <see cref="UpdateOrgBranding"/> so the legacy fallback and the dict
-    /// land atomically.</summary>
-    [ObservableProperty] private System.Collections.Generic.Dictionary<string, string> _orgNameTranslations
-        = new System.Collections.Generic.Dictionary<string, string>();
+    /// <summary>{"uz","kk","ru","en"}. The setter does NOT recompute
+    /// <see cref="OrgName"/> on its own; callers always pair it with
+    /// <see cref="UpdateOrgBranding"/> so the dict and the resolved name land
+    /// atomically.</summary>
+    [ObservableProperty] private Dictionary<string, string> _orgNameTranslations = new();
 
-    /// <summary>Legacy single-string org name, kept around as the last-ditch
-    /// fallback when <see cref="OrgNameTranslations"/> is empty or missing
-    /// the active locale. Old backends that don't send translations land here.</summary>
+    /// <summary>Legacy single-string name, kept as the last-ditch fallback when
+    /// the translations dict is empty or missing the active locale.</summary>
     private string _orgNameFallback = "";
 
-    /// <summary>Update the persisted-style org-branding bundle. Resolves
-    /// <see cref="OrgName"/> from the dict against the current language,
-    /// falling back to <paramref name="fallback"/> if no translation is
-    /// available. Idempotent — safe to call from heartbeat + enroll paths
-    /// or the LanguageChanged hook.</summary>
     public void UpdateOrgBranding(
-        System.Collections.Generic.IReadOnlyDictionary<string, string>? translations,
-        string fallback)
+        IReadOnlyDictionary<string, string>? translations, string fallback)
     {
-        var dict = new System.Collections.Generic.Dictionary<string, string>();
+        var dict = new Dictionary<string, string>();
         if (translations is not null)
         {
             foreach (var kvp in translations)
             {
-                if (!string.IsNullOrWhiteSpace(kvp.Value))
-                    dict[kvp.Key] = kvp.Value;
+                if (!string.IsNullOrWhiteSpace(kvp.Value)) dict[kvp.Key] = kvp.Value;
             }
         }
         _orgNameFallback = fallback ?? "";
         OrgNameTranslations = dict;
-        OrgName = PickOrgName(dict, _orgNameFallback);
+        OrgName = PickLocalized(dict, _orgNameFallback);
     }
 
-    private static string PickOrgName(
-        System.Collections.Generic.IReadOnlyDictionary<string, string> dict,
-        string fallback)
+    private static string PickLocalized(
+        IReadOnlyDictionary<string, string> dict, string fallback = "")
     {
         var lang = Localization.LocalizationService.LangCode(
             Localization.LocalizationService.Current);
-        if (dict.TryGetValue(lang, out var v) && !string.IsNullOrWhiteSpace(v))
-            return v;
-        // Try other supported locales before bailing to the legacy fallback.
-        foreach (var code in new[] { "kk", "uz", "ru" })
+        if (dict.TryGetValue(lang, out var v) && !string.IsNullOrWhiteSpace(v)) return v;
+        foreach (var code in new[] { "uz", "kk", "ru", "en" })
         {
             if (dict.TryGetValue(code, out var alt) && !string.IsNullOrWhiteSpace(alt))
                 return alt;
@@ -199,57 +189,35 @@ public partial class SessionStore : ObservableObject
 
     private void OnLocalizationLanguageChanged(Localization.Language _)
     {
-        // Re-pick from the current translations bundle; null-safe if the
-        // dict hasn't been populated yet.
-        var dict = OrgNameTranslations ?? new System.Collections.Generic.Dictionary<string, string>();
-        OrgName = PickOrgName(dict, _orgNameFallback);
+        OrgName = PickLocalized(OrgNameTranslations ?? new(), _orgNameFallback);
         RefreshLocalizedContacts();
     }
 
     private SessionStore()
     {
-        // Subscribed once for the lifetime of the app — SessionStore is a
-        // process-wide singleton so we don't need to unsubscribe.
+        // Subscribed once for the process lifetime — SessionStore is a
+        // process-wide singleton, so there is nothing to unsubscribe from.
         Localization.LocalizationService.LanguageChanged += OnLocalizationLanguageChanged;
     }
 
-    /// <summary>Localized weather widget text, e.g. "Нөкис · +25°". Filled
-    /// from each heartbeat's `weather` payload (Open-Meteo via backend,
-    /// 15-min cache). Empty string = hide the header weather row.</summary>
+    /// <summary>Localized weather text, e.g. "Nukus · +25°". Empty hides the row.</summary>
     [ObservableProperty] private string _weatherText = "";
 
-    /// <summary>Per-org help-desk phone shown in the kiosk footer band.
-    /// Empty = hide the help row (no per-org config yet).</summary>
+    /// <summary>Help-desk phone in the footer band. Empty hides the row.</summary>
     [ObservableProperty] private string _helplinePhone = "";
 
-    /// <summary>Localized contact info bundles — driven by heartbeat (every
-    /// 30 s) and the enroll response. Wire-format: {"uz": ..., "kk": ...,
-    /// "ru": ...}. The single <c>OrgAddress</c>/<c>OrgWorkHours</c>
-    /// projections below pick the active language; LanguageChanged
-    /// re-picks them in lockstep with the org name.</summary>
-    [ObservableProperty] private System.Collections.Generic.Dictionary<string, string> _orgAddressTranslations
-        = new System.Collections.Generic.Dictionary<string, string>();
-
-    [ObservableProperty] private System.Collections.Generic.Dictionary<string, string> _orgWorkHoursTranslations
-        = new System.Collections.Generic.Dictionary<string, string>();
-
-    /// <summary>Single email address shown on the Contacts page.</summary>
+    [ObservableProperty] private Dictionary<string, string> _orgAddressTranslations = new();
+    [ObservableProperty] private Dictionary<string, string> _orgWorkHoursTranslations = new();
     [ObservableProperty] private string _orgEmail = "";
-
-    /// <summary>Active-language address shown on the Contacts page row 1.</summary>
     [ObservableProperty] private string _orgAddress = "";
-
-    /// <summary>Active-language work hours shown on the Contacts page row 4.</summary>
     [ObservableProperty] private string _orgWorkHours = "";
 
-    /// <summary>Update the kiosk Contacts page contact bundle in one call.
-    /// Called from heartbeat + enroll on the UI thread. Empty values are
-    /// preserved as empty strings so the ContactsPage rows stay aligned
-    /// rather than collapsing.</summary>
+    /// <summary>Update the Contacts page bundle in one call. Empty values stay
+    /// empty strings so the rows keep their alignment rather than collapsing.</summary>
     public void UpdateContactInfo(
-        System.Collections.Generic.IReadOnlyDictionary<string, string>? address,
+        IReadOnlyDictionary<string, string>? address,
         string email,
-        System.Collections.Generic.IReadOnlyDictionary<string, string>? workHours,
+        IReadOnlyDictionary<string, string>? workHours,
         string helplinePhone)
     {
         OrgAddressTranslations = CopyDict(address);
@@ -259,10 +227,10 @@ public partial class SessionStore : ObservableObject
         RefreshLocalizedContacts();
     }
 
-    private static System.Collections.Generic.Dictionary<string, string> CopyDict(
-        System.Collections.Generic.IReadOnlyDictionary<string, string>? src)
+    private static Dictionary<string, string> CopyDict(
+        IReadOnlyDictionary<string, string>? src)
     {
-        var dst = new System.Collections.Generic.Dictionary<string, string>();
+        var dst = new Dictionary<string, string>();
         if (src is null) return dst;
         foreach (var kvp in src) dst[kvp.Key] = kvp.Value ?? "";
         return dst;
@@ -274,79 +242,77 @@ public partial class SessionStore : ObservableObject
         OrgWorkHours = PickLocalized(OrgWorkHoursTranslations);
     }
 
-    private static string PickLocalized(
-        System.Collections.Generic.IReadOnlyDictionary<string, string> dict)
-    {
-        var lang = Localization.LocalizationService.LangCode(
-            Localization.LocalizationService.Current);
-        if (dict.TryGetValue(lang, out var v) && !string.IsNullOrWhiteSpace(v))
-            return v;
-        foreach (var code in new[] { "kk", "uz", "ru" })
-        {
-            if (dict.TryGetValue(code, out var alt) && !string.IsNullOrWhiteSpace(alt))
-                return alt;
-        }
-        return "";
-    }
-
     public ObservableCollection<string> TranscriptLog { get; } = new();
 
     public Control CurrentView => CurrentPage switch
     {
         KioskPage.Home => _home ??= new HomePage(),
-        KioskPage.Submit => _submit ??= new SubmitPage(),
+        KioskPage.Library => _library ??= new LibraryPage(),
+        KioskPage.Abituriyent => _abituriyent ??= new AbituriyentPage(),
+        KioskPage.Murojat => _murojat ??= new MurojatPage(),
+        KioskPage.Jadval => _jadval ??= new SchedulePage(),
+        KioskPage.Qabul => _qabul ??= new ReceptionPage(),
         KioskPage.Contacts => _contacts ??= new ContactsPage(),
-        KioskPage.ManualSubmit => _manualSubmit ??= new ManualSubmitPage(),
-        // Don't cache the AI page — its Loaded/Unloaded handlers manage the
-        // voice runtime lifecycle, and a cached instance would skip Loaded
-        // on re-entry, leaving the runtime in whatever state Unloaded left
-        // it. A fresh instance per visit also resets the silence timer.
+        // Never cached: AiPage's Loaded/Unloaded manage the voice runtime, and a
+        // cached instance would skip Loaded on re-entry, leaving the runtime in
+        // whatever state Unloaded left it. A fresh instance also resets the
+        // silence timer.
         KioskPage.Ai => new AiPage(),
         _ => _home ??= new HomePage(),
     };
 
     public void Navigate(KioskPage page)
     {
-        // Silent navigation: page changes do NOT poke the agent. The agent
-        // only speaks in response to actual voice input (or the one-shot
-        // [START] the backend sends at WS open).
+        // Silent: a page change never pokes the agent. The agent speaks only in
+        // response to voice input, or the one-shot [START] at WS open.
         CurrentPage = page;
     }
 
-    /// <summary>Resets the kiosk to home + clears any in-progress murajat.</summary>
+    /// <summary>Reset to home and clear every in-progress flow.</summary>
     public void ResetIdle()
     {
         SubmitStep = SubmitStep.Idle;
-        SubmitText = "";
+        SubmitName = "";
         SubmitPhone = "";
-        SubmitConfirmed = false;
-        SubmitFirstName = "";
-        SubmitLastName = "";
-        AppealNumber = "";
+        SubmitTopic = "";
+        SubmitText = "";
+        SubmitReference = "";
         ShowSubmitSuccess = false;
 
-        SubmitBirthDate = "";
-        SubmitGender = null;
-        SubmitDistrictId = null;
-        SubmitQuarterId = null;
-        SubmitAddress = "";
-        LookupExists = false;
-        LookupPersonal = null;
-        ClearLocations();
+        ReceptionOfficialId = "";
+        ReceptionOfficialName = "";
+        ReceptionOfficialPosition = "";
+        ReceptionDay = "";
+        ReceptionTime = "";
+        ReceptionReason = "";
+        ReceptionReference = "";
+        Leadership.Clear();
+
+        ScheduleGroupName = "";
+        ScheduleScope = "";
+        ScheduleEmptyReason = "";
+        Lessons.Clear();
+        GroupChoices.Clear();
+
+        Directions.Clear();
+        SelectedDirection = null;
+
+        ShowInfoCard = false;
+        InfoCardTitle = "";
+        InfoCardBullets.Clear();
 
         LiveTranscript = "";
         Navigate(KioskPage.Home);
     }
 
-    // ── KioskRuntime callbacks (always on UI thread via Dispatcher) ────────
+    // ── KioskRuntime callbacks (always on the UI thread via Dispatcher) ───────
 
     public void OnConnectionChanged(ConnectionState s)
     {
         ConnectionState = s;
-        // Don't show the "reconnecting" overlay if (a) the device is revoked
-        // (the red overlay covers that with a clearer action) or (b) the user
-        // hasn't started the voice session — disconnected is the EXPECTED state
-        // when the kiosk is just sitting idle waiting for someone to tap the orb.
+        // Don't show "reconnecting" when (a) the device is revoked — the red
+        // overlay covers that with a clearer action — or (b) voice was never
+        // started, which is the normal idle state.
         ShowOfflineOverlay = !IsRevoked && IsVoiceActive && s != ConnectionState.Connected;
     }
 
@@ -358,67 +324,145 @@ public partial class SessionStore : ObservableObject
 
     public void OnNavigate(string screen)
     {
-        switch (screen)
+        Navigate(screen switch
         {
-            case "submit": Navigate(KioskPage.Submit); break;
-            case "contacts": Navigate(KioskPage.Contacts); break;
-            case "ai": Navigate(KioskPage.Ai); break;
-            default: Navigate(KioskPage.Home); break;
-        }
+            "maslahatchi" => KioskPage.Ai,
+            "library" => KioskPage.Library,
+            "abituriyent" => KioskPage.Abituriyent,
+            "murojat" => KioskPage.Murojat,
+            "jadval" => KioskPage.Jadval,
+            "qabul" => KioskPage.Qabul,
+            "contacts" => KioskPage.Contacts,
+            _ => KioskPage.Home,
+        });
     }
 
     public void OnTranscript(string text, bool final, string speaker)
     {
-        // Live overlay shows the latest non-final assistant phrase.
         if (!final) { LiveTranscript = text; return; }
         LiveTranscript = "";
         TranscriptLog.Add($"[{speaker}] {text}");
-        // Cap log to last 50 lines so memory doesn't grow forever during long sessions.
+        // Cap so memory doesn't grow through a long session.
         while (TranscriptLog.Count > 50) TranscriptLog.RemoveAt(0);
     }
 
-    /// <summary>AI agent composed a murajat draft (preview_murajat tool). Stash
-    /// the single text + phone (+ name when the citizen is new) and bring the
-    /// voice preview page up to its Review step.</summary>
-    public void OnMurajatPreview(MurajatPreviewMessage p)
+    // ── Appeal ────────────────────────────────────────────────────────────────
+
+    public void OnMurojatPreview(MurojatPreviewMessage p)
     {
-        SubmitText = p.Text;
+        SubmitName = p.FullName;
         SubmitPhone = p.Phone;
-        SubmitConfirmed = p.Confirmed;
-        SubmitFirstName = p.FirstName;
-        SubmitLastName = p.LastName;
+        SubmitTopic = p.Topic;
+        SubmitText = p.Text;
         SubmitStep = SubmitStep.Review;
-        Navigate(KioskPage.Submit);
+        Navigate(KioskPage.Murojat);
     }
 
-    /// <summary>AI agent submitted the murajat (submit_murajat tool). Show the
-    /// success talon with the cabinet's appeal number, then auto-return home.</summary>
-    public void OnMurajatSubmitted(MurajatSubmittedMessage s)
+    public void OnMurojatSubmitted(MurojatSubmittedMessage s)
     {
-        AppealNumber = s.AppealNumber;
-        if (!string.IsNullOrEmpty(s.PhoneMasked)) SubmitPhone = s.PhoneMasked;
-        // The submit envelope can carry a fresh translations bundle — useful
-        // when the super admin renamed the org since the last heartbeat.
-        if (s.OrgNameTranslations is not null && s.OrgNameTranslations.Count > 0)
-        {
-            UpdateOrgBranding(s.OrgNameTranslations,
-                string.IsNullOrEmpty(OrgName) ? "" : OrgName);
-        }
+        SubmitReference = s.Reference;
+        if (!string.IsNullOrWhiteSpace(s.FullName)) SubmitName = s.FullName;
         SubmitStep = SubmitStep.Done;
         ShowSubmitSuccess = true;
-        // Auto-return to home after 6 s so the screen resets for the next visitor.
-        DispatcherTimer.RunOnce(() => { ShowSubmitSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(6));
+        // Auto-return home so the screen resets for the next visitor.
+        DispatcherTimer.RunOnce(
+            () => { ShowSubmitSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(8));
+    }
+
+    // ── Timetable ─────────────────────────────────────────────────────────────
+
+    public void OnSchedule(ScheduleMessage m)
+    {
+        ScheduleGroupName = m.Group?.Name ?? "";
+        ScheduleScope = m.Scope;
+        ScheduleEmptyReason = m.EmptyReason;
+        Lessons.Clear();
+        foreach (var l in m.Lessons) Lessons.Add(l);
+        GroupChoices.Clear();
+        Navigate(KioskPage.Jadval);
+    }
+
+    public void OnGroupChoices(GroupChoicesMessage m)
+    {
+        GroupChoices.Clear();
+        foreach (var g in m.Items) GroupChoices.Add(g);
+        Navigate(KioskPage.Jadval);
+    }
+
+    // ── Abituriyent ───────────────────────────────────────────────────────────
+
+    public void OnDirections(DirectionsMessage m)
+    {
+        Directions.Clear();
+        foreach (var d in m.Items) Directions.Add(d);
+        SelectedDirection = null;
+        Navigate(KioskPage.Abituriyent);
+    }
+
+    public void OnDirection(DirectionMessage m)
+    {
+        SelectedDirection = m.Item;
+        Navigate(KioskPage.Abituriyent);
+    }
+
+    // ── Reception ─────────────────────────────────────────────────────────────
+
+    public void OnLeadership(LeadershipMessage m)
+    {
+        Leadership.Clear();
+        foreach (var o in m.Items) Leadership.Add(o);
+        Navigate(KioskPage.Qabul);
+    }
+
+    public void OnReceptionPreview(ReceptionPreviewMessage m)
+    {
+        SubmitName = m.FullName;
+        SubmitPhone = m.Phone;
+        ReceptionReason = m.Reason;
+        ApplyOfficial(m.Official);
+        SubmitStep = SubmitStep.Review;
+        Navigate(KioskPage.Qabul);
+    }
+
+    public void OnReceptionSubmitted(ReceptionSubmittedMessage m)
+    {
+        ReceptionReference = m.Reference;
+        ApplyOfficial(m.Official);
+        SubmitStep = SubmitStep.Done;
+        ShowSubmitSuccess = true;
+        DispatcherTimer.RunOnce(
+            () => { ShowSubmitSuccess = false; ResetIdle(); }, TimeSpan.FromSeconds(8));
+    }
+
+    private void ApplyOfficial(OfficialDto? o)
+    {
+        if (o is null) return;
+        ReceptionOfficialId = o.Id;
+        ReceptionOfficialName = o.Name;
+        ReceptionOfficialPosition = o.Position;
+        ReceptionDay = o.ReceptionDay;
+        ReceptionTime = o.ReceptionTime;
+    }
+
+    // ── Info card ─────────────────────────────────────────────────────────────
+
+    public void OnInfoCard(InfoCardMessage m)
+    {
+        InfoCardTitle = m.Title;
+        InfoCardBullets.Clear();
+        foreach (var b in m.Bullets) InfoCardBullets.Add(b);
+        ShowInfoCard = InfoCardBullets.Count > 0;
     }
 
     public void OnAudioDone()
     {
-        // Could be used to fade the talking robot pose; not wired in slice 8.
+        // Reserved for a talking-robot pose fade; not wired.
     }
 
     public void OnServerError(string code, string message)
     {
-        // Server errors are logged; UI doesn't surface internal codes (per the
-        // secrecy rules — operators see them in audit log if needed).
+        // Internal codes are never surfaced to visitors (see the error-secrecy
+        // rule); operators read them from the audit log.
         Console.Error.WriteLine($"[server error] {code} {message}");
     }
 }

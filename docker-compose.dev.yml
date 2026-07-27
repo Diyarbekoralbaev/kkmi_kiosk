@@ -1,4 +1,4 @@
-name: joqari-kenes-dev
+name: kkmi-kiosk-dev
 
 services:
   postgres:
@@ -6,14 +6,14 @@ services:
     environment:
       POSTGRES_USER: kiosk
       POSTGRES_PASSWORD: kiosk
-      POSTGRES_DB: joqari_kenes
+      POSTGRES_DB: kkmi_kiosk
     ports:
       # Bind to localhost only — never expose Postgres to the network
       - "127.0.0.1:5443:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kiosk -d joqari_kenes"]
+      test: ["CMD-SHELL", "pg_isready -U kiosk -d kkmi_kiosk"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -33,6 +33,10 @@ services:
     build:
       context: apps/backend
       dockerfile: Dockerfile
+      args:
+        # Dev image carries pytest/ruff/mypy so `make test` and `make lint`
+        # can exec into this container. Production builds omit them.
+        INSTALL_DEV: "1"
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,7 +45,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://kiosk:kiosk@postgres:5432/joqari_kenes
+      DATABASE_URL: postgresql+asyncpg://kiosk:kiosk@postgres:5432/kkmi_kiosk
       REDIS_URL: redis://redis:6379/0
       ENV: development
       LOG_LEVEL: INFO
@@ -50,10 +54,37 @@ services:
     volumes:
       - ./apps/backend/src:/app/src
       - ./apps/backend/alembic:/app/alembic
-      - ./archive:/app/archive:ro
+      # tests/ is not COPYed into the image (production doesn't need it), so
+      # mount it for `make test`.
+      - ./apps/backend/tests:/app/tests
+      - ./apps/backend/pyproject.toml:/app/pyproject.toml:ro
     command: >
       sh -c "alembic upgrade head &&
              uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # Nightly HEMIS mirror. A sidecar, not a FastAPI startup task: prod runs
+  # uvicorn with several workers and each would launch its own sweep.
+  # Profile-gated so `make up` stays fast — the sweep is ~95 s and hits the
+  # institute's live API. Run it explicitly:
+  #     docker compose -f docker-compose.dev.yml run --rm hemis-sync
+  hemis-sync:
+    profiles: ["sync"]
+    build:
+      context: apps/backend
+      dockerfile: Dockerfile
+      args:
+        INSTALL_DEV: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kiosk:kiosk@postgres:5432/kkmi_kiosk
+      LOG_LEVEL: INFO
+    volumes:
+      - ./apps/backend/src:/app/src
+    command: ["python", "-m", "src.hemis_sync"]
 
   super-panel:
     image: node:20-alpine

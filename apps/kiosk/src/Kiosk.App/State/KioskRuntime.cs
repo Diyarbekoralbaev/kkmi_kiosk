@@ -16,7 +16,7 @@ namespace Kiosk.App.State;
 /// the UI thread.
 ///
 /// Lifecycle:
-///   StartAsync()  → loads device creds, opens audio devices, connects WS, starts capture pump.
+///   StartAsync(menu) → loads device creds, opens audio devices, connects WS, starts capture pump.
 ///   StopAsync()   → reverse, idempotent.
 ///
 /// One process = one KioskRuntime; instantiated by App in MainWindow handoff.
@@ -45,6 +45,10 @@ public sealed class KioskRuntime : IAsyncDisposable
     public AnalyserNode? Analyser => _playback?.Analyser;
     public string BackendUrl { get; private set; } = "";
     public string DeviceId { get; private set; } = "";
+    /// <summary>Menu the current session was opened with. Read-only record of
+    /// what was negotiated at connect time — changing it mid-session has no
+    /// effect, the server bound its tool set when the socket opened.</summary>
+    public string Menu { get; private set; } = "";
 
     /// <summary>True while the WS + audio devices are live. Toggled by Start/StopAsync.</summary>
     public bool IsActive { get; private set; }
@@ -80,8 +84,13 @@ public sealed class KioskRuntime : IAsyncDisposable
     }
 
     /// <summary>Start the voice loop: open audio devices, connect WS, begin capture pump.
-    /// No-op if already active. Idempotent on rapid taps.</summary>
-    public async Task StartAsync()
+    /// No-op if already active. Idempotent on rapid taps.
+    ///
+    /// <paramref name="menu"/> is the home tile the visitor opened. It travels
+    /// on the WS URL and decides, server-side, which prompt focus block and
+    /// which tools the agent gets — so it must be set BEFORE connecting, not
+    /// negotiated afterwards.</summary>
+    public async Task StartAsync(string menu)
     {
         if (IsActive) return;
 
@@ -89,13 +98,14 @@ public sealed class KioskRuntime : IAsyncDisposable
         if (creds is null) throw new InvalidOperationException("no device credentials");
         BackendUrl = creds.BackendUrl;
         DeviceId = creds.DeviceId;
+        Menu = menu;
 
         _playback = new AudioPlayback();
         _playback.Start();
 
         _capture = new AudioCapture();
 
-        _ws = new KioskClient(creds.BackendUrl, creds.DeviceId);
+        _ws = new KioskClient(creds.BackendUrl, creds.DeviceId, menu);
         WireWsEvents(_ws);
         _ws.Start();
 
@@ -152,7 +162,7 @@ public sealed class KioskRuntime : IAsyncDisposable
         });
     }
 
-    public Task ToggleAsync() => IsActive ? StopAsync() : StartAsync();
+    public Task ToggleAsync(string menu) => IsActive ? StopAsync() : StartAsync(menu);
 
     private void OnUnauthorized()
     {
@@ -197,8 +207,16 @@ public sealed class KioskRuntime : IAsyncDisposable
         ws.Unauthorized += OnUnauthorized;
         ws.NavigateReceived += n => Dispatcher.UIThread.Post(() => SessionStore.Current.OnNavigate(n.Screen));
         ws.TranscriptReceived += t => Dispatcher.UIThread.Post(() => SessionStore.Current.OnTranscript(t.Text, t.Final, t.Speaker));
-        ws.MurajatPreviewReceived += p => Dispatcher.UIThread.Post(() => SessionStore.Current.OnMurajatPreview(p));
-        ws.MurajatSubmittedReceived += s => Dispatcher.UIThread.Post(() => SessionStore.Current.OnMurajatSubmitted(s));
+        ws.MurojatPreviewReceived += p => Dispatcher.UIThread.Post(() => SessionStore.Current.OnMurojatPreview(p));
+        ws.MurojatSubmittedReceived += s => Dispatcher.UIThread.Post(() => SessionStore.Current.OnMurojatSubmitted(s));
+        ws.ScheduleReceived += s => Dispatcher.UIThread.Post(() => SessionStore.Current.OnSchedule(s));
+        ws.GroupChoicesReceived += g => Dispatcher.UIThread.Post(() => SessionStore.Current.OnGroupChoices(g));
+        ws.DirectionsReceived += d => Dispatcher.UIThread.Post(() => SessionStore.Current.OnDirections(d));
+        ws.DirectionReceived += d => Dispatcher.UIThread.Post(() => SessionStore.Current.OnDirection(d));
+        ws.LeadershipReceived += l => Dispatcher.UIThread.Post(() => SessionStore.Current.OnLeadership(l));
+        ws.ReceptionPreviewReceived += r => Dispatcher.UIThread.Post(() => SessionStore.Current.OnReceptionPreview(r));
+        ws.ReceptionSubmittedReceived += r => Dispatcher.UIThread.Post(() => SessionStore.Current.OnReceptionSubmitted(r));
+        ws.InfoCardReceived += c => Dispatcher.UIThread.Post(() => SessionStore.Current.OnInfoCard(c));
         ws.AudioDoneReceived += () => Dispatcher.UIThread.Post(() => SessionStore.Current.OnAudioDone());
         ws.ErrorReceived += e => Dispatcher.UIThread.Post(() => SessionStore.Current.OnServerError(e.Code, e.Message));
     }
