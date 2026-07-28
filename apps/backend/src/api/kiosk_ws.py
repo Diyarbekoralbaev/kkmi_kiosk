@@ -99,7 +99,12 @@ async def kiosk_voice(ws: WebSocket) -> None:
     # time, not later: the agent speaks FIRST (see the [START] turn below), so
     # by the time a mid-session message could tell it, it has already greeted
     # the visitor in the wrong language.
-    lang = normalize_lang(ws.query_params.get("lang"))
+    #
+    # Presence of the param is also how we tell the two client generations
+    # apart — see the `ui_language` handler below.
+    lang_param = ws.query_params.get("lang")
+    lang = normalize_lang(lang_param)
+    speaks_lang = lang_param is not None
     structlog.contextvars.bind_contextvars(
         call_id=call_id, device_id=str(device.id), menu=menu, lang=lang
     )
@@ -615,6 +620,22 @@ async def kiosk_voice(ws: WebSocket) -> None:
                     # dropped: the kiosk sent it on every language change and
                     # the agent never heard about it, so the buttons had no
                     # effect on speech at all.
+                    #
+                    # Only clients that sent `?lang=` are trusted with it.
+                    # Builds before 0.26209.948 fire this envelope ~1 s after
+                    # EVERY connect, not just on a real language change, and
+                    # their language whitelist has no `en` — English is
+                    # rewritten to `kk`. Acting on that lands a bogus switch
+                    # instruction on top of the opening greeting, which is what
+                    # made Karakalpak and English come out half-Uzbek. A client
+                    # that names its language in the URL is new enough to only
+                    # send this on an actual tap.
+                    if not speaks_lang:
+                        logger.info(
+                            "ui_language_ignored_legacy_client",
+                            claimed=str(payload.get("language", "")),
+                        )
+                        continue
                     new_lang = normalize_lang(payload.get("language"))
                     logger.info("ui_language_changed", new_lang=new_lang)
                     await gemini.send_text(

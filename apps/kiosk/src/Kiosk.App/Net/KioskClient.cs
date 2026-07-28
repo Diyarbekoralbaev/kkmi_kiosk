@@ -146,7 +146,7 @@ public sealed class KioskClient : IAsyncDisposable
         // silently rewritten to Karakalpak. Default is uz, matching the kiosk's
         // own default language.
         var safe = (language ?? "").Trim().ToLowerInvariant();
-        if (safe != "kk" && safe != "uz" && safe != "ru" && safe != "en") safe = "uz";
+        if (safe != "kk" && safe != "uz" && safe != "ru" && safe != "en") safe = "kk";
         var json = "{\"type\":\"ui_language\",\"language\":\"" + safe + "\"}";
         return SendJsonAsync(json, ct);
     }

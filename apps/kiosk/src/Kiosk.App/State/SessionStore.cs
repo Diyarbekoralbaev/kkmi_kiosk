@@ -179,7 +179,7 @@ public partial class SessionStore : ObservableObject
         var lang = Localization.LocalizationService.LangCode(
             Localization.LocalizationService.Current);
         if (dict.TryGetValue(lang, out var v) && !string.IsNullOrWhiteSpace(v)) return v;
-        foreach (var code in new[] { "uz", "kk", "ru", "en" })
+        foreach (var code in new[] { "kk", "uz", "ru", "en" })
         {
             if (dict.TryGetValue(code, out var alt) && !string.IsNullOrWhiteSpace(alt))
                 return alt;

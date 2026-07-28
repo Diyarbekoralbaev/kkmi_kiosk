@@ -22,7 +22,9 @@ public enum Language { Uz, Ru, Kk, En }
 /// </summary>
 public static class LocalizationService
 {
-    public static Language Current { get; private set; } = Language.Uz;
+    /// Must match the LAST entry of App.axaml's MergedDictionaries, which is
+    /// what the kiosk actually renders before anyone calls SetLanguage.
+    public static Language Current { get; private set; } = Language.Kk;
 
     /// <summary>Fired after the active dictionary has been promoted. Subscribers
     /// that don't bind via DynamicResource (e.g. code-built strings, headers
@@ -80,17 +82,17 @@ public static class LocalizationService
     public static Language Parse(string? code) => code?.ToLowerInvariant() switch
     {
         "ru" => Language.Ru,
-        "kk" => Language.Kk,
+        "uz" => Language.Uz,
         "en" => Language.En,
-        _ => Language.Uz,
+        _ => Language.Kk,
     };
 
     public static string LangCode(Language lang) => lang switch
     {
         Language.Ru => "ru",
-        Language.Kk => "kk",
+        Language.Uz => "uz",
         Language.En => "en",
-        _ => "uz",
+        _ => "kk",
     };
 
     /// <summary>Look up a localized string by key from the active resource

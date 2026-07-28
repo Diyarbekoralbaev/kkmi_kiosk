@@ -13,17 +13,18 @@
              and are safe with trimming and AOT".
 
              Order = priority (last wins on duplicate keys). uz is LAST so
-             O'zbekcha is the default language — the institute's HEMIS content
-             (subject names, specialties) is predominantly Uzbek. en is present
-             for the institute's English-medium groups and foreign applicants.
+             Qaraqalpaqsha is the default language — LAST wins. The institute
+             is in Nókis, in Qaraqalpaqstan, and 538 of its 946 groups (56.9%)
+             are taught in Karakalpak against 206 in Uzbek. en is present for
+             the institute's English-medium groups and foreign applicants.
              LocalizationService reorders this list at runtime to switch
              languages. -->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://Kiosk.App/Localization/en.axaml" />
                 <ResourceInclude Source="avares://Kiosk.App/Localization/ru.axaml" />
-                <ResourceInclude Source="avares://Kiosk.App/Localization/kk.axaml" />
                 <ResourceInclude Source="avares://Kiosk.App/Localization/uz.axaml" />
+                <ResourceInclude Source="avares://Kiosk.App/Localization/kk.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ===== Theme tokens — referenced as {StaticResource KioskX} -->

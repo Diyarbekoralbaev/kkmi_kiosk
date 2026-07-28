@@ -71,7 +71,12 @@ _LANG_NAMES = {
     "ru": "Russian",
     "en": "English",
 }
-DEFAULT_LANG = "uz"
+# Karakalpak, not Uzbek: the institute is in Nukus, in Qaraqalpaqstan, and 538
+# of its 946 groups (56.9%) are taught in Karakalpak against 206 in Uzbek. An
+# earlier version defaulted to Uzbek on the reasoning that HEMIS record TEXT is
+# mostly Uzbek — but that is the language of the data, not of the people
+# standing in front of the kiosk.
+DEFAULT_LANG = "kk"
 
 
 def normalize_lang(raw: str | None) -> str:
@@ -119,13 +124,14 @@ def _format_today_block(now: datetime | None = None) -> str:
     )
 
 
-def _pick(d: dict[str, str], preferred: str = "uz") -> str:
-    """Institute records are predominantly Uzbek Latin, so that is the
-    fallback order for a prompt block the model reads once."""
+def _pick(d: dict[str, str], preferred: str = DEFAULT_LANG) -> str:
+    """Karakalpak first — it is the institute's majority teaching language and
+    the kiosk's default. Uzbek is the fallback because the institute's own
+    records are filled in most completely there."""
     v = d.get(preferred)
     if isinstance(v, str) and v.strip():
         return v
-    for k in ("uz", "en", "ru", "kk"):
+    for k in ("kk", "uz", "ru", "en"):
         alt = d.get(k)
         if isinstance(alt, str) and alt.strip():
             return alt

@@ -16,10 +16,14 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from src.ai.prompt_builder import (
+    DEFAULT_LANG,
     _format_org_contact_block,
     _format_today_block,
+    format_language_block,
+    normalize_lang,
     normalize_menu,
 )
+from src.core.seed import DEFAULT_SECTIONS, INSTITUTE_NAME_TRANSLATIONS
 from src.ai.tools import MENU_TOOLS, TOOL_DECLS, declarations_for, tools_for_menu
 from src.domain.ai_config import BASE_SECTION_KEYS, SECTION_KEYS, focus_key
 from src.domain.organization import Organization
@@ -124,3 +128,57 @@ def test_normalize_menu_falls_back_for_anything_else(raw: str | None) -> None:
 
 def test_base_sections_are_disjoint_from_focus_sections() -> None:
     assert set(BASE_SECTION_KEYS).isdisjoint({focus_key(m) for m in MENU_TOOLS})
+
+
+# ── Language ──────────────────────────────────────────────────────────────────
+#
+# The kiosk stands in Nókis, in Qaraqalpaqstan, and 56.9% of the institute's
+# groups are taught in Karakalpak. An earlier build defaulted to Uzbek because
+# the HEMIS record TEXT is mostly Uzbek; visitors got greeted in the wrong
+# language regardless of which button they had pressed.
+
+
+@pytest.mark.parametrize("raw", [None, "", "nonsense", "tr", "UZBEK"])
+def test_unknown_language_falls_back_to_karakalpak(raw: str | None) -> None:
+    assert normalize_lang(raw) == "kk" == DEFAULT_LANG
+
+
+@pytest.mark.parametrize("raw", ["kk", "UZ", " ru ", "en"])
+def test_normalize_lang_accepts_the_four_taught_languages(raw: str) -> None:
+    assert normalize_lang(raw) == raw.strip().lower()
+
+
+def test_language_block_names_karakalpak_as_latin() -> None:
+    """The model writes Karakalpak in Cyrillic unless told otherwise, while the
+    institute's own records are Latin."""
+    out = format_language_block("kk")
+    assert "Karakalpak" in out
+    assert "LATIN" in out
+    assert "never Cyrillic" in out
+
+
+def test_language_block_lets_speech_override_the_button() -> None:
+    assert "outranks the button" in format_language_block("ru")
+
+
+def _identity() -> str:
+    return next(
+        s["content"] for s in DEFAULT_SECTIONS if s["section_key"] == "identity"
+    )
+
+
+@pytest.mark.parametrize("lang", ["kk", "uz", "ru", "en"])
+def test_identity_section_carries_the_institute_name_in_every_language(
+    lang: str,
+) -> None:
+    """Without all four spellings present the model reached for the one it had
+    — the Uzbek «Qoraqalpogʻiston» — and said it while speaking Karakalpak."""
+    assert INSTITUTE_NAME_TRANSLATIONS[lang] in _identity()
+
+
+def test_language_section_makes_karakalpak_the_default() -> None:
+    content = next(
+        s["content"] for s in DEFAULT_SECTIONS if s["section_key"] == "language"
+    )
+    kk_line = next(line for line in content.split("\n") if "Karakalpak (LATIN" in line)
+    assert "DEFAULT" in kk_line

@@ -26,7 +26,7 @@ public sealed class KioskSettings
     [JsonPropertyName("auto_print_receipts")] public bool AutoPrintReceipts { get; set; } = true;
     [JsonPropertyName("speaker_volume")] public float SpeakerVolume { get; set; } = 0.85f;
     [JsonPropertyName("admin_pin_hash")] public string AdminPinHash { get; set; } = ""; // empty = default PIN "0205"
-    [JsonPropertyName("preferred_language")] public string PreferredLanguage { get; set; } = "uz";
+    [JsonPropertyName("preferred_language")] public string PreferredLanguage { get; set; } = "kk";
 
     public static KioskSettings Current { get; private set; } = Load();
 
