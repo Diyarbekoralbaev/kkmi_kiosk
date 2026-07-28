@@ -48,6 +48,11 @@ namespace Kiosk.App.Net;
 [JsonSerializable(typeof(GroupListResponse))]
 [JsonSerializable(typeof(LessonListResponse))]
 [JsonSerializable(typeof(DirectionListResponse))]
+[JsonSerializable(typeof(DirectionResponse))]
+[JsonSerializable(typeof(BookListResponse))]
+[JsonSerializable(typeof(BookSectionListResponse))]
+[JsonSerializable(typeof(BooksMessage))]
+[JsonSerializable(typeof(BookSectionsMessage))]
 [JsonSerializable(typeof(ReceptionRequest))]
 [JsonSerializable(typeof(ReceptionResponse))]
 // /api/kiosk/officials returns a bare array, so the List<> itself needs a

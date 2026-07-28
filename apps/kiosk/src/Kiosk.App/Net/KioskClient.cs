@@ -61,6 +61,8 @@ public sealed class KioskClient : IAsyncDisposable
     public event Action<GroupChoicesMessage>? GroupChoicesReceived;
     public event Action<DirectionsMessage>? DirectionsReceived;
     public event Action<DirectionMessage>? DirectionReceived;
+    public event Action<BooksMessage>? BooksReceived;
+    public event Action<BookSectionsMessage>? BookSectionsReceived;
     public event Action<LeadershipMessage>? LeadershipReceived;
     public event Action<ReceptionPreviewMessage>? ReceptionPreviewReceived;
     public event Action<ReceptionSubmittedMessage>? ReceptionSubmittedReceived;
@@ -321,6 +323,14 @@ public sealed class KioskClient : IAsyncDisposable
                 case "show_direction":
                     var d1 = JsonSerializer.Deserialize(json, KioskJsonContext.Default.DirectionMessage);
                     if (d1 is not null) DirectionReceived?.Invoke(d1);
+                    break;
+                case "show_books":
+                    var bk = JsonSerializer.Deserialize(json, KioskJsonContext.Default.BooksMessage);
+                    if (bk is not null) BooksReceived?.Invoke(bk);
+                    break;
+                case "show_sections":
+                    var bs = JsonSerializer.Deserialize(json, KioskJsonContext.Default.BookSectionsMessage);
+                    if (bs is not null) BookSectionsReceived?.Invoke(bs);
                     break;
                 case "show_leadership":
                     var ld = JsonSerializer.Deserialize(json, KioskJsonContext.Default.LeadershipMessage);

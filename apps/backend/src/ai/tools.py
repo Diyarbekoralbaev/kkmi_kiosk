@@ -12,9 +12,10 @@ Menus and their tools:
   maslahatchi   navigate_to_screen, show_info_card
                 General study/medical Q&A. Answers out loud; the info card is
                 the visual aid.
-  library       (none)
-                "Coming soon" screen — the institute has not yet supplied a
-                catalogue source.
+  library       navigate_to_screen, find_book, show_books
+                Reads OUR catalogue (`library_books`), typed in by the
+                librarians — IRBIS was never reachable from outside the
+                institute network.
   abituriyent   navigate_to_screen, show_directions, show_direction,
                 show_info_card
   murojat       navigate_to_screen, preview_murojat, submit_murojat
@@ -31,6 +32,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+
+from ..domain.library import SECTIONS
 
 _PHONE_DESC = (
     "Exactly 9 digits, no spaces or separators (e.g. 901234567). The visitor "
@@ -157,11 +160,29 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
                 },
                 "scope": {
                     "type": "string",
-                    "enum": ["today", "tomorrow", "week", "last_taught_week"],
+                    "enum": [
+                        "today",
+                        "tomorrow",
+                        "week",
+                        "last_taught_week",
+                        "date",
+                        "week_of",
+                    ],
                     "description": (
                         "Which range to show. Use \"last_taught_week\" — the group's "
                         "most recent week with classes — only after the "
-                        "visitor accepts the offer to see it."
+                        "visitor accepts the offer to see it. Use \"date\" for one "
+                        "named day and \"week_of\" for the week containing it; "
+                        "both need `date`."
+                    ),
+                },
+                "date": {
+                    "type": "string",
+                    "description": (
+                        "ISO date YYYY-MM-DD. Required for scope \"date\" and "
+                        "\"week_of\", ignored otherwise. Resolve relative phrases "
+                        "(«next Monday», «the 5th») against the CURRENT TIME "
+                        "block at the top of this prompt — never guess the year."
                     ),
                 },
             },
@@ -175,8 +196,9 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
             "List the institute's degree programmes on screen (bachelor's, "
             "master's, clinical residency) and return them so you can answer. "
             "Call this when an applicant asks what they can study here.\n\n"
-            "Returns {items: [{id, code, name, faculty, education_type}]}. "
-            "Summarise by education type rather than reading all of them."
+            "Returns {items: [{id, code, name, faculty, education_type, "
+            "group_count, languages}]}. Summarise by education type rather "
+            "than reading all of them."
         ),
         "parameters": {"type": "object", "properties": {}},
     },
@@ -185,6 +207,12 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
         "description": (
             "Show one programme in detail. `specialty_id` must come from a "
             "show_directions result.\n\n"
+            "Returns {item: {name, code, education_type, faculty, languages, "
+            "group_count, subjects}}. `subjects` is what the degree is actually "
+            "taught through, ranked by how much of the timetable each takes — "
+            "it is the most useful thing you can tell an applicant, so name a "
+            "few rather than listing the label fields. `languages` are the "
+            "languages this programme really has groups in.\n\n"
             "Admission quotas, pass marks and tuition fees are NOT in this "
             "system. If asked, say the institute's admissions office publishes "
             "them each year and point the visitor there — never estimate a "
@@ -199,6 +227,60 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
                 }
             },
             "required": ["specialty_id"],
+        },
+    },
+    # ── Kutubxona (our own catalogue, typed in by the librarians) ────────────
+    "find_book": {
+        "name": "find_book",
+        "description": (
+            "Search the institute library's catalogue by title, author or "
+            "subject, show the matches on screen, and return them.\n\n"
+            "Returns {items: [{id, title, authors, year, publisher, language, "
+            "section_label, copies, shelf, description, available}]}.\n"
+            "  • One match → say the title and author, and where it is "
+            "(`shelf`). The card on screen carries the rest.\n"
+            "  • Several → read out two or three titles and ask which one.\n"
+            "  • Empty → the library has not catalogued it. Say so plainly and "
+            "suggest the reading room. Do NOT fall back on what you know about "
+            "the book from anywhere else — only this catalogue counts.\n\n"
+            "`shelf` or `year` may be empty: the librarians are still filling "
+            "the cards in. An empty field means «not recorded», so say that "
+            "rather than guessing a shelf."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": (
+                        "Title, author surname, or both, as the visitor said "
+                        "them. E.g. \"anatomiya sapin\", \"farmakologiya\"."
+                    ),
+                }
+            },
+            "required": ["query"],
+        },
+    },
+    "show_books": {
+        "name": "show_books",
+        "description": (
+            "List the catalogue's shelf sections, or every book in ONE section, "
+            "on screen. Use this when the visitor is browsing rather than "
+            "looking for a specific title — «what medical books do you have?», "
+            "«anything on pharmacology?».\n\n"
+            "Called with no `section` it returns the sections and their counts; "
+            "with a `section` it returns that section's books. Summarise; do "
+            "not read a whole shelf aloud."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "section": {
+                    "type": "string",
+                    "enum": list(SECTIONS),
+                    "description": "Shelf section. Omit to list the sections.",
+                }
+            },
         },
     },
     # ── Murojat (stored in our DB) ───────────────────────────────────────────
@@ -326,7 +408,7 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
 # unknown value falls back to "maslahatchi" (see api/kiosk_ws.py).
 MENU_TOOLS: dict[str, tuple[str, ...]] = {
     "maslahatchi": ("navigate_to_screen", "show_info_card"),
-    "library": (),
+    "library": ("navigate_to_screen", "find_book", "show_books"),
     "abituriyent": (
         "navigate_to_screen",
         "show_directions",

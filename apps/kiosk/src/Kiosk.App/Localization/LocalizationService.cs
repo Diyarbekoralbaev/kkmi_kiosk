@@ -184,4 +184,27 @@ public static class LocalizationService
             _ => $"{when.Day}-{_monthsKk[idx]}, {when.Year}-jıl",
         };
     }
+
+    /// <summary>Day and month with no year — "11-may", "11 мая", "May 11".
+    /// Timetable day headers use this: the range above the list already states
+    /// the year once, and repeating it on all six day headers is noise.</summary>
+    public static string FormatDayMonth(DateTime when, Language lang)
+    {
+        var idx = when.Month - 1;
+        return lang switch
+        {
+            Language.Ru => $"{when.Day} {_monthsRu[idx]}",
+            Language.Uz => $"{when.Day}-{_monthsUz[idx]}",
+            Language.En => $"{_monthsEn[idx]} {when.Day}",
+            _ => $"{when.Day}-{_monthsKk[idx]}",
+        };
+    }
+
+    private static readonly string[] _isoDayCodes =
+        { "sun", "mon", "tue", "wed", "thu", "fri", "sat" };
+
+    /// <summary>Weekday name for a real date, routed through the same table the
+    /// backend's ISO codes use so the two can never disagree.</summary>
+    public static string FormatWeekday(DateTime when, Language lang) =>
+        FormatDay(_isoDayCodes[(int)when.DayOfWeek], lang);
 }

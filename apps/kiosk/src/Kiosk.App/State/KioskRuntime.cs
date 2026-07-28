@@ -215,6 +215,8 @@ public sealed class KioskRuntime : IAsyncDisposable
         ws.GroupChoicesReceived += g => Dispatcher.UIThread.Post(() => SessionStore.Current.OnGroupChoices(g));
         ws.DirectionsReceived += d => Dispatcher.UIThread.Post(() => SessionStore.Current.OnDirections(d));
         ws.DirectionReceived += d => Dispatcher.UIThread.Post(() => SessionStore.Current.OnDirection(d));
+        ws.BooksReceived += b => Dispatcher.UIThread.Post(() => SessionStore.Current.OnBooks(b));
+        ws.BookSectionsReceived += b => Dispatcher.UIThread.Post(() => SessionStore.Current.OnBookSections(b));
         ws.LeadershipReceived += l => Dispatcher.UIThread.Post(() => SessionStore.Current.OnLeadership(l));
         ws.ReceptionPreviewReceived += r => Dispatcher.UIThread.Post(() => SessionStore.Current.OnReceptionPreview(r));
         ws.ReceptionSubmittedReceived += r => Dispatcher.UIThread.Post(() => SessionStore.Current.OnReceptionSubmitted(r));

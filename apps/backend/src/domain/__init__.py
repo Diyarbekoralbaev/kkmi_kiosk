@@ -23,6 +23,7 @@ from .hemis import (  # noqa: F401
     HemisSyncState,
     HemisTrainingType,
 )
+from .library import LibraryBook  # noqa: F401
 from .organization import Organization, OrgCredentials  # noqa: F401
 from .release import KioskRelease  # noqa: F401
 from .session import VoiceSession  # noqa: F401

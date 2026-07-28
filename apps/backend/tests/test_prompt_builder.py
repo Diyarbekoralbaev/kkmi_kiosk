@@ -23,9 +23,10 @@ from src.ai.prompt_builder import (
     normalize_lang,
     normalize_menu,
 )
-from src.core.seed import DEFAULT_SECTIONS, INSTITUTE_NAME_TRANSLATIONS
 from src.ai.tools import MENU_TOOLS, TOOL_DECLS, declarations_for, tools_for_menu
+from src.core.seed import DEFAULT_SECTIONS, INSTITUTE_NAME_TRANSLATIONS
 from src.domain.ai_config import BASE_SECTION_KEYS, SECTION_KEYS, focus_key
+from src.domain.library import SECTIONS, section_label
 from src.domain.organization import Organization
 
 TASHKENT = ZoneInfo("Asia/Tashkent")
@@ -109,10 +110,37 @@ def test_appeal_tools_are_not_reachable_from_the_timetable_menu() -> None:
     assert "show_schedule" not in tools_for_menu("murojat")
 
 
-def test_library_menu_declares_no_tools() -> None:
-    """The catalogue is not connected yet. With no tools the agent can only say
-    so, rather than answering about books from memory."""
-    assert tools_for_menu("library") == []
+def test_library_menu_reads_the_catalogue() -> None:
+    """The catalogue used to be unreachable (IRBIS is institute-network only),
+    so this menu shipped with no tools and a "coming soon" screen. It now reads
+    our own `library_books` table."""
+    assert set(tools_for_menu("library")) == {
+        "navigate_to_screen",
+        "find_book",
+        "show_books",
+    }
+
+
+def test_book_tools_are_not_reachable_from_other_menus() -> None:
+    """Same cross-flow rule as the timetable: a visitor asking about a book
+    must not have an appeal filed, and vice versa."""
+    for menu in ("jadval", "murojat", "qabul", "abituriyent"):
+        assert "find_book" not in tools_for_menu(menu)
+    assert "submit_murojat" not in tools_for_menu("library")
+
+
+def test_show_books_section_enum_matches_the_database_vocabulary() -> None:
+    """The model picks a section from this enum and the backend filters on it.
+    If the two drift, a browse call silently returns an empty shelf."""
+    enum = TOOL_DECLS["show_books"]["parameters"]["properties"]["section"]["enum"]
+    assert set(enum) == set(SECTIONS)
+
+
+def test_every_section_has_a_label_in_every_language() -> None:
+    """A missing label renders as a blank browse tile on the kiosk."""
+    for section in SECTIONS:
+        for lang in ("kk", "uz", "ru", "en"):
+            assert section_label(section, lang).strip()
 
 
 @pytest.mark.parametrize("raw", ["jadval", "JADVAL", " jadval ", "murojat", "qabul"])

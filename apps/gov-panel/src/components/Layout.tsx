@@ -10,6 +10,7 @@ import {
   CalendarCheck,
   UserCog,
   RefreshCw,
+  BookOpen,
 } from 'lucide-react'
 import { isReviewer, useAuth } from '../lib/auth'
 import { cn } from './ui/cn'
@@ -23,6 +24,7 @@ const ADMIN_NAV = [
   { to: '/applications', label: 'Обращения', icon: Inbox },
   { to: '/appointments', label: 'Приёмы', icon: CalendarCheck },
   { to: '/leadership', label: 'Руководство', icon: UserCog },
+  { to: '/books', label: 'Библиотека', icon: BookOpen },
   { to: '/sessions', label: 'Сессии', icon: Headphones },
   { to: '/staff', label: 'Сотрудники', icon: Users },
   { to: '/hemis', label: 'HEMIS', icon: RefreshCw },

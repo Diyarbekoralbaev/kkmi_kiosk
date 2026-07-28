@@ -68,6 +68,21 @@ public sealed record DirectionListResponse
     [JsonPropertyName("items")] public List<DirectionDto> Items { get; init; } = new();
 }
 
+public sealed record DirectionResponse
+{
+    [JsonPropertyName("item")] public DirectionDto? Item { get; init; }
+}
+
+public sealed record BookListResponse
+{
+    [JsonPropertyName("items")] public List<BookDto> Items { get; init; } = new();
+}
+
+public sealed record BookSectionListResponse
+{
+    [JsonPropertyName("items")] public List<BookSectionDto> Items { get; init; } = new();
+}
+
 // ── Reception booking (touch twin of the voice submit_reception tool) ──
 
 public sealed record ReceptionRequest
@@ -150,13 +165,46 @@ public static class KioskApi
         GetAsync($"/api/kiosk/schedule/groups?faculty_id={facultyId}",
                  KioskJsonContext.Default.GroupListResponse);
 
-    /// <summary><paramref name="scope"/>: today | tomorrow | week | last_taught_week.</summary>
-    public static Task<LessonListResponse?> GetLessonsAsync(int groupId, string scope) =>
-        GetAsync($"/api/kiosk/schedule/lessons?group_id={groupId}&scope={Uri.EscapeDataString(scope)}",
-                 KioskJsonContext.Default.LessonListResponse);
+    /// <summary><paramref name="scope"/>: today | tomorrow | week |
+    /// last_taught_week | date | week_of. The last two need
+    /// <paramref name="onDate"/>; the backend falls back to today without it.</summary>
+    public static Task<LessonListResponse?> GetLessonsAsync(
+        int groupId, string scope, DateTime? onDate = null)
+    {
+        var url = $"/api/kiosk/schedule/lessons?group_id={groupId}"
+                  + $"&scope={Uri.EscapeDataString(scope)}";
+        if (onDate is { } d) url += $"&date={d:yyyy-MM-dd}";
+        return GetAsync(url, KioskJsonContext.Default.LessonListResponse);
+    }
 
     public static Task<DirectionListResponse?> GetDirectionsAsync() =>
         GetAsync("/api/kiosk/schedule/directions", KioskJsonContext.Default.DirectionListResponse);
+
+    /// <summary>One programme with the subjects it is taught through.</summary>
+    public static Task<DirectionResponse?> GetDirectionAsync(int specialtyId) =>
+        GetAsync($"/api/kiosk/schedule/directions/{specialtyId}",
+                 KioskJsonContext.Default.DirectionResponse);
+
+    // ── Kutubxona ────────────────────────────────────────────────────────────
+    //
+    // `locale` is sent so the backend can localize section labels; everything
+    // else on a catalogue card is the book's own language and is not
+    // translated.
+
+    public static Task<BookSectionListResponse?> GetBookSectionsAsync(string locale) =>
+        GetAsync($"/api/kiosk/library/sections?locale={Uri.EscapeDataString(locale)}",
+                 KioskJsonContext.Default.BookSectionListResponse);
+
+    public static Task<BookListResponse?> GetBooksAsync(
+        string locale, string? section = null, string? query = null)
+    {
+        var url = $"/api/kiosk/library/books?locale={Uri.EscapeDataString(locale)}";
+        if (!string.IsNullOrWhiteSpace(section))
+            url += $"&section={Uri.EscapeDataString(section)}";
+        if (!string.IsNullOrWhiteSpace(query))
+            url += $"&q={Uri.EscapeDataString(query)}";
+        return GetAsync(url, KioskJsonContext.Default.BookListResponse);
+    }
 
     /// <summary>GET /api/kiosk/officials — the leadership list. Returns a bare
     /// JSON array (not an {items} envelope) — that endpoint predates the

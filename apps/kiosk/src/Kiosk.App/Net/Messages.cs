@@ -159,6 +159,60 @@ public sealed record DirectionDto
     [JsonPropertyName("faculty")] public string Faculty { get; init; } = "";
     /// <summary>Bakalavr | Magistr | Ordinatura.</summary>
     [JsonPropertyName("education_type")] public string EducationType { get; init; } = "";
+    /// <summary>How many active groups study this programme — the only honest
+    /// signal of its size the mirror carries.</summary>
+    [JsonPropertyName("group_count")] public int GroupCount { get; init; }
+    /// <summary>Teaching languages that really have groups, e.g.
+    /// ["Ingliz","Qoraqalpoq","Rus","O‘zbek"]. HEMIS records the language on
+    /// the group, not the programme, so this is aggregated server-side.</summary>
+    [JsonPropertyName("languages")] public List<string> Languages { get; init; } = new();
+    /// <summary>Subjects the degree is actually taught through, most-timetabled
+    /// first. Only populated by the detail endpoint / show_direction — the list
+    /// endpoint leaves it empty.</summary>
+    [JsonPropertyName("subjects")] public List<string> Subjects { get; init; } = new();
+}
+
+// ── Kutubxona ────────────────────────────────────────────────────────────────
+
+/// <summary>One catalogue card. Unlike everything else the kiosk reads, this
+/// comes from a table the institute types into rather than the HEMIS mirror, so
+/// blank fields are normal — they mean "not recorded yet", never "unknown to
+/// the system".</summary>
+public sealed record BookDto
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("title")] public string Title { get; init; } = "";
+    [JsonPropertyName("authors")] public string Authors { get; init; } = "";
+    [JsonPropertyName("year")] public int? Year { get; init; }
+    [JsonPropertyName("publisher")] public string Publisher { get; init; } = "";
+    [JsonPropertyName("isbn")] public string Isbn { get; init; } = "";
+    [JsonPropertyName("language")] public string Language { get; init; } = "";
+    [JsonPropertyName("section")] public string Section { get; init; } = "";
+    /// <summary>Already localized by the backend from the `locale` query.</summary>
+    [JsonPropertyName("section_label")] public string SectionLabel { get; init; } = "";
+    [JsonPropertyName("copies")] public int Copies { get; init; }
+    [JsonPropertyName("shelf")] public string Shelf { get; init; } = "";
+    [JsonPropertyName("description")] public string Description { get; init; } = "";
+    [JsonPropertyName("available")] public bool Available { get; init; } = true;
+}
+
+public sealed record BookSectionDto
+{
+    [JsonPropertyName("section")] public string Section { get; init; } = "";
+    [JsonPropertyName("label")] public string Label { get; init; } = "";
+    [JsonPropertyName("count")] public int Count { get; init; }
+}
+
+public sealed record BooksMessage
+{
+    [JsonPropertyName("items")] public List<BookDto> Items { get; init; } = new();
+    [JsonPropertyName("query")] public string Query { get; init; } = "";
+    [JsonPropertyName("section")] public string Section { get; init; } = "";
+}
+
+public sealed record BookSectionsMessage
+{
+    [JsonPropertyName("items")] public List<BookSectionDto> Items { get; init; } = new();
 }
 
 public sealed record DirectionsMessage

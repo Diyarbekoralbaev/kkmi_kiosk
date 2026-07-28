@@ -1,0 +1,76 @@
+"""Kiosk touch reads over the institute's book catalogue.
+
+Touch twin of the `find_book` / `show_books` tools, same as `kiosk_schedule`
+is the touch twin of the timetable tools: a visitor must be able to browse the
+shelf sections and search without saying a word.
+
+The org comes from the authenticated device, never from the request — see the
+tenancy rule in CLAUDE.md.
+"""
+from __future__ import annotations
+
+import uuid
+from typing import Any
+
+from fastapi import APIRouter, Header, Query
+
+from ..core import library as library_q
+from ..core.deps import DbSession
+from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
+from ..core.errors import NotFoundError
+from ..domain.library import SECTIONS
+
+router = APIRouter(prefix="/api/kiosk/library", tags=["kiosk:library"])
+
+
+@router.get("/sections")
+async def sections(
+    session: DbSession,
+    locale: str = Query(default="kk"),
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> dict[str, Any]:
+    """Shelf sections that actually hold books, with counts."""
+    device = await resolve_device_from_signed_request(session, x_kiosk_auth)
+    return {
+        "items": await library_q.sections_with_counts(
+            session, device.org_id, locale=locale
+        )
+    }
+
+
+@router.get("/books")
+async def books(
+    session: DbSession,
+    section: str | None = Query(default=None),
+    q: str | None = Query(default=None),
+    locale: str = Query(default="kk"),
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> dict[str, Any]:
+    """Browse by section, or search when `q` is given."""
+    device = await resolve_device_from_signed_request(session, x_kiosk_auth)
+    if q and q.strip():
+        items = await library_q.search_books(
+            session, device.org_id, q, locale=locale, limit=40
+        )
+    else:
+        items = await library_q.list_books(
+            session,
+            device.org_id,
+            section=section if section in SECTIONS else None,
+            locale=locale,
+        )
+    return {"items": items}
+
+
+@router.get("/books/{book_id}")
+async def book_detail(
+    book_id: uuid.UUID,
+    session: DbSession,
+    locale: str = Query(default="kk"),
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> dict[str, Any]:
+    device = await resolve_device_from_signed_request(session, x_kiosk_auth)
+    item = await library_q.book_by_id(session, device.org_id, book_id, locale=locale)
+    if item is None:
+        raise NotFoundError()
+    return {"item": item}

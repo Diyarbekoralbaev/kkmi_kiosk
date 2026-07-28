@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -8,6 +9,25 @@ using Kiosk.App.Net;
 using Kiosk.App.Pages;
 
 namespace Kiosk.App.State;
+
+/// <summary>One day of a timetable, so a week renders as days with headers
+/// instead of one undifferentiated run of rows.
+///
+/// Built once per load rather than bound through a converter: the labels are
+/// language-dependent and rebuilding them on every render would re-localize
+/// dozens of strings each time the list scrolls.</summary>
+public sealed class LessonDay
+{
+    /// <summary>default(DateTime) when the backend sent an unparseable date —
+    /// the lessons still render, just under a bare header.</summary>
+    public DateTime Date { get; init; }
+    /// <summary>"Dúyshembi" / "Понедельник" / "Monday".</summary>
+    public string DayName { get; init; } = "";
+    /// <summary>"11-may" — no year; the range label above carries it.</summary>
+    public string DateLabel { get; init; } = "";
+    public bool IsToday { get; init; }
+    public List<LessonDto> Lessons { get; } = new();
+}
 
 /// <summary>The six home tiles plus the shared chrome screens.
 ///
@@ -19,7 +39,7 @@ public enum KioskPage
     Home,
     /// <summary>AI Maslahatchi — general Q&amp;A with the 3D robot.</summary>
     Ai,
-    /// <summary>AI Library — "coming soon" until the catalogue is connected.</summary>
+    /// <summary>AI Kutubxona — the institute's own book catalogue.</summary>
     Library,
     /// <summary>AI Abituriyent — degree programmes for applicants.</summary>
     Abituriyent,
@@ -128,11 +148,29 @@ public partial class SessionStore : ObservableObject
     /// is normal over the summer break and must not read as a broken kiosk.</summary>
     [ObservableProperty] private string _scheduleEmptyReason = "";
     public ObservableCollection<LessonDto> Lessons { get; } = new();
+    /// <summary>The same lessons grouped by day. A week is ~35 lessons and as a
+    /// flat list it is unreadable — you cannot tell where Tuesday ends. The UI
+    /// binds to this; <see cref="Lessons"/> stays as the flat source.</summary>
+    public ObservableCollection<LessonDay> LessonDays { get; } = new();
     public ObservableCollection<GroupDto> GroupChoices { get; } = new();
+
+    /// <summary>Human-readable span currently on screen, e.g. "11–16 may".
+    /// Without it a visitor looking at last-taught-week has no way to tell the
+    /// timetable is not this week's.</summary>
+    [ObservableProperty] private string _scheduleRangeLabel = "";
 
     // ── Abituriyent ───────────────────────────────────────────────────────────
     public ObservableCollection<DirectionDto> Directions { get; } = new();
     [ObservableProperty] private DirectionDto? _selectedDirection;
+
+    // ── Kutubxona ─────────────────────────────────────────────────────────────
+    public ObservableCollection<BookDto> Books { get; } = new();
+    public ObservableCollection<BookSectionDto> BookSections { get; } = new();
+    [ObservableProperty] private BookDto? _selectedBook;
+    /// <summary>What produced the current <see cref="Books"/> list — a section
+    /// label, a search string, or "". Drives the list header so the visitor can
+    /// see what they are looking at.</summary>
+    [ObservableProperty] private string _bookListCaption = "";
 
     // ── Info card (shared visual aid the agent pushes while talking) ──────────
     [ObservableProperty] private string _infoCardTitle = "";
@@ -291,11 +329,18 @@ public partial class SessionStore : ObservableObject
         ScheduleGroupName = "";
         ScheduleScope = "";
         ScheduleEmptyReason = "";
+        ScheduleRangeLabel = "";
         Lessons.Clear();
+        LessonDays.Clear();
         GroupChoices.Clear();
 
         Directions.Clear();
         SelectedDirection = null;
+
+        Books.Clear();
+        BookSections.Clear();
+        SelectedBook = null;
+        BookListCaption = "";
 
         ShowInfoCard = false;
         InfoCardTitle = "";
@@ -376,10 +421,77 @@ public partial class SessionStore : ObservableObject
         ScheduleGroupName = m.Group?.Name ?? "";
         ScheduleScope = m.Scope;
         ScheduleEmptyReason = m.EmptyReason;
-        Lessons.Clear();
-        foreach (var l in m.Lessons) Lessons.Add(l);
+        SetLessons(m.Lessons);
         GroupChoices.Clear();
         Navigate(KioskPage.Jadval);
+    }
+
+    /// <summary>Replace the timetable, from either the voice or the touch path.
+    /// Both go through here so the day grouping can never be built by one and
+    /// skipped by the other.</summary>
+    public void SetLessons(IEnumerable<LessonDto> lessons)
+    {
+        Lessons.Clear();
+        foreach (var l in lessons) Lessons.Add(l);
+        RebuildLessonDays();
+    }
+
+    private void RebuildLessonDays()
+    {
+        LessonDays.Clear();
+        var lang = Localization.LocalizationService.Current;
+        var today = DateTime.Today;
+
+        // Lessons arrive already ordered by (date, start) from the backend, so
+        // a single pass preserves timetable order within each day.
+        LessonDay? current = null;
+        foreach (var lesson in Lessons)
+        {
+            // TryParseExact against the invariant culture, not TryParse: the
+            // kiosk runs on Windows installs whose locale is Russian or Uzbek,
+            // and a culture-sensitive parse of "2026-05-11" is at the mercy of
+            // whatever short-date pattern that install carries.
+            if (!DateTime.TryParseExact(
+                    lesson.Date, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var day))
+            {
+                // No parseable date means we cannot place it under a header.
+                // Dropping it would hide a real class, so it goes in a bucket
+                // of its own rather than being silently lost.
+                day = default;
+            }
+            if (current is null || current.Date != day)
+            {
+                current = new LessonDay
+                {
+                    Date = day,
+                    DayName = day == default
+                        ? ""
+                        : Localization.LocalizationService.FormatWeekday(day, lang),
+                    DateLabel = day == default
+                        ? lesson.Date
+                        : Localization.LocalizationService.FormatDayMonth(day, lang),
+                    IsToday = day != default && day == today,
+                };
+                LessonDays.Add(current);
+            }
+            current.Lessons.Add(lesson);
+        }
+
+        ScheduleRangeLabel = BuildRangeLabel(lang);
+    }
+
+    private string BuildRangeLabel(Localization.Language lang)
+    {
+        var days = LessonDays.Where(d => d.Date != default).ToList();
+        if (days.Count == 0) return "";
+        var first = days[0].Date;
+        var last = days[^1].Date;
+        if (first == last)
+            return Localization.LocalizationService.FormatDate(first, lang);
+        return Localization.LocalizationService.FormatDayMonth(first, lang)
+               + " – " + Localization.LocalizationService.FormatDate(last, lang);
     }
 
     public void OnGroupChoices(GroupChoicesMessage m)
@@ -403,6 +515,31 @@ public partial class SessionStore : ObservableObject
     {
         SelectedDirection = m.Item;
         Navigate(KioskPage.Abituriyent);
+    }
+
+    // ── Kutubxona ─────────────────────────────────────────────────────────────
+
+    public void OnBooks(BooksMessage m)
+    {
+        Books.Clear();
+        foreach (var b in m.Items) Books.Add(b);
+        // A search caption beats a section one: when the agent searched, that
+        // is what the visitor asked for and what the empty state must explain.
+        BookListCaption = !string.IsNullOrWhiteSpace(m.Query)
+            ? m.Query
+            : (Books.Count > 0 ? Books[0].SectionLabel : "");
+        SelectedBook = Books.Count == 1 ? Books[0] : null;
+        Navigate(KioskPage.Library);
+    }
+
+    public void OnBookSections(BookSectionsMessage m)
+    {
+        BookSections.Clear();
+        foreach (var s in m.Items) BookSections.Add(s);
+        Books.Clear();
+        SelectedBook = null;
+        BookListCaption = "";
+        Navigate(KioskPage.Library);
     }
 
     // ── Reception ─────────────────────────────────────────────────────────────

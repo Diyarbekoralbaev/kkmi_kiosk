@@ -18,7 +18,7 @@ import asyncio
 import contextlib
 import json
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -55,6 +55,7 @@ from ..ai.prompt_builder import (
     normalize_menu,
 )
 from ..ai.tools import MENUS
+from ..core import library as library_q
 from ..core import schedule as schedule_q
 from ..core.config import get_settings
 from ..core.connection_registry import registry
@@ -65,6 +66,7 @@ from ..core.timezone import today_local
 from ..domain.ai_config import OrgKbOfficial
 from ..domain.application import KIND_MURAJAAT, STATUS_NEW, Application
 from ..domain.device import Device
+from ..domain.library import SECTIONS
 from ..domain.organization import Organization
 from ..domain.session import VoiceSession
 
@@ -262,9 +264,13 @@ async def kiosk_voice(ws: WebSocket) -> None:
 
     # ── Schedule helpers ─────────────────────────────────────────────────────
 
-    async def _schedule_payload(group_id: int, scope: str) -> dict[str, Any]:
+    async def _schedule_payload(
+        group_id: int, scope: str, on_date: date | None = None
+    ) -> dict[str, Any]:
         async with AsyncSessionLocal() as s:
-            day_from, day_to = await schedule_q.scope_range(s, group_id, scope)
+            day_from, day_to = await schedule_q.scope_range(
+                s, group_id, scope, on_date
+            )
             group = await schedule_q.group_by_id(s, group_id)
             lessons = await schedule_q.lessons_for_group(s, group_id, day_from, day_to)
             empty_reason = ""
@@ -361,7 +367,18 @@ async def kiosk_voice(ws: WebSocket) -> None:
             scope = str(args.get("scope", "today"))
             if scope not in schedule_q.SCOPES:
                 scope = "today"
-            payload = await _schedule_payload(group_id, scope)
+            # A model that names a day but mangles the format should not take
+            # the visitor to a random week — drop to today and let it retry.
+            on_date: date | None = None
+            raw_date = str(args.get("date", "")).strip()
+            if raw_date:
+                try:
+                    on_date = date.fromisoformat(raw_date)
+                except ValueError:
+                    logger.warning("show_schedule_bad_date", raw=raw_date)
+            if scope in ("date", "week_of") and on_date is None:
+                scope = "today"
+            payload = await _schedule_payload(group_id, scope, on_date)
             await _push({"type": "show_schedule", **payload})
             await gemini.send_tool_response(
                 ev.call_id, name, {"status": "ok", **payload}
@@ -384,8 +401,7 @@ async def kiosk_voice(ws: WebSocket) -> None:
                 )
                 return
             async with AsyncSessionLocal() as s:
-                items = await schedule_q.specialties(s)
-            item = next((i for i in items if i["id"] == specialty_id), None)
+                item = await schedule_q.specialty_detail(s, specialty_id)
             if item is None:
                 await gemini.send_tool_response(
                     ev.call_id, name, {"status": "error", "code": "not_found"}
@@ -395,6 +411,36 @@ async def kiosk_voice(ws: WebSocket) -> None:
             await gemini.send_tool_response(
                 ev.call_id, name, {"status": "ok", "item": item}
             )
+
+        elif name == "find_book":
+            query = str(args.get("query", "")).strip()
+            async with AsyncSessionLocal() as s:
+                items = await library_q.search_books(
+                    s, org_id, query, locale=lang
+                )
+            await _push({"type": "show_books", "items": items, "query": query})
+            await gemini.send_tool_response(
+                ev.call_id, name, {"status": "ok", "items": items}
+            )
+
+        elif name == "show_books":
+            section = str(args.get("section", "")).strip() or None
+            async with AsyncSessionLocal() as s:
+                if section in SECTIONS:
+                    items = await library_q.list_books(
+                        s, org_id, section=section, locale=lang
+                    )
+                    await _push(
+                        {"type": "show_books", "items": items, "section": section}
+                    )
+                    result: dict[str, Any] = {"status": "ok", "items": items}
+                else:
+                    sections = await library_q.sections_with_counts(
+                        s, org_id, locale=lang
+                    )
+                    await _push({"type": "show_sections", "items": sections})
+                    result = {"status": "ok", "sections": sections}
+            await gemini.send_tool_response(ev.call_id, name, result)
 
         elif name == "show_leadership":
             items = await _leadership(org_id)

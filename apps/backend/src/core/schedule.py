@@ -96,6 +96,17 @@ def _normalize(text: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def normalize_text(text: str) -> str:
+    """Public name for the fold above.
+
+    The table is not schedule-specific — it exists wherever spoken input meets
+    records written in mixed scripts, which is also the library catalogue
+    (`core/library.py`): a visitor asking for «Сапин» and a card typed as
+    "Sapin" have to land on the same book.
+    """
+    return _normalize(text)
+
+
 def _score(query: str, candidate: str) -> float:
     """0..1 similarity, biased toward the tokens a student actually says.
 
@@ -208,11 +219,14 @@ async def group_by_id(session: AsyncSession, group_id: int) -> dict[str, Any] | 
     return _group_dict(g) if g else None
 
 
-SCOPES = ("today", "tomorrow", "week", "last_taught_week")
+SCOPES = ("today", "tomorrow", "week", "last_taught_week", "date", "week_of")
 
 
 async def scope_range(
-    session: AsyncSession, group_id: int, scope: str
+    session: AsyncSession,
+    group_id: int,
+    scope: str,
+    on_date: date | None = None,
 ) -> tuple[date, date]:
     """Resolve a scope name to an inclusive date range for one group.
 
@@ -221,8 +235,21 @@ async def scope_range(
     looked reasonable and was wrong the moment it mattered: asked over the
     summer break it landed in the *previous* summer and returned nothing, so
     the fallback offered to a visitor was as empty as the thing it replaced.
+
+    `date` and `week_of` take `on_date` and answer for that day or the calendar
+    week containing it. They exist because the kiosk lets the visitor pick a
+    date: over the break "today" is empty for everyone, and a student checking
+    when an exam block ran needs to reach a specific day, not an offset from
+    now.
     """
     today = today_local()
+    if scope == "date":
+        day = on_date or today
+        return day, day
+    if scope == "week_of":
+        anchor = on_date or today
+        start = anchor - timedelta(days=anchor.weekday())
+        return start, start + timedelta(days=6)
     if scope == "today":
         return today, today
     if scope == "tomorrow":
@@ -296,18 +323,54 @@ async def lessons_for_group(
     return out
 
 
+# Ordering by education_type_code puts Bakalavr (11) first, then Magistr (12),
+# Ordinatura (13), Doktorantura (14) — which is the order an applicant standing
+# at the kiosk cares about, school-leavers being the overwhelming majority.
+#
+# HEMIS records the teaching language on the GROUP, not the specialty, so both
+# the language list and the programme's size are derived by aggregating the
+# groups that belong to it. A specialty with no groups yet is still listed —
+# it exists upstream and an applicant may well ask about it — it simply has
+# nothing to aggregate.
+def _group_rollup() -> Any:
+    return (
+        select(
+            HemisGroup.specialty_id.label("specialty_id"),
+            func.count(func.distinct(HemisGroup.id)).label("group_count"),
+            func.array_agg(func.distinct(HemisGroup.education_lang_name)).label(
+                "languages"
+            ),
+        )
+        .where(HemisGroup.active.is_(True), HemisGroup.specialty_id.is_not(None))
+        .group_by(HemisGroup.specialty_id)
+        .subquery()
+    )
+
+
+def _clean_languages(raw: Any) -> list[str]:
+    """array_agg keeps NULLs and the empty strings HEMIS uses for "unset"."""
+    return sorted({s.strip() for s in (raw or []) if s and s.strip()})
+
+
 async def specialties(session: AsyncSession) -> list[dict[str, Any]]:
     """Degree programmes, grouped-by-faculty friendly. Feeds AI Abituriyent."""
+    roll = _group_rollup()
     stmt = (
-        select(HemisSpecialty, HemisDepartment.name)
+        select(
+            HemisSpecialty,
+            HemisDepartment.name,
+            roll.c.group_count,
+            roll.c.languages,
+        )
         .outerjoin(
             HemisDepartment, HemisDepartment.id == HemisSpecialty.department_id
         )
+        .outerjoin(roll, roll.c.specialty_id == HemisSpecialty.id)
         .where(HemisSpecialty.active.is_(True))
         .order_by(HemisSpecialty.education_type_code, HemisSpecialty.name)
     )
     out: list[dict[str, Any]] = []
-    for spec, faculty in await session.execute(stmt):
+    for spec, faculty, group_count, languages in await session.execute(stmt):
         out.append(
             {
                 "id": spec.id,
@@ -315,6 +378,69 @@ async def specialties(session: AsyncSession) -> list[dict[str, Any]]:
                 "name": spec.name,
                 "faculty": (faculty or "").strip(),
                 "education_type": spec.education_type_name,
+                "group_count": int(group_count or 0),
+                "languages": _clean_languages(languages),
             }
         )
     return out
+
+
+# How many subjects to name for one programme. Enough to show what the degree
+# actually IS, few enough to read standing up.
+SUBJECT_SAMPLE = 10
+
+
+async def specialty_detail(
+    session: AsyncSession, specialty_id: int
+) -> dict[str, Any] | None:
+    """One programme, with the subjects it is actually taught through.
+
+    The subject list is the point of this endpoint. Everything else about a
+    degree programme is a label an applicant cannot evaluate — "Davolash ishi,
+    Bakalavr, code 60910200" tells a school-leaver nothing. The lessons that
+    were really timetabled for its groups do: they are what the next six years
+    consist of. Ranked by lesson count so the core of the degree floats up and
+    one-off seminars sink.
+    """
+    roll = _group_rollup()
+    row = (
+        await session.execute(
+            select(
+                HemisSpecialty,
+                HemisDepartment.name,
+                roll.c.group_count,
+                roll.c.languages,
+            )
+            .outerjoin(
+                HemisDepartment, HemisDepartment.id == HemisSpecialty.department_id
+            )
+            .outerjoin(roll, roll.c.specialty_id == HemisSpecialty.id)
+            .where(HemisSpecialty.id == specialty_id)
+        )
+    ).first()
+    if row is None:
+        return None
+    spec, faculty, group_count, languages = row
+
+    subject_rows = (
+        await session.execute(
+            select(HemisSubject.name, func.count(HemisLesson.id).label("n"))
+            .join(HemisGroup, HemisGroup.id == HemisLesson.group_id)
+            .join(HemisSubject, HemisSubject.id == HemisLesson.subject_id)
+            .where(HemisGroup.specialty_id == specialty_id)
+            .group_by(HemisSubject.name)
+            .order_by(func.count(HemisLesson.id).desc())
+            .limit(SUBJECT_SAMPLE)
+        )
+    ).all()
+
+    return {
+        "id": spec.id,
+        "code": spec.code,
+        "name": spec.name,
+        "faculty": (faculty or "").strip(),
+        "education_type": spec.education_type_name,
+        "group_count": int(group_count or 0),
+        "languages": _clean_languages(languages),
+        "subjects": [name for name, _ in subject_rows if (name or "").strip()],
+    }

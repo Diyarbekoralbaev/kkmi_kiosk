@@ -4,55 +4,298 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:Kiosk.App.Controls"
              xmlns:state="using:Kiosk.App.State"
+             xmlns:net="using:Kiosk.App.Net"
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1224"
              x:Class="Kiosk.App.Pages.LibraryPage"
              x:DataType="state:SessionStore">
-    <!-- Placeholder. The institute's catalogue (an IRBIS installation) is not
-         reachable from the kiosk network, so there is no book data to show and
-         the agent has no tools on this menu at all — it can only say the
-         service is being prepared.
+    <!-- The institute's own catalogue — the one dataset here with no upstream.
+         IRBIS never resolved from outside the institute network, so the books
+         are typed into the gov panel and read straight back.
 
-         The tile stays on the home screen deliberately: the institute asked for
-         five services and hiding one would make the menu look incomplete. An
-         honest "coming soon" beats a missing tile or, worse, an assistant
-         inventing books from memory. -->
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+         Three panels: shelf sections → book list → one card. The agent's
+         find_book / show_books push into the same SessionStore collections, so
+         speaking and tapping land on identical screens.
+
+         Blank fields are expected while the librarians fill the cards in. A
+         missing shelf or year means "not recorded yet", never "unknown" — the
+         card says so rather than hiding the book. -->
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,Auto,*" Margin="56,40,56,32">
+
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
-            <TextBlock Grid.Column="0" Text="{DynamicResource LibraryPageTitle}"
-                       FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
-                       Foreground="{StaticResource KioskPrimary}"
-                       VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                <TextBlock Text="{DynamicResource LibraryPageTitle}"
+                           FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
+                           Foreground="{StaticResource KioskPrimary}"
+                           TextWrapping="Wrap" MaxWidth="640" />
+                <TextBlock x:Name="Breadcrumb" FontSize="20"
+                           Foreground="{StaticResource KioskTextMuted}"
+                           TextWrapping="Wrap" MaxWidth="640" />
+            </StackPanel>
             <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
         </Grid>
 
-        <Border Grid.Row="1" Margin="0,40,0,0" VerticalAlignment="Top"
-                Background="{StaticResource KioskCard}"
-                BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
-                CornerRadius="{StaticResource KioskRadiusCard}" Padding="56,64">
-            <StackPanel Spacing="28" HorizontalAlignment="Center">
-                <Border Width="140" Height="140" CornerRadius="70"
-                        Background="{StaticResource KioskTileTint}"
-                        HorizontalAlignment="Center">
-                    <Viewbox Width="76" Height="76">
-                        <Canvas Width="24" Height="24">
-                            <Path Stroke="{StaticResource KioskPrimary}" StrokeThickness="1.6"
-                                  StrokeLineCap="Round" StrokeJoin="Round"
-                                  Data="M12,7 C12,7 9,5 4,5 V19 C9,19 12,21 12,21 C12,21 15,19 20,19 V5 C15,5 12,7 12,7 Z" />
-                            <Line StartPoint="12,7" EndPoint="12,21"
-                                  Stroke="{StaticResource KioskPrimary}" StrokeThickness="1.6" />
-                        </Canvas>
-                    </Viewbox>
+        <Border Grid.Row="1" Classes="searchbox" Margin="0,24,0,0">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                <TextBlock Grid.Column="0" Text="🔍" FontSize="24"
+                           VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" x:Name="SearchBox"
+                         KeyUp="OnSearchKeyUp"
+                         PlaceholderText="{DynamicResource LibrarySearchPlaceholder}"
+                         BorderThickness="0" Background="Transparent"
+                         FontSize="22" VerticalAlignment="Center" />
+                <Button Grid.Column="2" Click="OnSearchClick" Classes="scope primary"
+                        Content="{DynamicResource LibrarySearchButton}" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="0,24,0,0">
+
+            <!-- ① Shelf sections -->
+            <ScrollViewer x:Name="SectionPanel">
+                <ItemsControl ItemsSource="{Binding BookSections}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="net:BookSectionDto">
+                            <Button Click="OnSectionClick" Tag="{Binding}" Classes="tile">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="{Binding Label}"
+                                               FontSize="{StaticResource KioskFontH4}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource KioskText}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Count}"
+                                               FontSize="28" FontWeight="Bold"
+                                               Foreground="{StaticResource KioskAccentDark}" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- ② Book list -->
+            <Grid x:Name="ListPanel" IsVisible="False" RowDefinitions="*,Auto">
+                <ScrollViewer Grid.Row="0">
+                    <ItemsControl ItemsSource="{Binding Books}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="net:BookDto">
+                                <Button Click="OnBookClick" Tag="{Binding}" Classes="row">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                        <StackPanel Grid.Column="0" Spacing="5"
+                                                    VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="{StaticResource KioskFontH4}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource KioskText}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Authors}"
+                                                       FontSize="{StaticResource KioskFontCaption}"
+                                                       Foreground="{StaticResource KioskTextMuted}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1"
+                                                Background="{StaticResource KioskTileTint}"
+                                                CornerRadius="{StaticResource KioskRadiusChip}"
+                                                Padding="14,6" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SectionLabel}" FontSize="16"
+                                                       Foreground="{StaticResource KioskPrimary}" />
+                                        </Border>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <Border Grid.Row="0" x:Name="EmptyState" IsVisible="False"
+                        Background="{StaticResource KioskCard}"
+                        BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
+                        CornerRadius="{StaticResource KioskRadiusCard}"
+                        Padding="48" VerticalAlignment="Top">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                        <TextBlock Text="{DynamicResource LibraryNoResultsTitle}"
+                                   FontSize="{StaticResource KioskFontH3}" FontWeight="SemiBold"
+                                   Foreground="{StaticResource KioskText}"
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+                        <TextBlock Text="{DynamicResource LibraryNoResultsBody}"
+                                   FontSize="20"
+                                   Foreground="{StaticResource KioskTextMuted}"
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+                    </StackPanel>
                 </Border>
 
-                <TextBlock Text="{DynamicResource LibraryComingSoonTitle}"
-                           FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
-                           Foreground="{StaticResource KioskText}"
-                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="720" />
-                <TextBlock Text="{DynamicResource LibraryComingSoonBody}"
-                           FontSize="22"
-                           Foreground="{StaticResource KioskTextMuted}"
-                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="720" />
-            </StackPanel>
-        </Border>
+                <Button Grid.Row="1" Click="OnBackToSections" Classes="scope"
+                        HorizontalAlignment="Left" Margin="0,20,0,0"
+                        Content="{DynamicResource LibraryBackToSections}" />
+            </Grid>
+
+            <!-- ③ One card -->
+            <ScrollViewer x:Name="DetailPanel" IsVisible="False">
+                <StackPanel Spacing="20">
+                    <Border Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="DetailTitle"
+                                       FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskPrimary}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock x:Name="DetailAuthors" FontSize="22"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Border Background="{StaticResource KioskTileTint}"
+                                        CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
+                                    <TextBlock x:Name="DetailSection" FontSize="18"
+                                               Foreground="{StaticResource KioskPrimary}" />
+                                </Border>
+                                <Border Background="{StaticResource KioskTileTint}"
+                                        CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
+                                    <TextBlock x:Name="DetailLanguage" FontSize="18"
+                                               Foreground="{StaticResource KioskPrimary}" />
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Where to walk. The single most useful line on the card,
+                         so it gets its own block rather than a table row. -->
+                    <Border Classes="card" Background="{StaticResource KioskAccentTint}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock Text="{DynamicResource LibraryShelf}"
+                                           FontSize="{StaticResource KioskFontCaption}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskAccentDark}" />
+                                <TextBlock x:Name="DetailShelf"
+                                           FontSize="32" FontWeight="Bold"
+                                           Foreground="{StaticResource KioskAccentDark}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right">
+                                <TextBlock Text="{DynamicResource LibraryCopies}"
+                                           FontSize="{StaticResource KioskFontCaption}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskAccentDark}"
+                                           HorizontalAlignment="Right" />
+                                <TextBlock x:Name="DetailCopies"
+                                           FontSize="32" FontWeight="Bold"
+                                           Foreground="{StaticResource KioskAccentDark}"
+                                           HorizontalAlignment="Right" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Classes="card" x:Name="DescriptionCard">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{DynamicResource LibraryAbout}"
+                                       FontSize="{StaticResource KioskFontCaption}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource KioskTextMuted}" />
+                            <TextBlock x:Name="DetailDescription" FontSize="21"
+                                       Foreground="{StaticResource KioskText}"
+                                       TextWrapping="Wrap" LineHeight="30" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="14">
+                            <Grid ColumnDefinitions="200,*">
+                                <TextBlock Grid.Column="0" Text="{DynamicResource LibraryYear}"
+                                           FontSize="19"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock Grid.Column="1" x:Name="DetailYear" FontSize="19"
+                                           Foreground="{StaticResource KioskText}" />
+                            </Grid>
+                            <Grid ColumnDefinitions="200,*">
+                                <TextBlock Grid.Column="0" Text="{DynamicResource LibraryPublisher}"
+                                           FontSize="19"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock Grid.Column="1" x:Name="DetailPublisher" FontSize="19"
+                                           Foreground="{StaticResource KioskText}"
+                                           TextWrapping="Wrap" />
+                            </Grid>
+                            <Grid ColumnDefinitions="200,*">
+                                <TextBlock Grid.Column="0" Text="ISBN" FontSize="19"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <TextBlock Grid.Column="1" x:Name="DetailIsbn" FontSize="19"
+                                           Foreground="{StaticResource KioskText}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Button Click="OnBackToList" Classes="scope"
+                            HorizontalAlignment="Left"
+                            Content="{DynamicResource LibraryBackToList}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </Grid>
+
+    <UserControl.Styles>
+        <Style Selector="Button.row">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="26,20" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="MinHeight" Value="86" />
+        </Style>
+        <Style Selector="Button.row:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+
+        <!-- Section tiles: two per row at 1080 wide, thumb-sized. -->
+        <Style Selector="Button.tile">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusCard}" />
+            <Setter Property="Width" Value="462" />
+            <Setter Property="MinHeight" Value="132" />
+            <Setter Property="Padding" Value="28,24" />
+            <Setter Property="Margin" Value="0,0,16,16" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <Style Selector="Button.tile:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusCard}" />
+            <Setter Property="Padding" Value="30,26" />
+        </Style>
+
+        <Style Selector="Border.searchbox">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="24,12" />
+        </Style>
+
+        <Style Selector="Button.scope">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="24,14" />
+            <Setter Property="FontSize" Value="19" />
+            <Setter Property="MinHeight" Value="56" />
+        </Style>
+        <Style Selector="Button.scope.primary">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </UserControl.Styles>
 </UserControl>

@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Kiosk.App.Localization;
 using Kiosk.App.Net;
 using Kiosk.App.State;
 
@@ -11,9 +14,16 @@ namespace Kiosk.App.Pages;
 /// <summary>Degree programmes for applicants. The list loads over HTTP so the
 /// page works with no voice session at all; the agent's show_directions /
 /// show_direction write into the same SessionStore collections, so voice and
-/// touch stay on one screen state.</summary>
+/// touch stay on one screen state.
+///
+/// Tapping a row re-fetches the programme from the detail endpoint rather than
+/// reusing the list row: the subject list is the reason anyone opens this
+/// screen and the list endpoint does not carry it (94 programmes × 10 subjects
+/// would be most of a megabyte for a list nobody reads in full).</summary>
 public partial class AbituriyentPage : UserControl
 {
+    private List<DirectionDto> _all = new();
+
     public AbituriyentPage()
     {
         InitializeComponent();
@@ -28,8 +38,13 @@ public partial class AbituriyentPage : UserControl
         SessionStore.Current.PropertyChanged += OnSessionChanged;
         RenderDetail();
 
-        // The agent may already have pushed the list; don't refetch over it.
-        if (SessionStore.Current.Directions.Count > 0) return;
+        if (SessionStore.Current.Directions.Count > 0)
+        {
+            // The agent already pushed the list; don't refetch over it.
+            _all = SessionStore.Current.Directions.ToList();
+            DirectionList.ItemsSource = _all;
+            return;
+        }
         try
         {
             var resp = await KioskApi.GetDirectionsAsync();
@@ -37,6 +52,10 @@ public partial class AbituriyentPage : UserControl
             var s = SessionStore.Current;
             s.Directions.Clear();
             foreach (var d in resp.Items) s.Directions.Add(d);
+            _all = resp.Items;
+            DirectionList.ItemsSource = _all;
+            Breadcrumb.Text = string.Format(
+                LocalizationService.Get("AbituriyentCount"), _all.Count);
         }
         catch (Exception ex)
         {
@@ -53,20 +72,64 @@ public partial class AbituriyentPage : UserControl
             Dispatcher.UIThread.Post(RenderDetail);
     }
 
+    private void OnFilterChanged(object? sender, TextChangedEventArgs e)
+    {
+        var q = (DirectionFilter.Text ?? "").Trim();
+        DirectionList.ItemsSource = q.Length == 0
+            ? _all
+            : _all.Where(d =>
+                  d.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
+                  || d.Faculty.Contains(q, StringComparison.OrdinalIgnoreCase)
+                  || d.EducationType.Contains(q, StringComparison.OrdinalIgnoreCase))
+              .ToList();
+    }
+
     private void RenderDetail()
     {
         var d = SessionStore.Current.SelectedDirection;
-        DetailCard.IsVisible = d is not null;
-        if (d is null) return;
+        DetailPanel.IsVisible = d is not null;
+        ListPanel.IsVisible = d is null;
+        if (d is null)
+        {
+            Breadcrumb.Text = _all.Count == 0
+                ? ""
+                : string.Format(LocalizationService.Get("AbituriyentCount"), _all.Count);
+            return;
+        }
+
+        Breadcrumb.Text = d.EducationType;
         DetailName.Text = d.Name;
         DetailType.Text = d.EducationType;
         DetailCode.Text = d.Code;
         DetailFaculty.Text = d.Faculty;
+        DetailGroupCount.Text = d.GroupCount.ToString();
+        DetailLanguages.ItemsSource = d.Languages;
+        DetailSubjects.ItemsSource = d.Subjects;
+
+        // A programme with no groups yet has nothing to aggregate, and one
+        // reached through the list endpoint has no subjects. Hiding the empty
+        // card beats showing a heading over blank space.
+        FactsCard.IsVisible = d.Languages.Count > 0 || d.GroupCount > 0;
+        SubjectsCard.IsVisible = d.Subjects.Count > 0;
     }
 
-    private void OnDirectionClick(object? sender, RoutedEventArgs e)
+    private async void OnDirectionClick(object? sender, RoutedEventArgs e)
     {
-        if ((sender as Button)?.Tag is DirectionDto d)
-            SessionStore.Current.SelectedDirection = d;
+        if ((sender as Button)?.Tag is not DirectionDto d) return;
+        // Show the row we already have straight away, then swap in the fuller
+        // record — the screen must not sit blank while the fetch runs.
+        SessionStore.Current.SelectedDirection = d;
+        try
+        {
+            var resp = await KioskApi.GetDirectionAsync(d.Id);
+            if (resp?.Item is { } full) SessionStore.Current.SelectedDirection = full;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[abituriyent] detail: {ex.Message}");
+        }
     }
+
+    private void OnBackToList(object? sender, RoutedEventArgs e) =>
+        SessionStore.Current.SelectedDirection = null;
 }

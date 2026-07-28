@@ -7,6 +7,7 @@ import { AppointmentsPage, AppointmentDetailPage } from './routes/Appointments'
 import { SessionsPage, SessionDetailPage } from './routes/Sessions'
 import { StaffPage } from './routes/Staff'
 import { LeadershipPage } from './routes/Leadership'
+import { BooksPage } from './routes/Books'
 import { HemisSyncPage } from './routes/HemisSync'
 import { ProfilePage } from './routes/Profile'
 // Online appointment booking (the old QabulBook page) was removed — the kiosk
@@ -68,6 +69,7 @@ export default function App() {
       <Route path="/sessions/:id" element={<Protected adminOnly><SessionDetailPage /></Protected>} />
       <Route path="/staff" element={<Protected adminOnly><StaffPage /></Protected>} />
       <Route path="/leadership" element={<Protected adminOnly><LeadershipPage /></Protected>} />
+      <Route path="/books" element={<Protected adminOnly><BooksPage /></Protected>} />
       <Route path="/hemis" element={<Protected adminOnly><HemisSyncPage /></Protected>} />
       {/* Shared (admin + reviewer). Reviewers see only their assigned rows. */}
       <Route path="/applications" element={<Protected><ApplicationsPage /></Protected>} />

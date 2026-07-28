@@ -4,6 +4,7 @@ from __future__ import annotations
 import structlog
 from sqlalchemy import select, text
 
+from ..domain.organization import Organization
 from ..domain.user import ROLE_SUPER_ADMIN, User
 from .config import (
     INSECURE_DEFAULT_BASE_URL,
@@ -14,7 +15,11 @@ from .config import (
 )
 from .db import AsyncSessionLocal
 from .security import hash_password
-from .seed import ensure_default_institute_org, ensure_system_ai_defaults
+from .seed import (
+    ensure_default_institute_org,
+    ensure_library_seed,
+    ensure_system_ai_defaults,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -67,6 +72,16 @@ async def run() -> None:
             await session.execute(text("SELECT pg_advisory_xact_lock(728193)"))
             await ensure_system_ai_defaults(session)
             await ensure_default_institute_org(session)
+
+            # Separately from org creation: an install that predates the
+            # catalogue already has its org, so the seed inside
+            # ensure_default_institute_org never fires for it. This is safe to
+            # run every boot — it no-ops the moment the catalogue holds
+            # anything, including after a librarian deletes the starter rows.
+            for org in (
+                (await session.execute(select(Organization))).scalars().all()
+            ):
+                await ensure_library_seed(session, org)
 
             existing_super = (
                 await session.execute(

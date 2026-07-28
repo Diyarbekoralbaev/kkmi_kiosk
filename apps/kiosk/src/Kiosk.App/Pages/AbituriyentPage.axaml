@@ -9,83 +9,197 @@
              x:Class="Kiosk.App.Pages.AbituriyentPage"
              x:DataType="state:SessionStore">
     <!-- Degree programmes, straight from HEMIS.
-         What is deliberately NOT here: admission quotas, pass marks and tuition
-         fees. HEMIS does not carry them, they change every year, and a stale or
-         guessed figure is the one thing an applicant would actually act on — so
-         the page points at the admissions committee instead of showing a
-         number nobody can stand behind. -->
+
+         The list is names only, which tells a school-leaver nothing — so the
+         detail view leads with what the degree actually CONSISTS of: the
+         subjects its groups are really timetabled for, ranked by how much of
+         the timetable each takes. Teaching languages and the number of groups
+         come from the same place. All of it is derived, so none of it can go
+         stale the way a hand-maintained page would.
+
+         What is deliberately NOT here: admission quotas, pass marks and
+         tuition fees. HEMIS does not carry them, they change every year, and a
+         stale or guessed figure is the one thing an applicant would actually
+         act on — so the card points at the admissions committee instead. -->
     <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
-            <TextBlock Grid.Column="0" Text="{DynamicResource AbituriyentPageTitle}"
-                       FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
-                       Foreground="{StaticResource KioskPrimary}"
-                       VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                <TextBlock Text="{DynamicResource AbituriyentPageTitle}"
+                           FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
+                           Foreground="{StaticResource KioskPrimary}"
+                           TextWrapping="Wrap" MaxWidth="640" />
+                <TextBlock x:Name="Breadcrumb" FontSize="20"
+                           Foreground="{StaticResource KioskTextMuted}"
+                           TextWrapping="Wrap" MaxWidth="640" />
+            </StackPanel>
             <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,28,0,0" RowDefinitions="Auto,*">
+        <Grid Grid.Row="1" Margin="0,28,0,0">
 
-            <!-- Detail card — filled when the agent calls show_direction, or the
-                 visitor taps a row. -->
-            <Border Grid.Row="0" x:Name="DetailCard" IsVisible="False"
-                    Background="{StaticResource KioskCard}"
-                    BorderBrush="{StaticResource KioskAccent}" BorderThickness="2"
-                    CornerRadius="{StaticResource KioskRadiusCard}"
-                    Padding="32,28" Margin="0,0,0,24">
-                <StackPanel Spacing="10">
-                    <TextBlock x:Name="DetailName"
-                               FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
-                               Foreground="{StaticResource KioskText}" TextWrapping="Wrap" />
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Border Background="{StaticResource KioskTileTint}"
-                                CornerRadius="{StaticResource KioskRadiusChip}" Padding="14,6">
-                            <TextBlock x:Name="DetailType" FontSize="18"
-                                       Foreground="{StaticResource KioskPrimary}" />
-                        </Border>
-                        <Border Background="{StaticResource KioskTileTint}"
-                                CornerRadius="{StaticResource KioskRadiusChip}" Padding="14,6">
-                            <TextBlock x:Name="DetailCode" FontSize="18"
-                                       Foreground="{StaticResource KioskPrimary}" />
-                        </Border>
-                    </StackPanel>
-                    <TextBlock x:Name="DetailFaculty" FontSize="20"
-                               Foreground="{StaticResource KioskTextMuted}" TextWrapping="Wrap" />
-                    <TextBlock Text="{DynamicResource AbituriyentQuotaNote}"
-                               FontSize="{StaticResource KioskFontCaption}"
-                               Foreground="{StaticResource KioskTextMuted}"
-                               TextWrapping="Wrap" Margin="0,8,0,0" />
+            <!-- ① Programme list, grouped by degree level. -->
+            <Grid x:Name="ListPanel" RowDefinitions="Auto,*">
+                <Border Grid.Row="0" Classes="searchbox" Margin="0,0,0,16">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="🔍" FontSize="24"
+                                   VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <TextBox Grid.Column="1" x:Name="DirectionFilter"
+                                 TextChanged="OnFilterChanged"
+                                 PlaceholderText="{DynamicResource AbituriyentFilter}"
+                                 BorderThickness="0" Background="Transparent"
+                                 FontSize="22" VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl x:Name="DirectionList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="net:DirectionDto">
+                                <Button Click="OnDirectionClick" Tag="{Binding}" Classes="row">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                        <StackPanel Grid.Column="0" Spacing="5" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="{StaticResource KioskFontH4}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource KioskText}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Faculty}"
+                                                       FontSize="{StaticResource KioskFontCaption}"
+                                                       Foreground="{StaticResource KioskTextMuted}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Right">
+                                            <Border Background="{StaticResource KioskTileTint}"
+                                                    CornerRadius="{StaticResource KioskRadiusChip}"
+                                                    Padding="14,6">
+                                                <TextBlock Text="{Binding EducationType}" FontSize="16"
+                                                           Foreground="{StaticResource KioskPrimary}"
+                                                           HorizontalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Text="{Binding Languages.Count}"
+                                                       FontSize="{StaticResource KioskFontCaptionSm}"
+                                                       Foreground="{StaticResource KioskTextMuted}"
+                                                       HorizontalAlignment="Center"
+                                                       IsVisible="False" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- ② Detail. Filled from the detail endpoint on tap, or pushed
+                 straight in by the agent's show_direction. -->
+            <ScrollViewer x:Name="DetailPanel" IsVisible="False">
+                <StackPanel Spacing="20">
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="DetailName"
+                                       FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskPrimary}"
+                                       TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Border Background="{StaticResource KioskTileTint}"
+                                        CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
+                                    <TextBlock x:Name="DetailType" FontSize="18"
+                                               Foreground="{StaticResource KioskPrimary}" />
+                                </Border>
+                                <Border Background="{StaticResource KioskTileTint}"
+                                        CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
+                                    <TextBlock x:Name="DetailCode" FontSize="18"
+                                               Foreground="{StaticResource KioskPrimary}" />
+                                </Border>
+                            </StackPanel>
+                            <TextBlock x:Name="DetailFaculty" FontSize="20"
+                                       Foreground="{StaticResource KioskTextMuted}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Teaching languages + how many groups. Both aggregated
+                         from the groups that belong to this programme. -->
+                    <Border Classes="card" x:Name="FactsCard">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="24">
+                            <StackPanel Grid.Column="0" Spacing="10">
+                                <TextBlock Text="{DynamicResource AbituriyentLanguages}"
+                                           FontSize="{StaticResource KioskFontCaption}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource KioskTextMuted}" />
+                                <ItemsControl x:Name="DetailLanguages">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Border Background="{StaticResource KioskAccentTint}"
+                                                    CornerRadius="{StaticResource KioskRadiusChip}"
+                                                    Padding="16,8" Margin="0,0,10,10">
+                                                <TextBlock Text="{Binding}" FontSize="19"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource KioskAccentDark}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center"
+                                        HorizontalAlignment="Right">
+                                <TextBlock x:Name="DetailGroupCount"
+                                           FontSize="42" FontWeight="Bold"
+                                           Foreground="{StaticResource KioskPrimary}"
+                                           HorizontalAlignment="Right" />
+                                <TextBlock Text="{DynamicResource AbituriyentGroups}"
+                                           FontSize="{StaticResource KioskFontCaption}"
+                                           Foreground="{StaticResource KioskTextMuted}"
+                                           HorizontalAlignment="Right" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- The point of the whole screen. -->
+                    <Border Classes="card" x:Name="SubjectsCard">
+                        <StackPanel Spacing="14">
+                            <TextBlock Text="{DynamicResource AbituriyentSubjects}"
+                                       FontSize="{StaticResource KioskFontH3}" FontWeight="Bold"
+                                       Foreground="{StaticResource KioskText}" TextWrapping="Wrap" />
+                            <ItemsControl x:Name="DetailSubjects">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14"
+                                              Margin="0,0,0,12">
+                                            <Border Grid.Column="0" Width="10" Height="10"
+                                                    CornerRadius="5" VerticalAlignment="Center"
+                                                    Background="{StaticResource KioskAccent}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding}"
+                                                       FontSize="21"
+                                                       Foreground="{StaticResource KioskText}"
+                                                       TextWrapping="Wrap" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <TextBlock Text="{DynamicResource AbituriyentQuotaNote}"
+                                   FontSize="19"
+                                   Foreground="{StaticResource KioskTextMuted}"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <Button Click="OnBackToList" Classes="scope"
+                            HorizontalAlignment="Left"
+                            Content="{DynamicResource AbituriyentBackToList}" />
                 </StackPanel>
-            </Border>
-
-            <ScrollViewer Grid.Row="1">
-                <ItemsControl ItemsSource="{Binding Directions}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="net:DirectionDto">
-                            <Button Click="OnDirectionClick" Tag="{Binding}" Classes="row">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}"
-                                                   FontSize="{StaticResource KioskFontH4}"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{StaticResource KioskText}"
-                                                   TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding Faculty}"
-                                                   FontSize="{StaticResource KioskFontCaption}"
-                                                   Foreground="{StaticResource KioskTextMuted}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <Border Grid.Column="1" Background="{StaticResource KioskTileTint}"
-                                            CornerRadius="{StaticResource KioskRadiusChip}"
-                                            Padding="14,6" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding EducationType}" FontSize="16"
-                                                   Foreground="{StaticResource KioskPrimary}" />
-                                    </Border>
-                                </Grid>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
             </ScrollViewer>
         </Grid>
     </Grid>
@@ -104,6 +218,33 @@
         </Style>
         <Style Selector="Button.row:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#fbfcfe" />
+        </Style>
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusCard}" />
+            <Setter Property="Padding" Value="30,26" />
+        </Style>
+
+        <Style Selector="Border.searchbox">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="24,14" />
+        </Style>
+
+        <Style Selector="Button.scope">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="Padding" Value="24,14" />
+            <Setter Property="FontSize" Value="19" />
+            <Setter Property="MinHeight" Value="60" />
         </Style>
     </UserControl.Styles>
 </UserControl>

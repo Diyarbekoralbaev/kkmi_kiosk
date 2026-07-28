@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -23,9 +25,21 @@ namespace Kiosk.App.Pages;
 /// </summary>
 public partial class SchedulePage : UserControl
 {
+    /// <summary>What a freshly picked group opens on.
+    ///
+    /// NOT "today". The academic year runs roughly September–June, so for a
+    /// third of the year — including the whole admissions season, when the
+    /// lobby is busiest — "today" is empty for every group in the institute and
+    /// the kiosk reads as broken. The group's last taught week always has
+    /// something in it, and the range bar above the list says which week it is.
+    /// </summary>
+    private const string DefaultScope = "last_taught_week";
+
     private int _groupId;
     private int _facultyId;
-    private string _scope = "today";
+    private string _scope = DefaultScope;
+    private DateTime? _pickedDate;
+    private List<GroupDto> _allGroups = new();
 
     public SchedulePage()
     {
@@ -91,6 +105,13 @@ public partial class SchedulePage : UserControl
         if (!string.IsNullOrEmpty(s.ScheduleScope)) _scope = s.ScheduleScope;
         UpdateScopeButtons();
 
+        // Say out loud when the timetable on screen is not the current week —
+        // the dates alone do not tell a visitor that, and being wrong about
+        // which week you are reading sends you to a room on the wrong day.
+        RangeNote.Text = _scope == "last_taught_week"
+            ? LocalizationService.Get("ScheduleLastTaughtNote")
+            : "";
+
         var empty = s.Lessons.Count == 0;
         EmptyState.IsVisible = empty;
         if (empty)
@@ -100,18 +121,19 @@ public partial class SchedulePage : UserControl
                 yearMissing ? "ScheduleYearNotPublishedTitle" : "ScheduleNoLessonsTitle");
             EmptyBody.Text = LocalizationService.Get(
                 yearMissing ? "ScheduleYearNotPublishedBody" : "ScheduleNoLessonsBody");
-            // Only offer last year's week when the whole year is missing —
-            // after a free Sunday it would just be confusing.
-            LastYearButton.IsVisible = yearMissing;
+            // Only offer the last taught week when we are not already showing
+            // it — otherwise the button reloads the empty screen you are on.
+            LastYearButton.IsVisible = yearMissing && _scope != "last_taught_week";
         }
         ShowOnly(LessonPanel);
     }
 
     private void UpdateScopeButtons()
     {
+        SetActive(ScopeLast, _scope == "last_taught_week");
         SetActive(ScopeToday, _scope == "today");
         SetActive(ScopeTomorrow, _scope == "tomorrow");
-        SetActive(ScopeWeek, _scope is "week" or "last_taught_week");
+        SetActive(ScopeDate, _scope is "date" or "week_of");
     }
 
     private static void SetActive(Button b, bool active)
@@ -135,20 +157,22 @@ public partial class SchedulePage : UserControl
         _facultyId = facultyId;
         Breadcrumb.Text = facultyName;
         ShowOnly(GroupPanel);
+        GroupFilter.Text = "";
         var resp = await KioskApi.GetGroupsAsync(facultyId);
-        GroupList.ItemsSource = resp?.Items;
+        _allGroups = resp?.Items ?? new List<GroupDto>();
+        GroupList.ItemsSource = _allGroups;
     }
 
-    private async Task LoadLessonsAsync(int groupId, string scope)
+    private async Task LoadLessonsAsync(int groupId, string scope, DateTime? onDate = null)
     {
         _groupId = groupId;
         _scope = scope;
-        var resp = await KioskApi.GetLessonsAsync(groupId, scope);
+        _pickedDate = onDate;
+        var resp = await KioskApi.GetLessonsAsync(groupId, scope, onDate);
         var s = SessionStore.Current;
-        s.Lessons.Clear();
         if (resp is not null)
         {
-            foreach (var l in resp.Lessons) s.Lessons.Add(l);
+            s.SetLessons(resp.Lessons);
             s.ScheduleGroupName = resp.Group?.Name ?? "";
             s.ScheduleEmptyReason = resp.EmptyReason;
         }
@@ -156,6 +180,7 @@ public partial class SchedulePage : UserControl
         {
             // Backend unreachable. Reuse the free-day copy rather than inventing
             // an error state: the visitor's next move is the same either way.
+            s.SetLessons(Array.Empty<LessonDto>());
             s.ScheduleEmptyReason = "no_lessons_that_day";
         }
         s.ScheduleScope = scope;
@@ -171,32 +196,81 @@ public partial class SchedulePage : UserControl
         catch (Exception ex) { Console.Error.WriteLine($"[schedule] groups: {ex.Message}"); }
     }
 
+    /// <summary>Client-side filter over the loaded faculty. A faculty can hold
+    /// several hundred groups and scrolling to "301-B" past every first-year
+    /// group is the slowest part of the touch path.</summary>
+    private void OnGroupFilterChanged(object? sender, TextChangedEventArgs e)
+    {
+        var q = (GroupFilter.Text ?? "").Trim();
+        GroupList.ItemsSource = q.Length == 0
+            ? _allGroups
+            : _allGroups.Where(g =>
+                  g.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
+                  || g.Specialty.Contains(q, StringComparison.OrdinalIgnoreCase))
+              .ToList();
+    }
+
     private async void OnGroupClick(object? sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.Tag is not GroupDto g) return;
-        try { await LoadLessonsAsync(g.Id, "today"); }
+        try { await LoadLessonsAsync(g.Id, DefaultScope); }
         catch (Exception ex) { Console.Error.WriteLine($"[schedule] lessons: {ex.Message}"); }
     }
 
+    private async void OnScopeLast(object? sender, RoutedEventArgs e) => await Reload("last_taught_week");
     private async void OnScopeToday(object? sender, RoutedEventArgs e) => await Reload("today");
     private async void OnScopeTomorrow(object? sender, RoutedEventArgs e) => await Reload("tomorrow");
-    private async void OnScopeWeek(object? sender, RoutedEventArgs e) => await Reload("week");
-    private async void OnShowLastYear(object? sender, RoutedEventArgs e) => await Reload("last_taught_week");
 
-    private async Task Reload(string scope)
+    private async Task Reload(string scope, DateTime? onDate = null)
     {
         if (_groupId == 0) return;
-        try { await LoadLessonsAsync(_groupId, scope); }
+        try { await LoadLessonsAsync(_groupId, scope, onDate); }
         catch (Exception ex) { Console.Error.WriteLine($"[schedule] reload: {ex.Message}"); }
+    }
+
+    // ── Date picker ──────────────────────────────────────────────────────────
+
+    private void OnPickDate(object? sender, RoutedEventArgs e)
+    {
+        // Open on the day already being shown, so "next day" is one tap rather
+        // than navigating back from today across a summer's worth of months.
+        var anchor = _pickedDate
+            ?? SessionStore.Current.LessonDays.FirstOrDefault(d => d.Date != default)?.Date
+            ?? DateTime.Today;
+        DayCalendar.SelectedDate = anchor;
+        DayCalendar.DisplayDate = anchor;
+        DatePickerOverlay.IsVisible = true;
+    }
+
+    private void OnCancelDate(object? sender, RoutedEventArgs e) =>
+        DatePickerOverlay.IsVisible = false;
+
+    /// <summary>Selecting a day does not load it — the visitor still chooses
+    /// between that day and its whole week. Loading on selection would make the
+    /// week button unreachable.</summary>
+    private void OnCalendarDateChanged(object? sender, SelectionChangedEventArgs e) { }
+
+    private async void OnConfirmDate(object? sender, RoutedEventArgs e)
+    {
+        DatePickerOverlay.IsVisible = false;
+        if (DayCalendar.SelectedDate is { } d) await Reload("date", d);
+    }
+
+    private async void OnConfirmDateWeek(object? sender, RoutedEventArgs e)
+    {
+        DatePickerOverlay.IsVisible = false;
+        if (DayCalendar.SelectedDate is { } d) await Reload("week_of", d);
     }
 
     private async void OnBackToGroups(object? sender, RoutedEventArgs e)
     {
         var s = SessionStore.Current;
-        s.Lessons.Clear();
+        s.SetLessons(Array.Empty<LessonDto>());
         s.ScheduleEmptyReason = "";
         s.ScheduleGroupName = "";
         _groupId = 0;
+        _pickedDate = null;
+        _scope = DefaultScope;
         try
         {
             if (_facultyId != 0) await LoadGroupsAsync(_facultyId, Breadcrumb.Text ?? "");

@@ -11,7 +11,7 @@ the kiosk can show them without identifying anyone.
 """
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Header, Query
@@ -19,6 +19,7 @@ from fastapi import APIRouter, Header, Query
 from ..core import schedule as schedule_q
 from ..core.deps import DbSession
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
+from ..core.errors import NotFoundError
 from ..core.timezone import today_local
 
 router = APIRouter(prefix="/api/kiosk/schedule", tags=["kiosk:schedule"])
@@ -47,12 +48,18 @@ async def lessons(
     session: DbSession,
     group_id: int = Query(),
     scope: str = Query(default="today"),
+    on_date: date | None = Query(default=None, alias="date"),
     x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
 ) -> dict[str, Any]:
     await resolve_device_from_signed_request(session, x_kiosk_auth)
     if scope not in schedule_q.SCOPES:
         scope = "today"
-    day_from, day_to = await schedule_q.scope_range(session, group_id, scope)
+    # `date`/`week_of` are meaningless without a day to anchor them; rather than
+    # 422 on a malformed URL the kiosk built, fall back to the scope that needs
+    # no anchor. A visitor gets today's timetable instead of an error screen.
+    if scope in ("date", "week_of") and on_date is None:
+        scope = "today"
+    day_from, day_to = await schedule_q.scope_range(session, group_id, scope, on_date)
     items = await schedule_q.lessons_for_group(session, group_id, day_from, day_to)
 
     empty_reason = ""
@@ -82,3 +89,17 @@ async def directions(
     """Degree programmes for the applicants menu."""
     await resolve_device_from_signed_request(session, x_kiosk_auth)
     return {"items": await schedule_q.specialties(session)}
+
+
+@router.get("/directions/{specialty_id}")
+async def direction_detail(
+    specialty_id: int,
+    session: DbSession,
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> dict[str, Any]:
+    """One programme, including the subjects it is actually taught through."""
+    await resolve_device_from_signed_request(session, x_kiosk_auth)
+    item = await schedule_q.specialty_detail(session, specialty_id)
+    if item is None:
+        raise NotFoundError()
+    return {"item": item}

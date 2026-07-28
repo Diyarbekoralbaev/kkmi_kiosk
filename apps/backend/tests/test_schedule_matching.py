@@ -11,9 +11,11 @@ the wrong room and only finds out when the class does not happen.
 """
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
-from src.core.schedule import _normalize, _score
+from src.core.schedule import SCOPES, _normalize, _score, scope_range
 
 # Verbatim sample of real group names.
 CANDIDATES = [
@@ -123,3 +125,39 @@ def test_identical_name_scores_one() -> None:
 
 def test_empty_query_scores_zero() -> None:
     assert _score("", "120 A lesh ENG") == 0.0
+
+
+# ── Scope resolution ──────────────────────────────────────────────────────────
+#
+# `date` and `week_of` never touch the database, so they are pure enough to
+# test here. `last_taught_week` is not — it asks Postgres for the group's most
+# recent lesson — and is covered by the live smoke run in DEPLOY.md.
+
+
+async def test_date_scope_returns_exactly_that_day() -> None:
+    day = date(2026, 5, 11)
+    assert await scope_range(None, 1, "date", day) == (day, day)  # type: ignore[arg-type]
+
+
+async def test_week_of_snaps_to_the_monday_of_that_week() -> None:
+    """The kiosk's date picker hands over whatever day was tapped; a visitor
+    who picks Thursday and asks for the week means Mon–Sun around it."""
+    thursday = date(2026, 5, 14)
+    assert await scope_range(None, 1, "week_of", thursday) == (  # type: ignore[arg-type]
+        date(2026, 5, 11),
+        date(2026, 5, 17),
+    )
+
+
+async def test_week_of_is_stable_when_the_anchor_is_already_monday() -> None:
+    monday = date(2026, 5, 11)
+    assert await scope_range(None, 1, "week_of", monday) == (  # type: ignore[arg-type]
+        monday,
+        date(2026, 5, 17),
+    )
+
+
+def test_picker_scopes_are_declared() -> None:
+    """The endpoint validates against SCOPES before dispatching; a scope the
+    kiosk sends but SCOPES omits silently degrades to "today"."""
+    assert {"date", "week_of", "last_taught_week"} <= set(SCOPES)

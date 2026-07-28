@@ -19,12 +19,14 @@ from .api import kiosk_applications as kiosk_applications_router
 from .api import kiosk_auth as kiosk_auth_router
 from .api import kiosk_diag as kiosk_diag_router
 from .api import kiosk_enrollment as kiosk_enrollment_router
+from .api import kiosk_library as kiosk_library_router
 from .api import kiosk_reception as kiosk_reception_router
 from .api import kiosk_schedule as kiosk_schedule_router
 from .api import kiosk_updates as kiosk_updates_router
 from .api import kiosk_ws as kiosk_ws_router
 from .api.gov import applications as gov_applications_router
 from .api.gov import appointments as gov_appointments_router
+from .api.gov import books as gov_books_router
 from .api.gov import categories as gov_categories_router
 from .api.gov import dashboard as gov_dashboard_router
 from .api.gov import dashboard_monthly as gov_dashboard_monthly_router
@@ -136,10 +138,12 @@ def create_app() -> FastAPI:
     app.include_router(gov_officials_router.router)
     app.include_router(gov_hemis_router.router)
     app.include_router(gov_staff_router.router)
+    app.include_router(gov_books_router.router)
     app.include_router(kiosk_auth_router.router)
     app.include_router(kiosk_enrollment_router.router)
     app.include_router(kiosk_applications_router.router)
     app.include_router(kiosk_schedule_router.router)
+    app.include_router(kiosk_library_router.router)
     app.include_router(kiosk_reception_router.router)
     app.include_router(kiosk_diag_router.router)
     app.include_router(kiosk_updates_router.router)

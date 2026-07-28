@@ -9,11 +9,12 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..ai.tools import MENU_TOOLS
 from ..domain.ai_config import SystemAiDefaults
+from ..domain.library import LibraryBook
 from ..domain.organization import Organization
 
 logger = structlog.get_logger(__name__)
@@ -196,13 +197,25 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
     {
         "section_key": "focus_library",
         "content": (
-            "## This session: AI Library\n"
-            "The library catalogue is not connected to this kiosk yet, so you "
-            "have NO book data at all — no titles, no authors, no shelf "
-            "numbers. Do not answer from memory even if you recognise a book.\n\n"
-            "Say once, plainly, that the library service is being prepared and "
-            "that the library staff can help in person today. Then offer the "
-            "other menus on the home screen."
+            "## This session: AI Kutubxona (library)\n"
+            "The visitor is asking about books. You have the institute "
+            "library's own catalogue through two tools.\n\n"
+            "1) A specific book, author or subject → find_book.\n"
+            "2) Browsing («what do you have?») → show_books with no section to "
+            "list the shelf sections, then show_books with one section.\n\n"
+            "THE CATALOGUE IS THE ONLY THING YOU KNOW ABOUT BOOKS. You will "
+            "recognise most of these titles and you know a great deal about "
+            "them from elsewhere — none of that counts here. If find_book "
+            "returns nothing, the institute does not have it, however famous "
+            "the book is. Never describe the contents of a book the search did "
+            "not return, and never state an author, year or shelf that did not "
+            "come back in a tool result.\n\n"
+            "Fields come back empty while the librarians are still filling the "
+            "cards in. An empty `shelf` means the location is not recorded — "
+            "say that and send them to the reading-room desk. Same for a "
+            "missing year or publisher. Never fill a gap yourself.\n\n"
+            "You cannot lend, reserve or hold a book: the kiosk does not know "
+            "who the visitor is. Say where it is and let them fetch it."
         ),
         "order": 11,
     },
@@ -385,6 +398,213 @@ async def clone_defaults_into_org(
     await ensure_system_ai_defaults(session)
 
 
+# Starter catalogue for AI Kutubxona.
+#
+# These are the standard texts a Central Asian medical faculty teaches from, so
+# the menu has something real to answer about on day one. Title, authors,
+# publisher and subject are stable facts about each work. `isbn`, `shelf` and
+# `year` are deliberately LEFT EMPTY: an ISBN is a checksummed identifier that
+# points at one specific printing, a shelf code is internal to this library, and
+# editions differ — inventing any of them would send a student to the wrong
+# shelf while looking authoritative. The librarian fills those in through the
+# gov panel, which is where the rest of the catalogue gets typed anyway.
+#
+# Karakalpak- and Uzbek-language holdings are not seeded here for the same
+# reason: their editions cannot be verified from outside the institute.
+STARTER_BOOKS: list[dict[str, Any]] = [
+    {
+        "title": "Анатомия человека",
+        "authors": "М.Р. Сапин, Г.Л. Билич",
+        "publisher": "ГЭОТАР-Медиа",
+        "language": "ru",
+        "section": "anatomy",
+        "description": (
+            "Базовый учебник по анатомии человека для студентов лечебного и "
+            "педиатрического факультетов. Систематическое описание органов и "
+            "систем."
+        ),
+    },
+    {
+        "title": "Анатомия человека",
+        "authors": "М.Г. Привес, Н.К. Лысенков, В.И. Бушкович",
+        "publisher": "СПбМАПО",
+        "language": "ru",
+        "section": "anatomy",
+        "description": (
+            "Классический курс анатомии с функциональным и прикладным "
+            "изложением материала."
+        ),
+    },
+    {
+        "title": "Gray's Anatomy for Students",
+        "authors": "R.L. Drake, A.W. Vogl, A.W.M. Mitchell",
+        "publisher": "Elsevier",
+        "language": "en",
+        "section": "anatomy",
+        "description": (
+            "Clinically oriented anatomy textbook for English-medium groups, "
+            "organised by body region."
+        ),
+    },
+    {
+        "title": "Медицинская физиология",
+        "authors": "А.К. Гайтон, Дж.Э. Холл",
+        "publisher": "Логосфера",
+        "language": "ru",
+        "section": "physiology",
+        "description": (
+            "Русское издание классического курса физиологии: механизмы работы "
+            "систем организма и их регуляция."
+        ),
+    },
+    {
+        "title": "Guyton and Hall Textbook of Medical Physiology",
+        "authors": "J.E. Hall, M.E. Hall",
+        "publisher": "Elsevier",
+        "language": "en",
+        "section": "physiology",
+        "description": (
+            "The standard English-language physiology reference, covering "
+            "cellular through systems-level function."
+        ),
+    },
+    {
+        "title": "Биологическая химия",
+        "authors": "Т.Т. Березов, Б.Ф. Коровкин",
+        "publisher": "Медицина",
+        "language": "ru",
+        "section": "biochemistry",
+        "description": (
+            "Учебник биохимии для медицинских вузов: строение и обмен белков, "
+            "углеводов, липидов, ферменты и витамины."
+        ),
+    },
+    {
+        "title": "Фармакология",
+        "authors": "Д.А. Харкевич",
+        "publisher": "ГЭОТАР-Медиа",
+        "language": "ru",
+        "section": "pharmacology",
+        "description": (
+            "Общая и частная фармакология: классификация препаратов, механизмы "
+            "действия, показания и побочные эффекты."
+        ),
+    },
+    {
+        "title": "Патологическая анатомия",
+        "authors": "А.И. Струков, В.В. Серов",
+        "publisher": "ГЭОТАР-Медиа",
+        "language": "ru",
+        "section": "pathology",
+        "description": (
+            "Общий и частный курс патологической анатомии: морфология "
+            "патологических процессов и болезней."
+        ),
+    },
+    {
+        "title": "Robbins & Cotran Pathologic Basis of Disease",
+        "authors": "V. Kumar, A.K. Abbas, J.C. Aster",
+        "publisher": "Elsevier",
+        "language": "en",
+        "section": "pathology",
+        "description": (
+            "Reference pathology text linking cellular mechanisms of disease to "
+            "clinical presentation."
+        ),
+    },
+    {
+        "title": "Медицинская микробиология",
+        "authors": "О.К. Поздеев",
+        "publisher": "ГЭОТАР-Медиа",
+        "language": "ru",
+        "section": "microbiology",
+        "description": (
+            "Морфология и физиология микроорганизмов, инфекционный процесс, "
+            "иммунитет и лабораторная диагностика."
+        ),
+    },
+    {
+        "title": "Внутренние болезни",
+        "authors": "В.И. Маколкин, С.И. Овчаренко, В.А. Сулимов",
+        "publisher": "ГЭОТАР-Медиа",
+        "language": "ru",
+        "section": "internal_medicine",
+        "description": (
+            "Курс внутренних болезней: заболевания органов дыхания, "
+            "кровообращения, пищеварения, почек и системы крови."
+        ),
+    },
+    {
+        "title": "Хирургические болезни",
+        "authors": "М.И. Кузин",
+        "publisher": "ГЭОТАР-Медиа",
+        "language": "ru",
+        "section": "surgery",
+        "description": (
+            "Учебник по хирургическим болезням: диагностика и лечение основных "
+            "хирургических состояний."
+        ),
+    },
+    {
+        "title": "Детские болезни",
+        "authors": "Н.П. Шабалов",
+        "publisher": "Питер",
+        "language": "ru",
+        "section": "pediatrics",
+        "description": (
+            "Педиатрия от периода новорождённости до подросткового возраста: "
+            "развитие, вскармливание и основные заболевания."
+        ),
+    },
+    {
+        "title": "Акушерство",
+        "authors": "Э.К. Айламазян",
+        "publisher": "ГЭОТАР-Медиа",
+        "language": "ru",
+        "section": "obstetrics",
+        "description": (
+            "Физиологическое и патологическое течение беременности, родов и "
+            "послеродового периода."
+        ),
+    },
+    {
+        "title": "Терапевтическая стоматология",
+        "authors": "Е.В. Боровский",
+        "publisher": "МИА",
+        "language": "ru",
+        "section": "dentistry",
+        "description": (
+            "Кариес, болезни пульпы и периодонта, заболевания слизистой "
+            "оболочки полости рта."
+        ),
+    },
+]
+
+
+async def ensure_library_seed(
+    session: AsyncSession, org: Organization
+) -> int:
+    """Put the starter catalogue in front of an org that has none.
+
+    Only ever runs on an EMPTY catalogue. Once a librarian has entered a single
+    book the seed steps aside permanently — re-adding these on every startup
+    would fight the person maintaining the shelf, and matching-and-skipping
+    per title would resurrect books they deliberately withdrew.
+    """
+    count = (
+        await session.execute(
+            select(func.count(LibraryBook.id)).where(LibraryBook.org_id == org.id)
+        )
+    ).scalar_one()
+    if count:
+        return 0
+    for entry in STARTER_BOOKS:
+        session.add(LibraryBook(org_id=org.id, **entry))
+    await session.flush()
+    logger.info("seed_library_books_created", count=len(STARTER_BOOKS))
+    return len(STARTER_BOOKS)
+
+
 async def ensure_default_institute_org(session: AsyncSession) -> Organization | None:
     """Create the default KKMI org if no orgs exist yet."""
     existing = (
@@ -413,5 +633,6 @@ async def ensure_default_institute_org(session: AsyncSession) -> Organization | 
     session.add(org)
     await session.flush()
     await clone_defaults_into_org(session, org)
+    await ensure_library_seed(session, org)
     logger.info("seed_default_institute_org_created", org_id=str(org.id))
     return org
