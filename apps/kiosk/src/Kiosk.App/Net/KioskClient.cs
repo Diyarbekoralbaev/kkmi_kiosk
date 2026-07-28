@@ -39,6 +39,11 @@ public sealed class KioskClient : IAsyncDisposable
     /// URL; the backend uses it to pick the prompt's focus block and the tool
     /// set the agent may call.</summary>
     private readonly string _menu;
+    /// <summary>UI language at connect time, sent as `?lang=`. It has to be on
+    /// the URL rather than a message after connect: the agent speaks first, so
+    /// anything sent later arrives after it has already greeted the visitor in
+    /// the wrong language.</summary>
+    private readonly string _lang;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private CancellationTokenSource? _cts;
     private Task? _runTask;
@@ -69,11 +74,12 @@ public sealed class KioskClient : IAsyncDisposable
     /// "this device needs to be re-enrolled" UI instead of a transient offline overlay.</summary>
     public event Action? Unauthorized;
 
-    public KioskClient(string backendUrl, string deviceId, string menu)
+    public KioskClient(string backendUrl, string deviceId, string menu, string lang)
     {
         _backendUrl = backendUrl;
         _deviceId = deviceId;
         _menu = menu;
+        _lang = lang;
     }
 
     public void Start()
@@ -132,11 +138,15 @@ public sealed class KioskClient : IAsyncDisposable
     /// using. The backend pins this to the session and uses it at receipt-
     /// render time so the printed talon matches the language the visitor
     /// interacted with. Send once on connect + whenever language changes.
-    /// `language` must be "kk", "uz", or "ru" — the backend's allow-list.</summary>
+    /// `language` must be "uz", "kk", "ru" or "en" — the backend's allow-list.
+/// The backend also re-pins the agent's speaking language on receipt.</summary>
     public Task<bool> SendUiLanguageAsync(string language, CancellationToken ct = default)
     {
+        // "en" was missing from this list, so every English session was
+        // silently rewritten to Karakalpak. Default is uz, matching the kiosk's
+        // own default language.
         var safe = (language ?? "").Trim().ToLowerInvariant();
-        if (safe != "kk" && safe != "uz" && safe != "ru") safe = "kk";
+        if (safe != "kk" && safe != "uz" && safe != "ru" && safe != "en") safe = "uz";
         var json = "{\"type\":\"ui_language\",\"language\":\"" + safe + "\"}";
         return SendJsonAsync(json, ct);
     }
@@ -200,7 +210,9 @@ public sealed class KioskClient : IAsyncDisposable
                 var wsUri = new Uri(
                     HttpToWs(_backendUrl)
                     + "/ws/kiosk/voice?menu="
-                    + Uri.EscapeDataString(_menu));
+                    + Uri.EscapeDataString(_menu)
+                    + "&lang="
+                    + Uri.EscapeDataString(_lang));
                 await ws.ConnectAsync(wsUri, ct).ConfigureAwait(false);
 
                 _activeWs = ws;

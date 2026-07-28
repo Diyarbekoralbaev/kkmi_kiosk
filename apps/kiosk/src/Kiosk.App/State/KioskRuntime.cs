@@ -105,7 +105,9 @@ public sealed class KioskRuntime : IAsyncDisposable
 
         _capture = new AudioCapture();
 
-        _ws = new KioskClient(creds.BackendUrl, creds.DeviceId, menu);
+        _ws = new KioskClient(
+            creds.BackendUrl, creds.DeviceId, menu,
+            LocalizationService.LangCode(LocalizationService.Current));
         WireWsEvents(_ws);
         _ws.Start();
 

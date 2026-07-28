@@ -161,8 +161,11 @@ class Program
         // backend declares — `--ws-test 20 jadval` is how you smoke-test the
         // timetable flow end to end.
         var menu = args.Length >= 3 ? args[2] : "maslahatchi";
+        // Fourth arg picks the language, so `--ws-test 20 jadval kk` smoke-tests
+        // the Karakalpak path without touching the UI.
+        var lang = args.Length >= 4 ? args[3] : "uz";
 
-        await using var client = new KioskClient(creds.BackendUrl, creds.DeviceId, menu);
+        await using var client = new KioskClient(creds.BackendUrl, creds.DeviceId, menu, lang);
         var audioFrames = 0;
         var audioBytes = 0L;
         var transcripts = 0;

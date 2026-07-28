@@ -48,7 +48,12 @@ from ..ai.gemini_live import (
     Transcript,
 )
 from ..ai.kaa_voice import KaaVoiceSession
-from ..ai.prompt_builder import load_agent_config, normalize_menu
+from ..ai.prompt_builder import (
+    format_language_block,
+    load_agent_config,
+    normalize_lang,
+    normalize_menu,
+)
 from ..ai.tools import MENUS
 from ..core import schedule as schedule_q
 from ..core.config import get_settings
@@ -90,8 +95,13 @@ async def kiosk_voice(ws: WebSocket) -> None:
     await ws.accept()
     call_id = f"kiosk-{uuid.uuid4().hex[:12]}"
     menu = normalize_menu(ws.query_params.get("menu"))
+    # The language the visitor picked on the kiosk. It has to arrive at connect
+    # time, not later: the agent speaks FIRST (see the [START] turn below), so
+    # by the time a mid-session message could tell it, it has already greeted
+    # the visitor in the wrong language.
+    lang = normalize_lang(ws.query_params.get("lang"))
     structlog.contextvars.bind_contextvars(
-        call_id=call_id, device_id=str(device.id), menu=menu
+        call_id=call_id, device_id=str(device.id), menu=menu, lang=lang
     )
     logger.info("kiosk_ws_connected")
 
@@ -102,7 +112,7 @@ async def kiosk_voice(ws: WebSocket) -> None:
     await registry.register(device_id, ws)
 
     async with AsyncSessionLocal() as session:
-        agent_config = await load_agent_config(session, org_id, menu)
+        agent_config = await load_agent_config(session, org_id, menu, lang)
 
     settings = get_settings()
     _use_kaa = settings.voice_backend == "kaa" and bool(settings.kaa_ws_url)
@@ -589,10 +599,29 @@ async def kiosk_voice(ws: WebSocket) -> None:
                     payload = json.loads(text)
                 except json.JSONDecodeError:
                     continue
-                if str(payload.get("type", "")) == "user_text":
+                msg_type = str(payload.get("type", ""))
+                if msg_type == "user_text":
                     user_text = str(payload.get("text", "")).strip()
                     if user_text:
                         await gemini.send_text(user_text)
+                elif msg_type == "ui_language":
+                    # The visitor tapped a different language mid-session. The
+                    # system prompt is fixed once the provider session opens, so
+                    # the switch is delivered as a side-channel instruction
+                    # rather than a reconnect — reconnecting would drop the
+                    # conversation and re-greet from scratch.
+                    #
+                    # Previously this envelope was received and silently
+                    # dropped: the kiosk sent it on every language change and
+                    # the agent never heard about it, so the buttons had no
+                    # effect on speech at all.
+                    new_lang = normalize_lang(payload.get("language"))
+                    logger.info("ui_language_changed", new_lang=new_lang)
+                    await gemini.send_text(
+                        f"[SYSTEM] {format_language_block(new_lang)} "
+                        "Continue the conversation in that language from now on. "
+                        "Do not greet again."
+                    )
     except WebSocketDisconnect:
         logger.info("kiosk_ws_disconnected")
     except Exception:

@@ -53,12 +53,53 @@ class AgentConfig:
     response_modalities: str
     enabled_tools: list[str]
     menu: str
+    lang: str
 
 
 def normalize_menu(raw: str | None) -> str:
     """Coerce whatever arrived on the WS URL to a known menu."""
     menu = (raw or "").strip().lower()
     return menu if menu in MENUS else DEFAULT_MENU
+
+
+# How each UI language must be named to the model. Karakalpak is spelled out as
+# LATIN because the model otherwise defaults to Cyrillic, and because the
+# institute's own records are Latin.
+_LANG_NAMES = {
+    "uz": "Uzbek (Latin script)",
+    "kk": "Karakalpak (LATIN script — Joqarı, hám, bólim; never Cyrillic)",
+    "ru": "Russian",
+    "en": "English",
+}
+DEFAULT_LANG = "uz"
+
+
+def normalize_lang(raw: str | None) -> str:
+    lang = (raw or "").strip().lower()
+    return lang if lang in _LANG_NAMES else DEFAULT_LANG
+
+
+def format_language_block(lang: str) -> str:
+    """Pin the session to the language the visitor picked on the kiosk.
+
+    Without this the agent has nothing to go on for its opening line — it
+    speaks first, before hearing anyone — so it fell back to the prompt's
+    "Uzbek when unsure" and greeted every visitor in Uzbek regardless of the
+    language button they had just pressed.
+
+    Detecting the language from speech is not a substitute: Karakalpak and
+    Uzbek are close enough that the recogniser routinely labels Karakalpak
+    audio as Uzbek, so a visitor speaking Karakalpak kept getting Uzbek back.
+    The button press is an explicit statement of intent; use it.
+    """
+    name = _LANG_NAMES[normalize_lang(lang)]
+    return (
+        "===== SESSION LANGUAGE =====\n"
+        f"The visitor selected {name} on the kiosk. Greet and answer in that "
+        "language, including every card you put on screen.\n"
+        "If they then speak a different language, switch to theirs — a spoken "
+        "language always outranks the button."
+    )
 
 
 def _format_today_block(now: datetime | None = None) -> str:
@@ -116,10 +157,14 @@ def _format_org_contact_block(org: Organization) -> str:
 
 
 async def load_agent_config(
-    session: AsyncSession, org_id: uuid.UUID, menu: str | None = None
+    session: AsyncSession,
+    org_id: uuid.UUID,
+    menu: str | None = None,
+    lang: str | None = None,
 ) -> AgentConfig:
     defaults = await ensure_system_ai_defaults(session)
     resolved_menu = normalize_menu(menu)
+    resolved_lang = normalize_lang(lang)
 
     by_key = {
         str(s.get("section_key", "")): s for s in (defaults.default_sections or [])
@@ -138,7 +183,7 @@ async def load_agent_config(
             "prompt_sections_missing", menu=resolved_menu, missing=missing
         )
 
-    pieces: list[str] = [_format_today_block()]
+    pieces: list[str] = [_format_today_block(), format_language_block(resolved_lang)]
     pieces.extend(
         content for s in chosen if (content := str(s.get("content", "")).strip())
     )
@@ -171,4 +216,5 @@ async def load_agent_config(
         response_modalities=defaults.response_modalities,
         enabled_tools=enabled_tools,
         menu=resolved_menu,
+        lang=resolved_lang,
     )
