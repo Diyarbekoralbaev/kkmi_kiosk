@@ -12,9 +12,14 @@
 #
 # Re-run is idempotent — checks before creating each piece.
 #
-# Usage (PowerShell, Administrator):
-#   Set-ExecutionPolicy -Scope Process Bypass
-#   .\install-windows.ps1 -ExePath "C:\Program Files\Kiosk\Kiosk.App.exe"
+# DO NOT RUN THIS DIRECTLY. Use install-windows.bat next to it — right-click ->
+# "Run as administrator". Windows 10's default ExecutionPolicy refuses unsigned
+# .ps1 files, so invoking this by hand fails on a fresh machine; the .bat passes
+# -ExecutionPolicy Bypass for its own process and adds a confirmation prompt,
+# because this locks the machine into kiosk mode.
+#
+# It stays PowerShell because Assigned Access is configured through the
+# Set-AssignedAccess cmdlet, which has no cmd equivalent.
 
 param(
     [Parameter(Mandatory=$true)]
