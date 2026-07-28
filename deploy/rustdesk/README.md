@@ -15,20 +15,37 @@ Three things have to be true, and any one alone is not enough:
 
 ## Usage
 
-From an **elevated** PowerShell on the kiosk:
+**Use the .bat.** Right-click `setup-unattended.bat` → *Run as administrator*:
 
-```powershell
-# First time (RustDesk not yet installed)
-.\setup-unattended.ps1 -Password 'a-long-passphrase' -Installer .\rustdesk-1.4.4-x86_64.exe
-
-# Already installed
-.\setup-unattended.ps1 -Password 'a-long-passphrase'
-
-# Look but don't touch: control allowed, file transfer blocked
-.\setup-unattended.ps1 -Password 'a-long-passphrase' -AllowFileTransfer $false
+```bat
+setup-unattended.bat "a-long-passphrase"
+setup-unattended.bat "a-long-passphrase" "C:\path\to\rustdesk-1.4.4-x86_64.exe"
 ```
 
-The script prints the RustDesk ID and verifies each option actually stuck.
+Windows 10's default ExecutionPolicy refuses to run unsigned `.ps1` files, so
+the PowerShell version turns a two-minute job into a policy fight on a machine
+somebody has to physically walk to. `cmd` has no such gate. The `.ps1` is kept
+for anyone who already runs a relaxed policy, or wants `-AllowFileTransfer
+$false`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup-unattended.ps1 -Password 'a-long-passphrase'
+```
+
+Either one prints the RustDesk ID and verifies each option actually stuck.
+
+### Or just four commands
+
+If RustDesk is already installed, skip both scripts. Elevated **cmd**:
+
+```bat
+cd /d "C:\Program Files\RustDesk"
+rustdesk.exe --password "a-long-passphrase"
+rustdesk.exe --option verification-method use-permanent-password
+rustdesk.exe --option approve-mode password
+rustdesk.exe --option enable-file-transfer Y
+rustdesk.exe --get-id
+```
 
 ## What it sets
 
