@@ -37,6 +37,10 @@ def _book_dict(b: LibraryBook, locale: str = "kk") -> dict[str, Any]:
         "shelf": b.shelf,
         "description": b.description,
         "available": b.available,
+        # Whether a jacket exists, not the bytes. The kiosk uses this to decide
+        # between fetching the image and drawing its own designed cover, and it
+        # keeps a browse listing small.
+        "has_cover": b.cover is not None,
     }
 
 

@@ -8,25 +8,28 @@
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1224"
              x:Class="Kiosk.App.Pages.SchedulePage"
              x:DataType="state:SessionStore">
-    <!-- Timetables are per GROUP. The kiosk identifies nobody, so there is no
-         "my schedule" — the visitor either taps faculty → group, or says the
-         group name and the agent confirms the match before anything renders.
-         Both paths land on the same lesson list below.
+    <!-- Course → group → week. Timetables are per GROUP; the kiosk identifies
+         nobody, so there is no "my schedule".
 
-         Only one of the four panels is visible at a time; the code-behind owns
-         which. Voice can jump straight to Lessons by pushing show_schedule.
+         The week is the unit of navigation, not the day: the strip across the
+         top carries every day's lesson count, so a free Wednesday is visible
+         without tapping it, and picking a day is one touch rather than a
+         calendar. The calendar stays for dates outside this week.
 
-         Lessons render as DAYS, not as one flat list: a week is ~35 rows and
-         without headers there is no way to see where Tuesday ends. -->
+         Below it the day sits on a TIME RAIL — a continuous line with a
+         numbered node per class, the current one marked in the kiosk's only
+         warm colour. A day is a sequence in time, and the question a student
+         has standing here is "which one am I at"; a list of equal rows cannot
+         answer that. -->
     <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
-            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
                 <TextBlock Text="{DynamicResource SchedulePageTitle}"
                            FontSize="{StaticResource KioskFontH1}" FontWeight="Bold"
-                           Foreground="{StaticResource KioskPrimary}"
+                           Foreground="{StaticResource KioskInk}"
                            TextWrapping="Wrap" MaxWidth="640" />
-                <TextBlock x:Name="Breadcrumb" FontSize="20"
+                <TextBlock x:Name="Breadcrumb" FontSize="21"
                            Foreground="{StaticResource KioskTextMuted}"
                            TextWrapping="Wrap" MaxWidth="640" />
             </StackPanel>
@@ -35,21 +38,33 @@
 
         <Grid Grid.Row="1" Margin="0,28,0,0">
 
-            <!-- ① Faculty picker -->
-            <ScrollViewer x:Name="FacultyPanel">
-                <ItemsControl x:Name="FacultyList">
+            <!-- ① Course. Bachelor only — six years of medicine, five of
+                 stomatology. Residency and master's are numbered on another
+                 scheme entirely and would produce nonsense courses. -->
+            <ScrollViewer x:Name="CoursePanel">
+                <ItemsControl x:Name="CourseList">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="net:FacultyDto">
-                            <Button Click="OnFacultyClick" Tag="{Binding}" Classes="row">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="{Binding Name}"
-                                               FontSize="{StaticResource KioskFontH4}"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource KioskText}"
-                                               VerticalAlignment="Center" TextWrapping="Wrap" />
-                                    <TextBlock Grid.Column="1" Text="›" FontSize="34" FontWeight="Bold"
+                        <DataTemplate x:DataType="net:CourseDto">
+                            <Button Click="OnCourseClick" Tag="{Binding}" Classes="course">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="22">
+                                    <TextBlock Grid.Column="0" Text="{Binding Course}"
+                                               FontSize="72" FontWeight="Bold"
                                                Foreground="{StaticResource KioskPrimary}"
                                                VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Spacing="2"
+                                                VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource ScheduleCourseWord}"
+                                                   FontSize="24" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource KioskInk}" />
+                                        <TextBlock Text="{Binding GroupCount}"
+                                                   FontSize="18"
+                                                   Foreground="{StaticResource KioskTextMuted}" />
+                                    </StackPanel>
                                 </Grid>
                             </Button>
                         </DataTemplate>
@@ -57,7 +72,7 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- ② Group picker. ~1000 groups across 4 faculties, so this scrolls. -->
+            <!-- ② Groups on that course -->
             <Grid x:Name="GroupPanel" IsVisible="False" RowDefinitions="Auto,*">
                 <Border Grid.Row="0" Classes="searchbox" Margin="0,0,0,16">
                     <Grid ColumnDefinitions="Auto,*">
@@ -75,12 +90,12 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="net:GroupDto">
                                 <Button Click="OnGroupClick" Tag="{Binding}" Classes="row">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}"
                                                        FontSize="{StaticResource KioskFontH4}"
                                                        FontWeight="SemiBold"
-                                                       Foreground="{StaticResource KioskText}"
+                                                       Foreground="{StaticResource KioskInk}"
                                                        TextWrapping="Wrap" />
                                             <TextBlock Text="{Binding Specialty}"
                                                        FontSize="{StaticResource KioskFontCaption}"
@@ -101,13 +116,12 @@
                 </ScrollViewer>
             </Grid>
 
-            <!-- ③ Voice candidates — shown when find_group returned more than
-                 one plausible match and the visitor should pick. -->
+            <!-- ③ Voice candidates — find_group returned several matches. -->
             <ScrollViewer x:Name="ChoicesPanel" IsVisible="False">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{DynamicResource ScheduleWhichGroup}"
                                FontSize="{StaticResource KioskFontH3}" FontWeight="SemiBold"
-                               Foreground="{StaticResource KioskText}" TextWrapping="Wrap" />
+                               Foreground="{StaticResource KioskInk}" TextWrapping="Wrap" />
                     <ItemsControl ItemsSource="{Binding GroupChoices}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="net:GroupDto">
@@ -116,7 +130,7 @@
                                         <TextBlock Text="{Binding Name}"
                                                    FontSize="{StaticResource KioskFontH4}"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{StaticResource KioskText}"
+                                                   Foreground="{StaticResource KioskInk}"
                                                    TextWrapping="Wrap" />
                                         <TextBlock Text="{Binding Specialty}"
                                                    FontSize="{StaticResource KioskFontCaption}"
@@ -130,111 +144,140 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- ④ Lessons -->
+            <!-- ④ The week -->
             <Grid x:Name="LessonPanel" IsVisible="False" RowDefinitions="Auto,Auto,*,Auto">
 
-                <!-- Which span is on screen. Load defaults to the group's last
-                     taught week, so without this line a visitor would read a
-                     May timetable believing it was this week's. -->
-                <Border Grid.Row="0" Classes="rangebar" Margin="0,0,0,16">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Grid.Column="0" Text="{Binding ScheduleRangeLabel}"
-                                   FontSize="22" FontWeight="SemiBold"
-                                   Foreground="{StaticResource KioskPrimary}"
-                                   VerticalAlignment="Center" TextWrapping="Wrap" />
-                        <TextBlock Grid.Column="1" x:Name="RangeNote" FontSize="17"
-                                   Foreground="{StaticResource KioskTextMuted}"
-                                   VerticalAlignment="Center" />
+                <!-- Week strip: navigation and date picker in one. -->
+                <Border Grid.Row="0" Classes="strip" Margin="0,0,0,18">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0" Click="OnPrevWeek" Classes="step"
+                                    Content="‹" />
+                            <TextBlock Grid.Column="1" Text="{Binding ScheduleRangeLabel}"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{StaticResource KioskInk}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Button Grid.Column="2" Click="OnNextWeek" Classes="step"
+                                    Content="›" />
+                        </Grid>
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding WeekDays}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="1" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="state:WeekDayCell">
+                                    <Button Click="OnDayClick" Tag="{Binding}" Classes="day"
+                                            Classes.selected="{Binding IsSelected}"
+                                            Classes.today="{Binding IsToday}"
+                                            Classes.empty="{Binding !HasLessons}">
+                                        <StackPanel Spacing="3" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding ShortName}"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding DayNumber}"
+                                                       FontSize="26" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding Count}"
+                                                       FontSize="13"
+                                                       HorizontalAlignment="Center"
+                                                       IsVisible="{Binding HasLessons}" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </Grid>
                 </Border>
 
-                <!-- Scope chips + date picker -->
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,20">
-                    <Button x:Name="ScopeLast" Click="OnScopeLast" Classes="scope"
-                            Content="{DynamicResource ScheduleScopeLastWeek}" />
-                    <Button x:Name="ScopeToday" Click="OnScopeToday" Classes="scope"
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12"
+                            Margin="0,0,0,18">
+                    <Button Click="OnToday" Classes="step wide"
                             Content="{DynamicResource ScheduleScopeToday}" />
-                    <Button x:Name="ScopeTomorrow" Click="OnScopeTomorrow" Classes="scope"
-                            Content="{DynamicResource ScheduleScopeTomorrow}" />
-                    <Button x:Name="ScopeDate" Click="OnPickDate" Classes="scope"
+                    <Button Click="OnPickDate" Classes="step wide"
                             Content="{DynamicResource ScheduleScopeDate}" />
                 </StackPanel>
 
-                <!-- Days. Each header carries weekday + date + lesson count; the
-                     current day is tinted so it is findable at a glance. -->
+                <!-- The day, on its rail. -->
                 <ScrollViewer Grid.Row="2">
                     <ItemsControl ItemsSource="{Binding LessonDays}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="state:LessonDay">
-                                <StackPanel Margin="0,0,0,26">
-                                    <Border Classes="dayheader"
-                                            Classes.today="{Binding IsToday}">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                                            <TextBlock Grid.Column="0" Text="{Binding DayName}"
-                                                       FontSize="24" FontWeight="Bold"
-                                                       Foreground="{StaticResource KioskPrimary}" />
-                                            <TextBlock Grid.Column="1" Text="{Binding DateLabel}"
-                                                       FontSize="22"
-                                                       Foreground="{StaticResource KioskTextMuted}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{Binding Lessons.Count}"
-                                                       FontSize="20" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource KioskAccentDark}"
-                                                       VerticalAlignment="Center" />
-                                        </Grid>
-                                    </Border>
+                                <StackPanel Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal" Spacing="12"
+                                                Margin="4,0,0,14">
+                                        <TextBlock Text="{Binding DateLabel}"
+                                                   FontSize="26" FontWeight="Bold"
+                                                   Foreground="{StaticResource KioskInk}" />
+                                        <TextBlock Text="{Binding DayName}"
+                                                   FontSize="26"
+                                                   Foreground="{StaticResource KioskTextMuted}" />
+                                    </StackPanel>
 
-                                    <ItemsControl ItemsSource="{Binding Lessons}" Margin="0,10,0,0">
+                                    <ItemsControl ItemsSource="{Binding Rows}">
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="net:LessonDto">
-                                                <Border Classes="lesson">
-                                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                                          ColumnSpacing="18">
-                                                        <!-- Time first: it is what a student scans
-                                                             for, and fixed width keeps the column
-                                                             aligned all the way down. -->
-                                                        <StackPanel Grid.Column="0" Width="86"
-                                                                    VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Start}"
-                                                                       FontSize="26" FontWeight="Bold"
-                                                                       Foreground="{StaticResource KioskText}" />
-                                                            <TextBlock Text="{Binding End}"
-                                                                       FontSize="16"
-                                                                       Foreground="{StaticResource KioskTextMuted}" />
-                                                        </StackPanel>
-                                                        <!-- Accent rule ties the row to its time
-                                                             column without drawing a full border. -->
-                                                        <Border Grid.Column="1" Width="4"
-                                                                CornerRadius="2"
-                                                                Background="{StaticResource KioskAccent}" />
-                                                        <StackPanel Grid.Column="2" Spacing="5"
-                                                                    VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Subject}"
-                                                                       FontSize="{StaticResource KioskFontH4}"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{StaticResource KioskText}"
-                                                                       TextWrapping="Wrap" />
-                                                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <TextBlock Text="{Binding Teacher}"
-                                                                           FontSize="{StaticResource KioskFontCaption}"
-                                                                           Foreground="{StaticResource KioskTextMuted}"
-                                                                           TextWrapping="Wrap" />
-                                                                <TextBlock Text="{Binding Kind}"
-                                                                           FontSize="{StaticResource KioskFontCaptionSm}"
-                                                                           Foreground="{StaticResource KioskTextMuted}" />
-                                                            </StackPanel>
-                                                        </StackPanel>
-                                                        <Border Grid.Column="3"
-                                                                Background="{StaticResource KioskAccentTint}"
-                                                                CornerRadius="{StaticResource KioskRadiusChip}"
-                                                                Padding="16,8" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Room}" FontSize="19"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{StaticResource KioskAccentDark}" />
+                                            <DataTemplate x:DataType="state:LessonRow">
+                                                <Grid ColumnDefinitions="58,*" MinHeight="104">
+                                                    <!-- Rail: the line runs the
+                                                         full row height, so
+                                                         consecutive rows join
+                                                         into one continuous
+                                                         spine. -->
+                                                    <Grid Grid.Column="0">
+                                                        <Border Width="2" HorizontalAlignment="Center"
+                                                                Background="{StaticResource KioskBorder}" />
+                                                        <Border Width="40" Height="40" CornerRadius="20"
+                                                                VerticalAlignment="Top"
+                                                                HorizontalAlignment="Center"
+                                                                Classes="node"
+                                                                Classes.now="{Binding IsNow}"
+                                                                Classes.past="{Binding IsPast}">
+                                                            <TextBlock Text="{Binding Index}"
+                                                                       FontSize="17" FontWeight="Bold"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center" />
                                                         </Border>
                                                     </Grid>
-                                                </Border>
+
+                                                    <Border Grid.Column="1" Classes="lesson"
+                                                            Classes.now="{Binding IsNow}"
+                                                            Classes.past="{Binding IsPast}">
+                                                        <Grid ColumnDefinitions="94,*,Auto"
+                                                              ColumnSpacing="18">
+                                                            <StackPanel Grid.Column="0"
+                                                                        VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Lesson.Start}"
+                                                                           FontSize="27" FontWeight="Bold"
+                                                                           Foreground="{StaticResource KioskInk}" />
+                                                                <TextBlock Text="{Binding Lesson.End}"
+                                                                           FontSize="17"
+                                                                           Foreground="{StaticResource KioskTextMuted}" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="1" Spacing="5"
+                                                                        VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Lesson.Subject}"
+                                                                           FontSize="23" FontWeight="SemiBold"
+                                                                           Foreground="{StaticResource KioskInk}"
+                                                                           TextWrapping="Wrap" />
+                                                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                                                    <TextBlock Text="{Binding Lesson.Teacher}"
+                                                                               FontSize="16"
+                                                                               Foreground="{StaticResource KioskTextMuted}"
+                                                                               TextWrapping="Wrap" />
+                                                                    <TextBlock Text="{Binding Lesson.Kind}"
+                                                                               FontSize="15"
+                                                                               Foreground="{StaticResource KioskTextMuted}" />
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                            <Border Grid.Column="2" Classes="room"
+                                                                    VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Lesson.Room}"
+                                                                           FontSize="20" FontWeight="Bold" />
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -244,42 +287,33 @@
                     </ItemsControl>
                 </ScrollViewer>
 
-                <!-- Empty state. "Free day" and "the year isn't published yet"
-                     look identical but mean opposite things — over the summer
-                     the second is normal and must not read as a broken kiosk,
-                     so it gets its own message plus a way to still see data. -->
+                <!-- Empty state. Three reasons need three sentences: a free
+                     day, a group HEMIS has no timetable for at all, and the
+                     summer gap before next year loads. -->
                 <Border Grid.Row="2" x:Name="EmptyState" IsVisible="False"
                         Background="{StaticResource KioskCard}"
                         BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
                         CornerRadius="{StaticResource KioskRadiusCard}"
                         Padding="48" VerticalAlignment="Top">
-                    <StackPanel Spacing="20" HorizontalAlignment="Center">
+                    <StackPanel Spacing="18" HorizontalAlignment="Center">
                         <TextBlock x:Name="EmptyTitle"
                                    FontSize="{StaticResource KioskFontH3}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource KioskText}"
-                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
-                        <TextBlock x:Name="EmptyBody"
-                                   FontSize="20"
+                                   Foreground="{StaticResource KioskInk}"
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="620" />
+                        <TextBlock x:Name="EmptyBody" FontSize="20"
                                    Foreground="{StaticResource KioskTextMuted}"
-                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="640" />
-                        <Button x:Name="LastYearButton" Click="OnScopeLast"
-                                IsVisible="False" Classes="scope primary"
-                                HorizontalAlignment="Center"
-                                Content="{DynamicResource ScheduleShowLastYear}" />
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="620" />
                     </StackPanel>
                 </Border>
 
-                <Button Grid.Row="3" Click="OnBackToGroups" Classes="scope"
-                        HorizontalAlignment="Left" Margin="0,20,0,0"
+                <Button Grid.Row="3" Click="OnBackToGroups" Classes="step wide"
+                        HorizontalAlignment="Left" Margin="0,18,0,0"
                         Content="{DynamicResource ScheduleChangeGroup}" />
             </Grid>
 
-            <!-- Date picker overlay. An inline Calendar rather than a
-                 CalendarDatePicker dropdown: on a 1080-wide portrait touch
-                 screen the dropdown's cells are far too small to hit, and the
-                 popup would clip at the panel edge. -->
-            <Border x:Name="DatePickerOverlay" IsVisible="False"
-                    Background="#cc0f2154">
+            <!-- Date picker. An inline Calendar, not a dropdown: on a portrait
+                 touch screen the dropdown's cells are far too small to hit. -->
+            <Border x:Name="DatePickerOverlay" IsVisible="False" Background="#cc0b1b3a">
                 <Border Background="{StaticResource KioskCard}"
                         CornerRadius="{StaticResource KioskRadiusCard}"
                         Padding="36,32" VerticalAlignment="Center"
@@ -287,18 +321,13 @@
                     <StackPanel Spacing="22">
                         <TextBlock Text="{DynamicResource ScheduleChooseDate}"
                                    FontSize="{StaticResource KioskFontH3}" FontWeight="Bold"
-                                   Foreground="{StaticResource KioskPrimary}"
-                                   TextWrapping="Wrap" />
-                        <Calendar x:Name="DayCalendar"
-                                  SelectionMode="SingleDate"
-                                  SelectedDatesChanged="OnCalendarDateChanged" />
+                                   Foreground="{StaticResource KioskInk}" TextWrapping="Wrap" />
+                        <Calendar x:Name="DayCalendar" SelectionMode="SingleDate" />
                         <StackPanel Orientation="Horizontal" Spacing="14"
                                     HorizontalAlignment="Right">
-                            <Button Click="OnCancelDate" Classes="scope"
+                            <Button Click="OnCancelDate" Classes="step wide"
                                     Content="{DynamicResource CommonCancel}" />
-                            <Button Click="OnConfirmDateWeek" Classes="scope"
-                                    Content="{DynamicResource ScheduleWholeWeek}" />
-                            <Button Click="OnConfirmDate" Classes="scope primary"
+                            <Button Click="OnConfirmDate" Classes="step wide primary"
                                     Content="{DynamicResource ScheduleShowDay}" />
                         </StackPanel>
                     </StackPanel>
@@ -308,6 +337,22 @@
     </Grid>
 
     <UserControl.Styles>
+        <!-- Course cards: two per row, the numeral doing the work. -->
+        <Style Selector="Button.course">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusCard}" />
+            <Setter Property="Width" Value="464" />
+            <Setter Property="MinHeight" Value="150" />
+            <Setter Property="Padding" Value="34,26" />
+            <Setter Property="Margin" Value="0,0,16,16" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <Style Selector="Button.course:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource KioskTileTint}" />
+        </Style>
+
         <Style Selector="Button.row">
             <Setter Property="Background" Value="{StaticResource KioskCard}" />
             <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
@@ -323,31 +368,55 @@
             <Setter Property="Background" Value="#fbfcfe" />
         </Style>
 
-        <Style Selector="Border.searchbox">
+        <Style Selector="Border.strip">
             <Setter Property="Background" Value="{StaticResource KioskCard}" />
             <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
-            <Setter Property="Padding" Value="24,14" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusCard}" />
+            <Setter Property="Padding" Value="18,16" />
         </Style>
 
-        <Style Selector="Border.rangebar">
-            <Setter Property="Background" Value="{StaticResource KioskTileTint}" />
-            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
-            <Setter Property="Padding" Value="24,14" />
-        </Style>
-
-        <Style Selector="Border.dayheader">
+        <!-- Week-strip day. Selected wins over today: the visitor's own choice
+             must be unambiguous, and today keeps its warm text either way. -->
+        <Style Selector="Button.day">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
-            <Setter Property="BorderThickness" Value="0,0,0,2" />
-            <Setter Property="Padding" Value="4,0,4,10" />
-        </Style>
-        <Style Selector="Border.dayheader.today">
-            <Setter Property="Background" Value="{StaticResource KioskAccentTint}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskInk}" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusChip}" />
-            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="6,12" />
+            <Setter Property="Margin" Value="3,0" />
+            <Setter Property="MinHeight" Value="92" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.day.empty">
+            <Setter Property="Foreground" Value="{StaticResource KioskBorder}" />
+        </Style>
+        <Style Selector="Button.day.today">
+            <Setter Property="Foreground" Value="{StaticResource KioskNow}" />
+        </Style>
+        <Style Selector="Button.day.selected">
+            <Setter Property="Background" Value="{StaticResource KioskInk}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.day.selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource KioskInk}" />
+        </Style>
+
+        <!-- Rail node -->
+        <Style Selector="Border.node">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Border.node > TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource KioskTextMuted}" />
+        </Style>
+        <Style Selector="Border.node.now">
+            <Setter Property="Background" Value="{StaticResource KioskNow}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskNow}" />
+        </Style>
+        <Style Selector="Border.node.now > TextBlock">
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style Selector="Border.lesson">
@@ -356,35 +425,56 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
             <Setter Property="Padding" Value="22,16" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+        <Style Selector="Border.lesson.now">
+            <Setter Property="Background" Value="{StaticResource KioskNowTint}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskNow}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Border.lesson.past">
+            <Setter Property="Opacity" Value="0.5" />
         </Style>
 
-        <Style Selector="Button.scope">
+        <Style Selector="Border.room">
+            <Setter Property="Background" Value="{StaticResource KioskTileTint}" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusChip}" />
+            <Setter Property="Padding" Value="16,9" />
+        </Style>
+        <Style Selector="Border.room > TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource KioskPrimary}" />
+        </Style>
+
+        <Style Selector="Button.step">
             <Setter Property="Background" Value="{StaticResource KioskCard}" />
-            <Setter Property="Foreground" Value="{StaticResource KioskText}" />
+            <Setter Property="Foreground" Value="{StaticResource KioskInk}" />
+            <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="MinWidth" Value="56" />
+            <Setter Property="MinHeight" Value="56" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.step.wide">
+            <Setter Property="Padding" Value="26,14" />
+            <Setter Property="FontSize" Value="19" />
+        </Style>
+        <Style Selector="Button.step.primary">
+            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="Border.searchbox">
+            <Setter Property="Background" Value="{StaticResource KioskCard}" />
             <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
             <Setter Property="Padding" Value="24,14" />
-            <Setter Property="FontSize" Value="19" />
-            <Setter Property="MinHeight" Value="60" />
-        </Style>
-        <Style Selector="Button.scope.primary">
-            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-        <Style Selector="Button.scope.active">
-            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-        <Style Selector="Button.scope.active:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource KioskPrimary}" />
         </Style>
 
-        <!-- The stock Calendar is sized for a mouse. Scale the cells up so a
-             finger can hit a single day. -->
         <Style Selector="Calendar">
             <Setter Property="FontSize" Value="20" />
             <Setter Property="HorizontalAlignment" Value="Center" />

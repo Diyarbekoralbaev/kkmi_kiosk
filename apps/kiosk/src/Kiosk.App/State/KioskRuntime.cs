@@ -90,8 +90,33 @@ public sealed class KioskRuntime : IAsyncDisposable
     /// on the WS URL and decides, server-side, which prompt focus block and
     /// which tools the agent gets — so it must be set BEFORE connecting, not
     /// negotiated afterwards.</summary>
+    /// <summary>Serialises start/stop. Two callers now race for the same
+    /// runtime — the page-change handler in MainWindow and AiPage's own Loaded
+    /// — and both await inside, so the plain `IsActive` check is not enough to
+    /// stop two Gemini sessions being opened at once.</summary>
+    private readonly SemaphoreSlim _startGate = new(1, 1);
+
     public async Task StartAsync(string menu)
     {
+        await _startGate.WaitAsync();
+        try
+        {
+            await StartCoreAsync(menu);
+        }
+        finally
+        {
+            _startGate.Release();
+        }
+    }
+
+    private async Task StartCoreAsync(string menu)
+    {
+        // A session already running for a DIFFERENT screen is worse than none:
+        // the menu is baked into the WS URL, so the agent would still be
+        // holding the timetable's tools and the timetable's focus block while
+        // the visitor stands in front of the library. Swap it out.
+        if (IsActive && !string.Equals(Menu, menu, StringComparison.Ordinal))
+            await StopAsync();
         if (IsActive) return;
 
         var creds = DeviceKeyStore.Load();

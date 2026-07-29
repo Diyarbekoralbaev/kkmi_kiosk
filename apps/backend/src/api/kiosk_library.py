@@ -12,13 +12,14 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Header, Query
+from fastapi import APIRouter, Header, Query, Response
+from sqlalchemy import select
 
 from ..core import library as library_q
 from ..core.deps import DbSession
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
 from ..core.errors import NotFoundError
-from ..domain.library import SECTIONS
+from ..domain.library import SECTIONS, LibraryBook
 
 router = APIRouter(prefix="/api/kiosk/library", tags=["kiosk:library"])
 
@@ -60,6 +61,35 @@ async def books(
             locale=locale,
         )
     return {"items": items}
+
+
+@router.get("/books/{book_id}/cover.jpg")
+async def book_cover(
+    book_id: uuid.UUID,
+    session: DbSession,
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> Response:
+    """The stored jacket. 404 when there is none — the kiosk draws its own
+    designed cover in that case rather than showing a broken frame."""
+    device = await resolve_device_from_signed_request(session, x_kiosk_auth)
+    row = (
+        await session.execute(
+            select(LibraryBook.cover).where(
+                LibraryBook.id == book_id,
+                LibraryBook.org_id == device.org_id,
+                LibraryBook.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if not row:
+        raise NotFoundError()
+    return Response(
+        content=row,
+        media_type="image/jpeg",
+        # Jackets never change once stored, and the kiosk re-requests them on
+        # every browse. A long cache keeps the shelf instant.
+        headers={"Cache-Control": "public, max-age=604800"},
+    )
 
 
 @router.get("/books/{book_id}")

@@ -84,20 +84,28 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="net:BookDto">
                                 <Button Click="OnBookClick" Tag="{Binding}" Classes="row">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                        <StackPanel Grid.Column="0" Spacing="5"
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="20">
+                                        <controls:BookCover Grid.Column="0"
+                                                            Book="{Binding}"
+                                                            Width="86" Height="122"
+                                                            VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Spacing="6"
                                                     VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Title}"
                                                        FontSize="{StaticResource KioskFontH4}"
                                                        FontWeight="SemiBold"
-                                                       Foreground="{StaticResource KioskText}"
+                                                       Foreground="{StaticResource KioskInk}"
                                                        TextWrapping="Wrap" />
                                             <TextBlock Text="{Binding Authors}"
                                                        FontSize="{StaticResource KioskFontCaption}"
                                                        Foreground="{StaticResource KioskTextMuted}"
                                                        TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Shelf}"
+                                                       FontSize="{StaticResource KioskFontCaptionSm}"
+                                                       Foreground="{StaticResource KioskAccentDark}"
+                                                       IsVisible="{Binding Shelf, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                         </StackPanel>
-                                        <Border Grid.Column="1"
+                                        <Border Grid.Column="2"
                                                 Background="{StaticResource KioskTileTint}"
                                                 CornerRadius="{StaticResource KioskRadiusChip}"
                                                 Padding="14,6" VerticalAlignment="Center">
@@ -137,27 +145,32 @@
             <ScrollViewer x:Name="DetailPanel" IsVisible="False">
                 <StackPanel Spacing="20">
                     <Border Classes="card">
-                        <StackPanel Spacing="12">
-                            <TextBlock x:Name="DetailTitle"
-                                       FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
-                                       Foreground="{StaticResource KioskPrimary}"
-                                       TextWrapping="Wrap" />
-                            <TextBlock x:Name="DetailAuthors" FontSize="22"
-                                       Foreground="{StaticResource KioskText}"
-                                       TextWrapping="Wrap" />
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Background="{StaticResource KioskTileTint}"
-                                        CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
-                                    <TextBlock x:Name="DetailSection" FontSize="18"
-                                               Foreground="{StaticResource KioskPrimary}" />
-                                </Border>
-                                <Border Background="{StaticResource KioskTileTint}"
-                                        CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
-                                    <TextBlock x:Name="DetailLanguage" FontSize="18"
-                                               Foreground="{StaticResource KioskPrimary}" />
-                                </Border>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="28">
+                            <controls:BookCover Grid.Column="0" x:Name="DetailCover"
+                                                Width="150" Height="212"
+                                                VerticalAlignment="Top" />
+                            <StackPanel Grid.Column="1" Spacing="12" VerticalAlignment="Center">
+                                <TextBlock x:Name="DetailTitle"
+                                           FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
+                                           Foreground="{StaticResource KioskInk}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock x:Name="DetailAuthors" FontSize="22"
+                                           Foreground="{StaticResource KioskText}"
+                                           TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Border Background="{StaticResource KioskTileTint}"
+                                            CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
+                                        <TextBlock x:Name="DetailSection" FontSize="18"
+                                                   Foreground="{StaticResource KioskPrimary}" />
+                                    </Border>
+                                    <Border Background="{StaticResource KioskTileTint}"
+                                            CornerRadius="{StaticResource KioskRadiusChip}" Padding="16,7">
+                                        <TextBlock x:Name="DetailLanguage" FontSize="18"
+                                                   Foreground="{StaticResource KioskPrimary}" />
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
+                        </Grid>
                     </Border>
 
                     <!-- Where to walk. The single most useful line on the card,

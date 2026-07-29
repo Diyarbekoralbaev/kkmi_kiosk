@@ -200,6 +200,16 @@ public static class LocalizationService
         };
     }
 
+    /// <summary>Three-letter weekday for the timetable's week strip. Six
+    /// columns share 1080px minus margins, so the full name does not fit —
+    /// and does not need to, because the day number sits right under it.</summary>
+    public static string FormatWeekdayShort(DateTime when, Language lang)
+    {
+        var full = FormatWeekday(when, lang);
+        return full.Length <= 3 ? full.ToUpperInvariant()
+                                : full[..3].ToUpperInvariant();
+    }
+
     private static readonly string[] _isoDayCodes =
         { "sun", "mon", "tue", "wed", "thu", "fri", "sat" };
 

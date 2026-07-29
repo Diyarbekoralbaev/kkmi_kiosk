@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="120" d:DesignHeight="168"
+             x:Class="Kiosk.App.Controls.BookCover">
+    <!-- A book on a shelf is recognised by its jacket, so the catalogue shows
+         one for every title — including the ones with no image.
+
+         Most cards will not have a jacket: Open Library only answers for an
+         ISBN, and the librarians are still filling those in. Leaving a grey
+         rectangle there would make the shelf look broken, so the fallback is a
+         DESIGNED cover rather than a placeholder: the section's own colour, the
+         first letters of the title set large, and a rule that reads as a spine.
+         Library systems have done this for years because it works — the colour
+         alone lets you find the anatomy books again after seeing them once. -->
+    <Border x:Name="Frame" CornerRadius="6" ClipToBounds="True"
+            Background="{DynamicResource KioskTileTint}">
+        <Grid>
+            <!-- Real jacket, when one is stored. -->
+            <Image x:Name="Jacket" Stretch="UniformToFill" IsVisible="False" />
+
+            <!-- Drawn cover, when one is not. -->
+            <Grid x:Name="Drawn">
+                <Border x:Name="Field" />
+                <!-- Spine: the vertical band down the binding edge. It is what
+                     separates this from a coloured box. -->
+                <Border x:Name="Spine" Width="9" HorizontalAlignment="Left" />
+                <StackPanel Margin="16,14,12,14" VerticalAlignment="Center">
+                    <TextBlock x:Name="Initials" FontWeight="Bold"
+                               FontSize="30" Foreground="White" />
+                    <TextBlock x:Name="TitleLine" FontSize="12" Opacity="0.85"
+                               Foreground="White" TextWrapping="Wrap"
+                               MaxLines="3" Margin="0,8,0,0" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

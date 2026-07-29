@@ -73,6 +73,20 @@ public sealed record DirectionResponse
     [JsonPropertyName("item")] public DirectionDto? Item { get; init; }
 }
 
+public sealed record CourseListResponse
+{
+    [JsonPropertyName("items")] public List<CourseDto> Items { get; init; } = new();
+}
+
+public sealed record WeekResponse
+{
+    [JsonPropertyName("group")] public GroupDto? Group { get; init; }
+    [JsonPropertyName("week_start")] public string WeekStart { get; init; } = "";
+    [JsonPropertyName("week_end")] public string WeekEnd { get; init; } = "";
+    [JsonPropertyName("days")] public List<WeekDayDto> Days { get; init; } = new();
+    [JsonPropertyName("lessons")] public List<LessonDto> Lessons { get; init; } = new();
+}
+
 public sealed record BookListResponse
 {
     [JsonPropertyName("items")] public List<BookDto> Items { get; init; } = new();
@@ -161,9 +175,30 @@ public static class KioskApi
     public static Task<FacultyListResponse?> GetFacultiesAsync() =>
         GetAsync("/api/kiosk/schedule/faculties", KioskJsonContext.Default.FacultyListResponse);
 
-    public static Task<GroupListResponse?> GetGroupsAsync(int facultyId) =>
-        GetAsync($"/api/kiosk/schedule/groups?faculty_id={facultyId}",
-                 KioskJsonContext.Default.GroupListResponse);
+    public static Task<CourseListResponse?> GetCoursesAsync() =>
+        GetAsync("/api/kiosk/schedule/courses",
+                 KioskJsonContext.Default.CourseListResponse);
+
+    /// <summary>Groups filtered by faculty, by bachelor course, or unfiltered.</summary>
+    public static Task<GroupListResponse?> GetGroupsAsync(
+        int? facultyId = null, int? course = null)
+    {
+        var url = "/api/kiosk/schedule/groups";
+        var sep = "?";
+        if (facultyId is { } f) { url += $"{sep}faculty_id={f}"; sep = "&"; }
+        if (course is { } c) { url += $"{sep}course={c}"; }
+        return GetAsync(url, KioskJsonContext.Default.GroupListResponse);
+    }
+
+    /// <summary>A group's whole week — per-day counts and every lesson in one
+    /// call, so switching day is instant instead of a network wait. Omit
+    /// <paramref name="onDate"/> and the backend picks the last taught week.</summary>
+    public static Task<WeekResponse?> GetWeekAsync(int groupId, DateTime? onDate = null)
+    {
+        var url = $"/api/kiosk/schedule/week?group_id={groupId}";
+        if (onDate is { } d) url += $"&date={d:yyyy-MM-dd}";
+        return GetAsync(url, KioskJsonContext.Default.WeekResponse);
+    }
 
     /// <summary><paramref name="scope"/>: today | tomorrow | week |
     /// last_taught_week | date | week_of. The last two need
@@ -190,6 +225,27 @@ public static class KioskApi
     // `locale` is sent so the backend can localize section labels; everything
     // else on a catalogue card is the book's own language and is not
     // translated.
+
+    /// <summary>The stored jacket bytes, or null when the book has none — the
+    /// kiosk draws its own cover in that case, so a 404 is an ordinary outcome
+    /// rather than a failure worth surfacing.</summary>
+    public static async Task<byte[]?> GetBookCoverAsync(string bookId)
+    {
+        var creds = DeviceKeyStore.Load();
+        if (creds is null) return null;
+        try
+        {
+            var resp = await SignedHttpClient.GetAsync(
+                creds.BackendUrl, $"/api/kiosk/library/books/{bookId}/cover.jpg");
+            if (!resp.IsSuccessStatusCode) return null;
+            return await resp.Content.ReadAsByteArrayAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[api] cover {bookId}: {ex.Message}");
+            return null;
+        }
+    }
 
     public static Task<BookSectionListResponse?> GetBookSectionsAsync(string locale) =>
         GetAsync($"/api/kiosk/library/sections?locale={Uri.EscapeDataString(locale)}",

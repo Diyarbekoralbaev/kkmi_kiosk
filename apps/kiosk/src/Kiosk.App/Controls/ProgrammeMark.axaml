@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="86" d:DesignHeight="86"
+             x:Class="Kiosk.App.Controls.ProgrammeMark">
+    <!-- A degree programme has no photograph we can honestly show. Stock
+         images of anonymous people in white coats would be decoration standing
+         in for information, and worse, they would imply the institute took
+         them.
+
+         So the mark is built from what the programme actually IS: the faculty
+         it belongs to picks the colour, the degree level picks the letter.
+         Two facts, both true, both useful — after one visit the applicant
+         recognises "the red ones are 1st Faculty" without reading. -->
+    <Border x:Name="Plate" CornerRadius="10" ClipToBounds="True">
+        <Grid>
+            <Border x:Name="Corner" Width="4" HorizontalAlignment="Left" />
+            <TextBlock x:Name="Letter" FontSize="30" FontWeight="Bold"
+                       Foreground="White"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+    </Border>
+</UserControl>

@@ -133,6 +133,9 @@
     <x:String x:Key="AbituriyentPageTitle">Bilimlendiriw baǵdarları</x:String>
     <x:String x:Key="AbituriyentQuotaNote">Kvotalar, ótiw balları hám kontrakt summası hár jılı qabıl komissiyası tárepinen járiyalanadı — anıq maǵlıwmat ushın qabıl komissiyasına barıń.</x:String>
     <x:String x:Key="SchedulePageTitle">Sabaq kestesi</x:String>
+    <x:String x:Key="ScheduleChooseCourse">Kursti saylań</x:String>
+    <x:String x:Key="ScheduleCourseWord">kurs</x:String>
+    <x:String x:Key="ScheduleCourseLabel">{0}-kurs</x:String>
     <x:String x:Key="ScheduleChooseFaculty">Fakultetti saylań</x:String>
     <x:String x:Key="ScheduleWhichGroup">Qaysı topar?</x:String>
     <x:String x:Key="ScheduleScopeToday">Búgin</x:String>

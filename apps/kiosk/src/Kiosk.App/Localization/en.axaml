@@ -141,6 +141,9 @@
     <x:String x:Key="AbituriyentPageTitle">Study programmes</x:String>
     <x:String x:Key="AbituriyentQuotaNote">Quotas, pass marks and tuition are published each year by the admissions committee — ask them for exact figures.</x:String>
     <x:String x:Key="SchedulePageTitle">Class timetable</x:String>
+    <x:String x:Key="ScheduleChooseCourse">Choose a year</x:String>
+    <x:String x:Key="ScheduleCourseWord">year</x:String>
+    <x:String x:Key="ScheduleCourseLabel">Year {0}</x:String>
     <x:String x:Key="ScheduleChooseFaculty">Choose a faculty</x:String>
     <x:String x:Key="ScheduleWhichGroup">Which group?</x:String>
     <x:String x:Key="ScheduleScopeToday">Today</x:String>

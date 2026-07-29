@@ -134,6 +134,9 @@
     <x:String x:Key="AbituriyentPageTitle">Направления обучения</x:String>
     <x:String x:Key="AbituriyentQuotaNote">Квоты, проходные баллы и сумма контракта ежегодно объявляются приёмной комиссией — за точной информацией обращайтесь туда.</x:String>
     <x:String x:Key="SchedulePageTitle">Расписание занятий</x:String>
+    <x:String x:Key="ScheduleChooseCourse">Выберите курс</x:String>
+    <x:String x:Key="ScheduleCourseWord">курс</x:String>
+    <x:String x:Key="ScheduleCourseLabel">{0} курс</x:String>
     <x:String x:Key="ScheduleChooseFaculty">Выберите факультет</x:String>
     <x:String x:Key="ScheduleWhichGroup">Какая группа?</x:String>
     <x:String x:Key="ScheduleScopeToday">Сегодня</x:String>

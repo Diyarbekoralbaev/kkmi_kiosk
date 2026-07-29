@@ -48,6 +48,20 @@
             <Color x:Key="KioskTileTintColor">#e8edf8</Color>
             <Color x:Key="KioskAccentTintColor">#d9f2ef</Color>
 
+            <!-- "Now" — the one warm colour on the kiosk, and the reason it
+                 exists: every token above is navy, teal or grey, so nothing on
+                 screen could ever say THIS ONE. It marks the current lesson,
+                 today's column, the row you are standing in front of, and
+                 nothing else. Spending it anywhere decorative empties it. -->
+            <Color x:Key="KioskNowColor">#c2410c</Color>
+            <Color x:Key="KioskNowTintColor">#fdece2</Color>
+
+            <!-- Ink: a genuinely dark step. KioskText (#1a2740) is the darkest
+                 thing on screen today, which is why the interface reads as one
+                 soft grey wash — there is no anchor. Ink carries the time rail
+                 and the day headers. -->
+            <Color x:Key="KioskInkColor">#0b1b3a</Color>
+
             <SolidColorBrush x:Key="KioskPrimary" Color="{StaticResource KioskPrimaryColor}" />
             <SolidColorBrush x:Key="KioskPrimaryDark" Color="{StaticResource KioskPrimaryDarkColor}" />
             <SolidColorBrush x:Key="KioskAccent" Color="{StaticResource KioskAccentColor}" />
@@ -61,6 +75,9 @@
             <SolidColorBrush x:Key="KioskSuccess" Color="{StaticResource KioskSuccessColor}" />
             <SolidColorBrush x:Key="KioskTileTint" Color="{StaticResource KioskTileTintColor}" />
             <SolidColorBrush x:Key="KioskAccentTint" Color="{StaticResource KioskAccentTintColor}" />
+            <SolidColorBrush x:Key="KioskNow" Color="{StaticResource KioskNowColor}" />
+            <SolidColorBrush x:Key="KioskNowTint" Color="{StaticResource KioskNowTintColor}" />
+            <SolidColorBrush x:Key="KioskInk" Color="{StaticResource KioskInkColor}" />
 
             <!-- ===== Typography tokens — canonical font sizes =====
                  New code should pick from this set rather than inventing

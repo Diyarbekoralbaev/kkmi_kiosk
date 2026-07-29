@@ -21,7 +21,16 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -163,6 +172,21 @@ class LibraryBook(Base, TimestampMixin):
     available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     """Cleared when a title is withdrawn or lost, instead of deleting the row —
     a librarian who mistypes a search should not be able to erase a record."""
+
+    cover: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    """The jacket image, stored as bytes rather than a URL.
+
+    A URL would make the kiosk depend on openlibrary.org being reachable at the
+    moment a visitor taps a book — from a lobby in Nókis, on the institute's
+    connection. Covers are 20-60 KB and a catalogue is hundreds of books, so
+    the whole set is a few megabytes: cheaper to hold than to re-fetch, and it
+    keeps working when the upstream does not."""
+    cover_fetched_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    """Set on every attempt, hit or miss. A miss is worth remembering — most
+    ISBNs simply have no cover upstream, and without this the fetcher would
+    retry the same hopeless lookups on every run."""
 
     deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

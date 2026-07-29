@@ -139,6 +139,9 @@
     <x:String x:Key="AbituriyentPageTitle">Ta’lim yo‘nalishlari</x:String>
     <x:String x:Key="AbituriyentQuotaNote">Kvotalar, o‘tish ballari va kontrakt summasi har yili qabul komissiyasi tomonidan e’lon qilinadi — aniq ma’lumot uchun qabul komissiyasiga murojaat qiling.</x:String>
     <x:String x:Key="SchedulePageTitle">Dars jadvali</x:String>
+    <x:String x:Key="ScheduleChooseCourse">Kursni tanlang</x:String>
+    <x:String x:Key="ScheduleCourseWord">kurs</x:String>
+    <x:String x:Key="ScheduleCourseLabel">{0}-kurs</x:String>
     <x:String x:Key="ScheduleChooseFaculty">Fakultetni tanlang</x:String>
     <x:String x:Key="ScheduleWhichGroup">Qaysi guruh?</x:String>
     <x:String x:Key="ScheduleScopeToday">Bugun</x:String>

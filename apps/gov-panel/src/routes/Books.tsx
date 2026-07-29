@@ -341,12 +341,19 @@ export function BooksPage() {
               />
             </FormField>
           </div>
+          {/* A real, checksum-valid ISBN as the example. The backend refuses to
+              fetch a cover for one whose check digit fails, because a mistyped
+              ISBN usually still resolves upstream — to a different book. */}
           <FormField label="ISBN">
             <Input
               value={form.isbn}
               onChange={(e) => setForm({ ...form, isbn: e.target.value })}
-              placeholder="978-5-9704-4870-1"
+              placeholder="9780323393041"
             />
+            <p className="mt-1 text-xs text-ink-muted">
+              С обложки книги. По нему киоск подтягивает изображение — если
+              контрольная цифра не сходится, обложка не загрузится.
+            </p>
           </FormField>
           <FormField label="О книге">
             <Textarea

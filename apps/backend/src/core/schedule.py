@@ -184,7 +184,10 @@ async def faculties(session: AsyncSession) -> list[dict[str, Any]]:
 
 
 async def groups(
-    session: AsyncSession, *, faculty_id: int | None = None
+    session: AsyncSession,
+    *,
+    faculty_id: int | None = None,
+    course: int | None = None,
 ) -> list[dict[str, Any]]:
     # No "has lessons" filter here: `hemis_sync` drops timetable-less groups at
     # the end of every sweep, so the mirror only ever holds groups worth
@@ -193,8 +196,59 @@ async def groups(
     stmt = select(HemisGroup).where(HemisGroup.active.is_(True))
     if faculty_id is not None:
         stmt = stmt.where(HemisGroup.department_id == faculty_id)
+    if course is not None:
+        stmt = stmt.join(
+            HemisSpecialty, HemisSpecialty.id == HemisGroup.specialty_id
+        ).where(
+            HemisSpecialty.education_type_name == BACHELOR,
+            _course_expr() == str(course),
+        )
     rows = (await session.execute(stmt.order_by(HemisGroup.name))).scalars()
     return [_group_dict(g) for g in rows]
+
+
+async def week_for_group(
+    session: AsyncSession, group_id: int, anchor: date
+) -> dict[str, Any]:
+    """One calendar week for a group: the per-day counts and every lesson.
+
+    Returned together on purpose. The week strip needs the counts and the day
+    view needs the lessons, and a week is ~35 rows — small enough that sending
+    both costs less than the second round trip would, and it means changing
+    day is instant rather than a network wait.
+
+    Days with no classes are still listed. A gap in the strip is information —
+    it is how a student sees Wednesday is free without tapping it.
+    """
+    start = anchor - timedelta(days=anchor.weekday())
+    end = start + timedelta(days=6)
+    lessons = await lessons_for_group(session, group_id, start, end)
+
+    per_day: dict[str, int] = {}
+    for lesson in lessons:
+        per_day[lesson["date"]] = per_day.get(lesson["date"], 0) + 1
+
+    today = today_local()
+    days = []
+    for offset in range(7):
+        day = start + timedelta(days=offset)
+        iso = day.isoformat()
+        days.append(
+            {
+                "date": iso,
+                "weekday": day.isoweekday(),
+                "count": per_day.get(iso, 0),
+                "is_today": day == today,
+            }
+        )
+
+    return {
+        "group": await group_by_id(session, group_id),
+        "week_start": start.isoformat(),
+        "week_end": end.isoformat(),
+        "days": days,
+        "lessons": lessons,
+    }
 
 
 async def find_groups(
@@ -354,6 +408,56 @@ def _group_rollup() -> Any:
 def _clean_languages(raw: Any) -> list[str]:
     """array_agg keeps NULLs and the empty strings HEMIS uses for "unset"."""
     return sorted({s.strip() for s in (raw or []) if s and s.strip()})
+
+
+# The course a group is in is not a field HEMIS publishes — `group-list`
+# carries only id, name, department, specialty, educationLang and curriculum.
+# It IS encoded in the group number: the first digit of the three-digit run in
+# the name. "Emlew isi-211" is 2nd course, "Pediatriya-604" is 6th, "120 A" is
+# 1st. Verified against every active bachelor group — 224 of 224 parse, none
+# lacks a three-digit number.
+#
+# Medicine here runs six years (five for stomatology), so courses are 1-6.
+_COURSE_PATTERN = "[0-9]{3}"
+BACHELOR = "Bakalavr"
+
+
+def _course_expr() -> Any:
+    return func.left(func.substring(HemisGroup.name, _COURSE_PATTERN), 1)
+
+
+async def courses(session: AsyncSession) -> list[dict[str, Any]]:
+    """Bachelor courses with how many groups each holds.
+
+    Bachelor only: an applicant or a first-year looking for "3-kurs" means the
+    six-year degree. Residency and master's cohorts are numbered on a different
+    scheme entirely and would produce nonsense courses.
+    """
+    # Derive first, aggregate second. Grouping directly on the expression fails
+    # on Postgres: SQLAlchemy binds the regex as a parameter, so the copy in
+    # GROUP BY is a different placeholder from the one in SELECT and the planner
+    # refuses to treat them as the same expression.
+    derived = (
+        select(_course_expr().label("course"))
+        .join(HemisSpecialty, HemisSpecialty.id == HemisGroup.specialty_id)
+        .where(
+            HemisGroup.active.is_(True),
+            HemisSpecialty.education_type_name == BACHELOR,
+        )
+        .subquery()
+    )
+    rows = (
+        await session.execute(
+            select(derived.c.course, func.count())
+            .group_by(derived.c.course)
+            .order_by(derived.c.course)
+        )
+    ).all()
+    return [
+        {"course": int(c), "group_count": int(n)}
+        for c, n in rows
+        if c and c.isdigit() and c != "0"
+    ]
 
 
 async def has_any_lessons(session: AsyncSession, group_id: int) -> bool:

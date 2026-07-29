@@ -26,7 +26,46 @@ public sealed class LessonDay
     /// <summary>"11-may" — no year; the range label above carries it.</summary>
     public string DateLabel { get; init; } = "";
     public bool IsToday { get; init; }
-    public List<LessonDto> Lessons { get; } = new();
+    public List<LessonRow> Rows { get; } = new();
+}
+
+/// <summary>One day in the week strip. Carries its own labels because they are
+/// language-dependent and the strip is rebuilt only when the week changes.</summary>
+public sealed partial class WeekDayCell : ObservableObject
+{
+    public DateTime Date { get; init; }
+    /// <summary>Three letters — "DÚY", "SEY". The strip has six columns on a
+    /// 1080px screen; a full weekday name does not fit and does not need to.</summary>
+    public string ShortName { get; init; } = "";
+    public string DayNumber { get; init; } = "";
+    public int Count { get; init; }
+    public bool IsToday { get; init; }
+    /// <summary>A day with no classes is still shown. The gap is the
+    /// information — it is how a free Wednesday is visible without tapping.</summary>
+    public bool HasLessons => Count > 0;
+    /// <summary>Mutable: the strip re-renders as the visitor moves between
+    /// days, which is why this class is observable and the rest are not.</summary>
+    [ObservableProperty] private bool _isSelected;
+}
+
+/// <summary>One lesson positioned on the day's time rail.
+///
+/// The rail is the timetable's spine: a continuous line down the left with a
+/// numbered node per class. It exists because a day IS a sequence in time, and
+/// the question a student actually has standing here is "which one am I at" —
+/// which a flat list of equal rows cannot answer.</summary>
+public sealed class LessonRow
+{
+    /// <summary>Position within the day, 1-based. Not the HEMIS pair code —
+    /// what the rail communicates is order, and a day that starts at pair 3
+    /// should still read 1, 2, 3 down the screen.</summary>
+    public int Index { get; init; }
+    public LessonDto Lesson { get; init; } = new();
+    /// <summary>The class happening right now. The only thing on the kiosk that
+    /// gets the warm colour.</summary>
+    public bool IsNow { get; init; }
+    /// <summary>Already finished — dimmed so the eye skips it.</summary>
+    public bool IsPast { get; init; }
 }
 
 /// <summary>The six home tiles plus the shared chrome screens.
@@ -158,6 +197,11 @@ public partial class SessionStore : ObservableObject
     /// Without it a visitor looking at last-taught-week has no way to tell the
     /// timetable is not this week's.</summary>
     [ObservableProperty] private string _scheduleRangeLabel = "";
+
+    /// <summary>The week strip: one entry per day with its lesson count. It is
+    /// both the navigation and the date picker for the common case — a student
+    /// looking for Wednesday should not have to open a calendar.</summary>
+    public ObservableCollection<WeekDayCell> WeekDays { get; } = new();
 
     // ── Abituriyent ───────────────────────────────────────────────────────────
     public ObservableCollection<DirectionDto> Directions { get; } = new();
@@ -327,6 +371,7 @@ public partial class SessionStore : ObservableObject
         ScheduleRangeLabel = "";
         Lessons.Clear();
         LessonDays.Clear();
+        WeekDays.Clear();
         GroupChoices.Clear();
 
         SelectedDirection = null;
@@ -363,6 +408,7 @@ public partial class SessionStore : ObservableObject
         ScheduleRangeLabel = "";
         Lessons.Clear();
         LessonDays.Clear();
+        WeekDays.Clear();
         GroupChoices.Clear();
 
         Directions.Clear();
@@ -467,6 +513,42 @@ public partial class SessionStore : ObservableObject
         RebuildLessonDays();
     }
 
+    /// <summary>Rebuild the week strip. Called once per week loaded; moving
+    /// between days inside the week only flips <see cref="WeekDayCell.IsSelected"/>
+    /// and re-filters the lessons already in hand.</summary>
+    public void SetWeek(IEnumerable<WeekDayDto> days, DateTime selected)
+    {
+        var lang = Localization.LocalizationService.Current;
+        WeekDays.Clear();
+        foreach (var d in days)
+        {
+            if (!DateTime.TryParseExact(
+                    d.Date, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var day))
+                continue;
+            // Sunday is dropped: the institute does not teach on it, so a
+            // permanently empty seventh column would be six-sevenths of a
+            // wasted row on a screen where width is the scarce resource.
+            if (day.DayOfWeek == DayOfWeek.Sunday) continue;
+            WeekDays.Add(new WeekDayCell
+            {
+                Date = day,
+                ShortName = Localization.LocalizationService
+                    .FormatWeekdayShort(day, lang),
+                DayNumber = day.Day.ToString(),
+                Count = d.Count,
+                IsToday = d.IsToday,
+                IsSelected = day == selected.Date,
+            });
+        }
+    }
+
+    public void SelectWeekDay(DateTime day)
+    {
+        foreach (var cell in WeekDays) cell.IsSelected = cell.Date == day.Date;
+    }
+
     private void RebuildLessonDays()
     {
         LessonDays.Clear();
@@ -507,10 +589,33 @@ public partial class SessionStore : ObservableObject
                 };
                 LessonDays.Add(current);
             }
-            current.Lessons.Add(lesson);
+            var (isNow, isPast) = LessonClock(day, lesson);
+            current.Rows.Add(new LessonRow
+            {
+                Index = current.Rows.Count + 1,
+                Lesson = lesson,
+                IsNow = isNow,
+                IsPast = isPast,
+            });
         }
 
         ScheduleRangeLabel = BuildRangeLabel(lang);
+    }
+
+    /// <summary>Is this class happening now, or already over?
+    ///
+    /// Only meaningful for today — on any other day nothing is "now", and
+    /// marking a past Tuesday's classes as finished would say nothing useful.
+    /// Times arrive as "HH:mm" strings; an unparseable one simply means the
+    /// class gets no marker rather than a wrong one.</summary>
+    private static (bool IsNow, bool IsPast) LessonClock(DateTime day, LessonDto lesson)
+    {
+        if (day == default || day != DateTime.Today) return (false, false);
+        if (!TimeSpan.TryParse(lesson.Start, out var start)) return (false, false);
+        if (!TimeSpan.TryParse(lesson.End, out var end)) return (false, false);
+        var now = DateTime.Now.TimeOfDay;
+        if (now >= start && now <= end) return (true, false);
+        return (false, now > end);
     }
 
     private string BuildRangeLabel(Localization.Language lang)

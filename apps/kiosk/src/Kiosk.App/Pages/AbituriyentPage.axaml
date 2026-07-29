@@ -57,34 +57,30 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="net:DirectionDto">
                                 <Button Click="OnDirectionClick" Tag="{Binding}" Classes="row">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                        <StackPanel Grid.Column="0" Spacing="5" VerticalAlignment="Center">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="20">
+                                        <controls:ProgrammeMark Grid.Column="0"
+                                                                Programme="{Binding}"
+                                                                Width="76" Height="76"
+                                                                VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Spacing="5" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}"
                                                        FontSize="{StaticResource KioskFontH4}"
                                                        FontWeight="SemiBold"
-                                                       Foreground="{StaticResource KioskText}"
+                                                       Foreground="{StaticResource KioskInk}"
                                                        TextWrapping="Wrap" />
                                             <TextBlock Text="{Binding Faculty}"
                                                        FontSize="{StaticResource KioskFontCaption}"
                                                        Foreground="{StaticResource KioskTextMuted}"
                                                        TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="1" Spacing="6"
-                                                    VerticalAlignment="Center"
-                                                    HorizontalAlignment="Right">
-                                            <Border Background="{StaticResource KioskTileTint}"
-                                                    CornerRadius="{StaticResource KioskRadiusChip}"
-                                                    Padding="14,6">
-                                                <TextBlock Text="{Binding EducationType}" FontSize="16"
-                                                           Foreground="{StaticResource KioskPrimary}"
-                                                           HorizontalAlignment="Center" />
-                                            </Border>
-                                            <TextBlock Text="{Binding Languages.Count}"
-                                                       FontSize="{StaticResource KioskFontCaptionSm}"
-                                                       Foreground="{StaticResource KioskTextMuted}"
-                                                       HorizontalAlignment="Center"
-                                                       IsVisible="False" />
-                                        </StackPanel>
+                                        <Border Grid.Column="2"
+                                                Background="{StaticResource KioskTileTint}"
+                                                CornerRadius="{StaticResource KioskRadiusChip}"
+                                                Padding="14,6" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding EducationType}" FontSize="16"
+                                                       Foreground="{StaticResource KioskPrimary}"
+                                                       HorizontalAlignment="Center" />
+                                        </Border>
                                     </Grid>
                                 </Button>
                             </DataTemplate>
@@ -100,9 +96,15 @@
 
                     <Border Classes="card">
                         <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="20">
+                                <controls:ProgrammeMark x:Name="DetailMark"
+                                                        Width="96" Height="96"
+                                                        VerticalAlignment="Center" />
+                                <TextBlock x:Name="DetailNameTop" IsVisible="False" />
+                            </StackPanel>
                             <TextBlock x:Name="DetailName"
                                        FontSize="{StaticResource KioskFontH2}" FontWeight="Bold"
-                                       Foreground="{StaticResource KioskPrimary}"
+                                       Foreground="{StaticResource KioskInk}"
                                        TextWrapping="Wrap" />
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <Border Background="{StaticResource KioskTileTint}"

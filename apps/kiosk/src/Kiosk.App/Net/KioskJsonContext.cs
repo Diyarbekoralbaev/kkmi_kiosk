@@ -49,6 +49,8 @@ namespace Kiosk.App.Net;
 [JsonSerializable(typeof(LessonListResponse))]
 [JsonSerializable(typeof(DirectionListResponse))]
 [JsonSerializable(typeof(DirectionResponse))]
+[JsonSerializable(typeof(CourseListResponse))]
+[JsonSerializable(typeof(WeekResponse))]
 [JsonSerializable(typeof(BookListResponse))]
 [JsonSerializable(typeof(BookSectionListResponse))]
 [JsonSerializable(typeof(BooksMessage))]

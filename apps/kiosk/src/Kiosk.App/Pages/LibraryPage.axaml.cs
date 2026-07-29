@@ -87,6 +87,7 @@ public partial class LibraryPage : UserControl, IBackNavigable
     private void RenderDetail(BookDto b)
     {
         Breadcrumb.Text = b.SectionLabel;
+        DetailCover.Book = b;
         DetailTitle.Text = b.Title;
         DetailAuthors.Text = OrDash(b.Authors);
         DetailSection.Text = b.SectionLabel;

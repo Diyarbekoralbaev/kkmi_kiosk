@@ -225,6 +225,39 @@ public partial class MainWindow : Window
         if (e.PropertyName == nameof(SessionStore.CurrentPage))
         {
             MicOrb.IsVisible = SessionStore.Current.CurrentPage != KioskPage.Ai;
+            _ = SyncVoiceToPageAsync(SessionStore.Current.CurrentPage);
+        }
+    }
+
+    /// <summary>Keep the voice session pinned to whatever screen is open.
+    ///
+    /// The agent's menu is fixed when the WS connects — it decides both the
+    /// prompt's focus block and the tool set — so a session started on one
+    /// screen is wrong on the next. Previously only the AI page started one at
+    /// all, which is why every other tile said "AI" but sat silent, and why the
+    /// agent lost track of where the visitor was.
+    ///
+    /// Home stops the session rather than switching it: nobody is being helped
+    /// on the home screen, and leaving a Gemini Live session open there burns
+    /// tokens on an empty lobby.</summary>
+    private async Task SyncVoiceToPageAsync(KioskPage page)
+    {
+        try
+        {
+            // Home and Contacts carry nothing to ask about; leaving a Gemini
+            // Live session open on either burns tokens on an empty lobby.
+            if (page is KioskPage.Home or KioskPage.Contacts)
+            {
+                await _runtime.StopAsync();
+                return;
+            }
+            await _runtime.StartAsync(SessionStore.MenuFor(page));
+        }
+        catch (Exception ex)
+        {
+            // A page must still render if the mic or the network is unavailable
+            // — the touch flow works without voice.
+            Console.Error.WriteLine($"[voice] page sync failed: {ex.Message}");
         }
     }
 

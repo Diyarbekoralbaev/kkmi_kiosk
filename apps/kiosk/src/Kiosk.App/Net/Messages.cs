@@ -172,6 +172,24 @@ public sealed record DirectionDto
     [JsonPropertyName("subjects")] public List<string> Subjects { get; init; } = new();
 }
 
+/// <summary>A bachelor course (1-6) and how many groups sit in it. Derived
+/// server-side from the group number — HEMIS publishes no course field.</summary>
+public sealed record CourseDto
+{
+    [JsonPropertyName("course")] public int Course { get; init; }
+    [JsonPropertyName("group_count")] public int GroupCount { get; init; }
+}
+
+/// <summary>One column of the week strip.</summary>
+public sealed record WeekDayDto
+{
+    [JsonPropertyName("date")] public string Date { get; init; } = "";
+    /// <summary>ISO weekday, 1 = Monday.</summary>
+    [JsonPropertyName("weekday")] public int Weekday { get; init; }
+    [JsonPropertyName("count")] public int Count { get; init; }
+    [JsonPropertyName("is_today")] public bool IsToday { get; init; }
+}
+
 // ── Kutubxona ────────────────────────────────────────────────────────────────
 
 /// <summary>One catalogue card. Unlike everything else the kiosk reads, this
@@ -194,6 +212,9 @@ public sealed record BookDto
     [JsonPropertyName("shelf")] public string Shelf { get; init; } = "";
     [JsonPropertyName("description")] public string Description { get; init; } = "";
     [JsonPropertyName("available")] public bool Available { get; init; } = true;
+    /// <summary>A jacket image is stored for this book. When false the kiosk
+    /// draws its own designed cover instead of showing a broken frame.</summary>
+    [JsonPropertyName("has_cover")] public bool HasCover { get; init; }
 }
 
 public sealed record BookSectionDto

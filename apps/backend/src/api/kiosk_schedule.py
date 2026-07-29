@@ -33,14 +33,51 @@ async def faculties(
     return {"items": await schedule_q.faculties(session)}
 
 
+@router.get("/courses")
+async def courses(
+    session: DbSession,
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> dict[str, Any]:
+    """Bachelor courses 1-6 with group counts — the first drill-down step."""
+    await resolve_device_from_signed_request(session, x_kiosk_auth)
+    return {"items": await schedule_q.courses(session)}
+
+
 @router.get("/groups")
 async def groups(
     session: DbSession,
     faculty_id: int | None = Query(default=None),
+    course: int | None = Query(default=None, ge=1, le=6),
     x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
 ) -> dict[str, Any]:
     await resolve_device_from_signed_request(session, x_kiosk_auth)
-    return {"items": await schedule_q.groups(session, faculty_id=faculty_id)}
+    return {
+        "items": await schedule_q.groups(
+            session, faculty_id=faculty_id, course=course
+        )
+    }
+
+
+@router.get("/week")
+async def week(
+    session: DbSession,
+    group_id: int = Query(),
+    on_date: date | None = Query(default=None, alias="date"),
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> dict[str, Any]:
+    """A group's whole week: per-day counts for the strip, plus every lesson.
+
+    Falls back to the group's last taught week when no date is given, for the
+    same reason the page does — over the summer break the current week is empty
+    for every group in the institute.
+    """
+    await resolve_device_from_signed_request(session, x_kiosk_auth)
+    if on_date is None:
+        start, _ = await schedule_q.scope_range(
+            session, group_id, "last_taught_week"
+        )
+        on_date = start
+    return await schedule_q.week_for_group(session, group_id, on_date)
 
 
 @router.get("/lessons")

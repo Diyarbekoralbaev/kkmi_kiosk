@@ -98,6 +98,7 @@ public partial class AbituriyentPage : UserControl, IBackNavigable
         }
 
         Breadcrumb.Text = d.EducationType;
+        DetailMark.Programme = d;
         DetailName.Text = d.Name;
         DetailType.Text = d.EducationType;
         DetailCode.Text = d.Code;
