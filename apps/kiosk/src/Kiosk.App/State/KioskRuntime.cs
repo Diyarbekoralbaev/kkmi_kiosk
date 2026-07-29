@@ -76,6 +76,13 @@ public sealed class KioskRuntime : IAsyncDisposable
         return _ws?.SendUiLanguageAsync(code) ?? Task.FromResult(false);
     }
 
+    /// <summary>Report the visitor's position on screen to the agent. No-ops
+    /// when no session is open, which is the normal case on Home.</summary>
+    public Task SendUiStateAsync(string where)
+    {
+        return _ws?.SendUiStateAsync(where) ?? Task.FromResult(false);
+    }
+
     /// <summary>Forward an explicit text turn to Gemini via the backend —
     /// used by the voice-preview confirm/reject buttons.</summary>
     public Task SendUserTextAsync(string text)
@@ -240,6 +247,8 @@ public sealed class KioskRuntime : IAsyncDisposable
         ws.GroupChoicesReceived += g => Dispatcher.UIThread.Post(() => SessionStore.Current.OnGroupChoices(g));
         ws.DirectionsReceived += d => Dispatcher.UIThread.Post(() => SessionStore.Current.OnDirections(d));
         ws.DirectionReceived += d => Dispatcher.UIThread.Post(() => SessionStore.Current.OnDirection(d));
+        ws.CoursesReceived += c => Dispatcher.UIThread.Post(() => SessionStore.Current.OnCourses(c));
+        ws.CourseGroupsReceived += c => Dispatcher.UIThread.Post(() => SessionStore.Current.OnCourseGroups(c));
         ws.BooksReceived += b => Dispatcher.UIThread.Post(() => SessionStore.Current.OnBooks(b));
         ws.BookSectionsReceived += b => Dispatcher.UIThread.Post(() => SessionStore.Current.OnBookSections(b));
         ws.LeadershipReceived += l => Dispatcher.UIThread.Post(() => SessionStore.Current.OnLeadership(l));

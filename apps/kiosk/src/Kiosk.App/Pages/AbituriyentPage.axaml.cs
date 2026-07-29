@@ -120,6 +120,7 @@ public partial class AbituriyentPage : UserControl, IBackNavigable
         // Show the row we already have straight away, then swap in the fuller
         // record — the screen must not sit blank while the fetch runs.
         SessionStore.Current.SelectedDirection = d;
+        Tell($"the programme \"{d.Name}\" ({d.EducationType}, {d.Faculty})");
         try
         {
             var resp = await KioskApi.GetDirectionAsync(d.Id);
@@ -139,6 +140,18 @@ public partial class AbituriyentPage : UserControl, IBackNavigable
         return true;
     }
 
-    private void OnBackToList(object? sender, RoutedEventArgs e) =>
+    private void OnBackToList(object? sender, RoutedEventArgs e)
+    {
         SessionStore.Current.SelectedDirection = null;
+        Tell("the full programme list");
+    }
+
+    /// <summary>Tell the agent what the visitor opened by touch, so it does not
+    /// ask about a programme already on screen.</summary>
+    private static void Tell(string where)
+    {
+        var rt = KioskRuntime.Current;
+        if (rt is null || !rt.IsActive) return;
+        _ = rt.SendUiStateAsync($"Abituriyent — {where}");
+    }
 }

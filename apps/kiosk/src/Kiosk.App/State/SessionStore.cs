@@ -203,6 +203,16 @@ public partial class SessionStore : ObservableObject
     /// looking for Wednesday should not have to open a calendar.</summary>
     public ObservableCollection<WeekDayCell> WeekDays { get; } = new();
 
+    /// <summary>Course list and one course's groups, when the AGENT opened
+    /// them. The touch path fetches the same data into the page's own fields;
+    /// these exist so a spoken step lands the visitor on exactly the screen a
+    /// tap would have.</summary>
+    public ObservableCollection<CourseDto> Courses { get; } = new();
+    public ObservableCollection<GroupDto> CourseGroups { get; } = new();
+    /// <summary>Which course the agent opened, 0 when none. Drives the
+    /// breadcrumb so the screen agrees with what was just said aloud.</summary>
+    [ObservableProperty] private int _agentCourse;
+
     // ── Abituriyent ───────────────────────────────────────────────────────────
     public ObservableCollection<DirectionDto> Directions { get; } = new();
     [ObservableProperty] private DirectionDto? _selectedDirection;
@@ -373,6 +383,9 @@ public partial class SessionStore : ObservableObject
         LessonDays.Clear();
         WeekDays.Clear();
         GroupChoices.Clear();
+        Courses.Clear();
+        CourseGroups.Clear();
+        AgentCourse = 0;
 
         SelectedDirection = null;
 
@@ -410,6 +423,9 @@ public partial class SessionStore : ObservableObject
         LessonDays.Clear();
         WeekDays.Clear();
         GroupChoices.Clear();
+        Courses.Clear();
+        CourseGroups.Clear();
+        AgentCourse = 0;
 
         Directions.Clear();
         SelectedDirection = null;
@@ -660,6 +676,37 @@ public partial class SessionStore : ObservableObject
             return Localization.LocalizationService.FormatDate(first, lang);
         return Localization.LocalizationService.FormatDayMonth(first, lang)
                + " – " + Localization.LocalizationService.FormatDate(last, lang);
+    }
+
+    /// <summary>The agent opened the course list. Clearing the deeper levels is
+    /// the point: the visitor asked to step back out, so leaving a stale group
+    /// list or timetable underneath would put the page one level from where the
+    /// agent just said it is.</summary>
+    public void OnCourses(CoursesMessage m)
+    {
+        Courses.Clear();
+        foreach (var c in m.Items) Courses.Add(c);
+        CourseGroups.Clear();
+        GroupChoices.Clear();
+        SetLessons(Array.Empty<LessonDto>());
+        WeekDays.Clear();
+        ScheduleGroupName = "";
+        ScheduleEmptyReason = "";
+        AgentCourse = 0;
+        Navigate(KioskPage.Jadval);
+    }
+
+    public void OnCourseGroups(CourseGroupsMessage m)
+    {
+        CourseGroups.Clear();
+        foreach (var g in m.Items) CourseGroups.Add(g);
+        AgentCourse = m.Course;
+        GroupChoices.Clear();
+        SetLessons(Array.Empty<LessonDto>());
+        WeekDays.Clear();
+        ScheduleGroupName = "";
+        ScheduleEmptyReason = "";
+        Navigate(KioskPage.Jadval);
     }
 
     public void OnGroupChoices(GroupChoicesMessage m)

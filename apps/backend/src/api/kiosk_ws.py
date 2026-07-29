@@ -414,6 +414,43 @@ async def kiosk_voice(ws: WebSocket) -> None:
                 ev.call_id, name, {"status": "ok", "item": item}
             )
 
+        elif name == "show_courses":
+            async with AsyncSessionLocal() as s:
+                items = await schedule_q.courses(s)
+            await _push({"type": "show_courses", "items": items})
+            await gemini.send_tool_response(
+                ev.call_id, name, {"status": "ok", "items": items}
+            )
+
+        elif name == "show_course_groups":
+            try:
+                course = int(args.get("course"))
+            except (TypeError, ValueError):
+                await gemini.send_tool_response(
+                    ev.call_id, name, {"status": "error", "code": "bad_course"}
+                )
+                return
+            if not 1 <= course <= 6:
+                await gemini.send_tool_response(
+                    ev.call_id,
+                    name,
+                    {"status": "error", "code": "course_out_of_range",
+                     "next_step": "bachelor courses run 1 to 6"},
+                )
+                return
+            async with AsyncSessionLocal() as s:
+                items = await schedule_q.groups(s, course=course)
+            # Everything shown here counts as offered, so the visitor can pick
+            # one by name and the agent may go straight to show_schedule
+            # without a find_group round trip.
+            offered_groups.update(int(g["id"]) for g in items)
+            await _push(
+                {"type": "show_course_groups", "course": course, "items": items}
+            )
+            await gemini.send_tool_response(
+                ev.call_id, name, {"status": "ok", "course": course, "items": items}
+            )
+
         elif name == "find_book":
             query = str(args.get("query", "")).strip()
             async with AsyncSessionLocal() as s:
@@ -657,6 +694,26 @@ async def kiosk_voice(ws: WebSocket) -> None:
                     user_text = str(payload.get("text", "")).strip()
                     if user_text:
                         await gemini.send_text(user_text)
+                elif msg_type == "ui_state":
+                    # Where the visitor has got to by TOUCH. Both surfaces move
+                    # the same screen, so without this the agent asks for things
+                    # already on it — "which group?" while the group's week is
+                    # open — and the visitor has to repeat themselves to a
+                    # machine that is looking at the answer.
+                    #
+                    # Sent only on level changes, never per tap: every one of
+                    # these is a turn in the model's context, and narrating a
+                    # visitor's scrolling would crowd out the conversation.
+                    where = str(payload.get("where", "")).strip()[:200]
+                    if not where:
+                        continue
+                    logger.info("ui_state", where=where)
+                    await gemini.send_text(
+                        f"[SYSTEM] The visitor is now looking at: {where}. "
+                        "Do not announce this and do not greet again. Use it so "
+                        "you never ask for something already on their screen."
+                    )
+
                 elif msg_type == "ui_language":
                     # The visitor tapped a different language mid-session. The
                     # system prompt is fixed once the provider session opens, so

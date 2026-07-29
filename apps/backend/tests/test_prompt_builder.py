@@ -101,7 +101,22 @@ def test_every_declared_tool_exists(menu: str) -> None:
 
 def test_declarations_are_built_for_the_menu_only() -> None:
     names = {d["name"] for d in declarations_for(tools_for_menu("jadval"))}
-    assert names == {"navigate_to_screen", "find_group", "show_schedule"}
+    assert names == {
+        "navigate_to_screen",
+        "show_courses",
+        "show_course_groups",
+        "find_group",
+        "show_schedule",
+    }
+
+
+def test_timetable_agent_can_open_each_drill_down_level() -> None:
+    """The agent moves the same course → group → week screens the touch flow
+    does. Without a tool per level it stalls: asked for "4-kurs dars jadvali"
+    it could only answer "which group?", because find_group needs a name and
+    show_schedule needs a confirmed id."""
+    tools = set(tools_for_menu("jadval"))
+    assert {"show_courses", "show_course_groups"} <= tools
 
 
 def test_appeal_tools_are_not_reachable_from_the_timetable_menu() -> None:

@@ -20,7 +20,11 @@ Menus and their tools:
                 show_info_card
   murojat       navigate_to_screen, preview_murojat, submit_murojat
                 Appeals are stored in OUR database and worked in the gov panel.
-  jadval        navigate_to_screen, find_group, show_schedule
+  jadval        navigate_to_screen, show_courses, show_course_groups,
+                find_group, show_schedule
+                The agent drives the same course → group → week drill-down the
+                touch flow uses, so a visitor can speak one step and tap the
+                next without either surface losing the thread.
   qabul         navigate_to_screen, show_leadership, preview_reception,
                 submit_reception
 
@@ -131,6 +135,42 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
                 }
             },
             "required": ["query"],
+        },
+    },
+    "show_courses": {
+        "name": "show_courses",
+        "description": (
+            "Open the course list on screen — bachelor years 1 to 6 with how "
+            "many groups each holds.\n\n"
+            "Use this when the visitor wants a timetable but has not named a "
+            "group, or asks what courses there are. It is the same screen the "
+            "touch flow starts on, so speaking and tapping stay in step.\n\n"
+            "Returns {items: [{course, group_count}]}."
+        ),
+        "parameters": {"type": "object", "properties": {}},
+    },
+    "show_course_groups": {
+        "name": "show_course_groups",
+        "description": (
+            "Open ONE course's groups on screen and return them.\n\n"
+            "Call this the moment the visitor names a course — «4-kurs dars "
+            "jadvali», «üshinshi kurs» — instead of asking which group. They "
+            "can then read the list and say or tap one, which is faster than "
+            "spelling a group name to you.\n\n"
+            "Returns {course, items: [{id, name, specialty, language}]}. Say "
+            "how many there are and ask which one; do not read all 45 aloud. "
+            "An id from here is confirmed — you may pass it straight to "
+            "show_schedule without find_group."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "course": {
+                    "type": "integer",
+                    "description": "Bachelor year, 1-6. Medicine runs six.",
+                }
+            },
+            "required": ["course"],
         },
     },
     "show_schedule": {
@@ -416,7 +456,13 @@ MENU_TOOLS: dict[str, tuple[str, ...]] = {
         "show_info_card",
     ),
     "murojat": ("navigate_to_screen", "preview_murojat", "submit_murojat"),
-    "jadval": ("navigate_to_screen", "find_group", "show_schedule"),
+    "jadval": (
+        "navigate_to_screen",
+        "show_courses",
+        "show_course_groups",
+        "find_group",
+        "show_schedule",
+    ),
     "qabul": (
         "navigate_to_screen",
         "show_leadership",

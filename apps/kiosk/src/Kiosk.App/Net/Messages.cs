@@ -180,6 +180,19 @@ public sealed record CourseDto
     [JsonPropertyName("group_count")] public int GroupCount { get; init; }
 }
 
+public sealed record CoursesMessage
+{
+    [JsonPropertyName("items")] public List<CourseDto> Items { get; init; } = new();
+}
+
+/// <summary>The agent opened one course's groups. Same payload the touch path
+/// fetches, so both surfaces land on an identical screen.</summary>
+public sealed record CourseGroupsMessage
+{
+    [JsonPropertyName("course")] public int Course { get; init; }
+    [JsonPropertyName("items")] public List<GroupDto> Items { get; init; } = new();
+}
+
 /// <summary>One column of the week strip.</summary>
 public sealed record WeekDayDto
 {

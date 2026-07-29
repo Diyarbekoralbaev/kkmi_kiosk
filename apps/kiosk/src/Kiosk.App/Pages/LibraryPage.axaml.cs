@@ -145,11 +145,24 @@ public partial class LibraryPage : UserControl, IBackNavigable
     {
         if ((sender as Button)?.Tag is not BookSectionDto sec) return;
         await LoadBooksAsync(sec.Section, null, sec.Label);
+        Tell($"the \"{sec.Label}\" shelf ({sec.Count} books)");
     }
 
     private void OnBookClick(object? sender, RoutedEventArgs e)
     {
-        if ((sender as Button)?.Tag is BookDto b) SessionStore.Current.SelectedBook = b;
+        if ((sender as Button)?.Tag is not BookDto b) return;
+        SessionStore.Current.SelectedBook = b;
+        Tell($"the card for \"{b.Title}\" by {b.Authors}");
+    }
+
+    /// <summary>Tell the agent what the visitor opened by touch, so it does not
+    /// ask for a title already on screen. Level changes only — each report is a
+    /// turn in the model's context.</summary>
+    private static void Tell(string where)
+    {
+        var rt = KioskRuntime.Current;
+        if (rt is null || !rt.IsActive) return;
+        _ = rt.SendUiStateAsync($"Kitapxana — {where}");
     }
 
     private async void OnSearchClick(object? sender, RoutedEventArgs e) => await RunSearch();

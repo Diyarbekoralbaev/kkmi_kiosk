@@ -49,17 +49,22 @@ public partial class SchedulePage : UserControl, IBackNavigable
         SessionStore.Current.PropertyChanged -= OnSessionChanged;
         SessionStore.Current.PropertyChanged += OnSessionChanged;
 
-        // The agent may have pushed a schedule (or candidates) before this page
-        // was even constructed, so honour existing state before starting fresh.
-        if (SessionStore.Current.Lessons.Count > 0
-            || !string.IsNullOrEmpty(SessionStore.Current.ScheduleEmptyReason))
+        // The agent may have pushed a level (or a whole schedule) before this
+        // page was even constructed, so honour existing state before fetching.
+        var s = SessionStore.Current;
+        if (s.Lessons.Count > 0 || !string.IsNullOrEmpty(s.ScheduleEmptyReason))
         {
             ShowLessons();
             return;
         }
-        if (SessionStore.Current.GroupChoices.Count > 0)
+        if (s.GroupChoices.Count > 0)
         {
             ShowChoices();
+            return;
+        }
+        if (s.CourseGroups.Count > 0 || s.Courses.Count > 0)
+        {
+            FollowAgentDrillDown();
             return;
         }
         await LoadCoursesAsync();
@@ -74,6 +79,41 @@ public partial class SchedulePage : UserControl, IBackNavigable
             || e.PropertyName == nameof(SessionStore.ScheduleGroupName))
         {
             Dispatcher.UIThread.Post(ShowLessons);
+        }
+        // The agent stepped the drill-down. Follow it, so a spoken step lands
+        // on the same screen a tap would have.
+        else if (e.PropertyName == nameof(SessionStore.AgentCourse))
+        {
+            Dispatcher.UIThread.Post(FollowAgentDrillDown);
+        }
+    }
+
+    /// <summary>Mirror whatever level the agent just opened.
+    ///
+    /// Both surfaces move the same page, so the visitor can say "4-kurs", tap a
+    /// group from the list that appears, and neither side loses the thread.
+    /// Without this the agent's words and the screen would disagree — which is
+    /// worse than the agent doing nothing at all.</summary>
+    private void FollowAgentDrillDown()
+    {
+        var s = SessionStore.Current;
+        if (s.CourseGroups.Count > 0)
+        {
+            _course = s.AgentCourse;
+            _allGroups = s.CourseGroups.ToList();
+            GroupList.ItemsSource = _allGroups;
+            GroupFilter.Text = "";
+            Breadcrumb.Text = string.Format(
+                LocalizationService.Get("ScheduleCourseLabel"), s.AgentCourse);
+            ShowOnly(GroupPanel);
+            return;
+        }
+        if (s.Courses.Count > 0)
+        {
+            _course = 0;
+            CourseList.ItemsSource = s.Courses.ToList();
+            Breadcrumb.Text = LocalizationService.Get("ScheduleChooseCourse");
+            ShowOnly(CoursePanel);
         }
     }
 
@@ -128,6 +168,7 @@ public partial class SchedulePage : UserControl, IBackNavigable
         ShowOnly(CoursePanel);
         var resp = await KioskApi.GetCoursesAsync();
         CourseList.ItemsSource = resp?.Items;
+        Tell("the course list (bachelor years 1-6), no group chosen yet");
     }
 
     private async Task LoadGroupsAsync(int course)
@@ -140,6 +181,20 @@ public partial class SchedulePage : UserControl, IBackNavigable
         var resp = await KioskApi.GetGroupsAsync(course: course);
         _allGroups = resp?.Items ?? new List<GroupDto>();
         GroupList.ItemsSource = _allGroups;
+        Tell($"the group list for course {course} ({_allGroups.Count} groups)");
+    }
+
+    /// <summary>Tell the agent what the visitor just opened by touch.
+    ///
+    /// Only on level changes. Each report is a turn in the model's context, so
+    /// narrating every tap would crowd out the actual conversation — and the
+    /// levels are what matter: they are what the agent would otherwise ask
+    /// about.</summary>
+    private static void Tell(string where)
+    {
+        var rt = KioskRuntime.Current;
+        if (rt is null || !rt.IsActive) return;
+        _ = rt.SendUiStateAsync($"Dars jadvali — {where}");
     }
 
     /// <summary>Fetch a week and show one day of it.
@@ -178,6 +233,8 @@ public partial class SchedulePage : UserControl, IBackNavigable
 
         s.SetWeek(resp.Days, _selectedDay);
         ApplyDay();
+        Tell($"the timetable for group \"{s.ScheduleGroupName}\", "
+             + $"week of {resp.WeekStart}, showing {_selectedDay:yyyy-MM-dd}");
     }
 
     private static DateTime? ParseDay(string? iso) =>

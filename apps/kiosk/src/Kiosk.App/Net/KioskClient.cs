@@ -61,6 +61,8 @@ public sealed class KioskClient : IAsyncDisposable
     public event Action<GroupChoicesMessage>? GroupChoicesReceived;
     public event Action<DirectionsMessage>? DirectionsReceived;
     public event Action<DirectionMessage>? DirectionReceived;
+    public event Action<CoursesMessage>? CoursesReceived;
+    public event Action<CourseGroupsMessage>? CourseGroupsReceived;
     public event Action<BooksMessage>? BooksReceived;
     public event Action<BookSectionsMessage>? BookSectionsReceived;
     public event Action<LeadershipMessage>? LeadershipReceived;
@@ -150,6 +152,19 @@ public sealed class KioskClient : IAsyncDisposable
         var safe = (language ?? "").Trim().ToLowerInvariant();
         if (safe != "kk" && safe != "uz" && safe != "ru" && safe != "en") safe = "kk";
         var json = "{\"type\":\"ui_language\",\"language\":\"" + safe + "\"}";
+        return SendJsonAsync(json, ct);
+    }
+
+    /// <summary>Tell the backend where the visitor has got to by touch, so the
+    /// agent stops asking for things already on their screen. Short free text:
+    /// each one becomes a turn in the model's context, so callers send it on
+    /// level changes only, never per tap.</summary>
+    public Task<bool> SendUiStateAsync(string where, CancellationToken ct = default)
+    {
+        var clean = (where ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"")
+            .Replace("\n", " ").Replace("\r", " ");
+        if (clean.Length > 200) clean = clean[..200];
+        var json = "{\"type\":\"ui_state\",\"where\":\"" + clean + "\"}";
         return SendJsonAsync(json, ct);
     }
 
@@ -323,6 +338,14 @@ public sealed class KioskClient : IAsyncDisposable
                 case "show_direction":
                     var d1 = JsonSerializer.Deserialize(json, KioskJsonContext.Default.DirectionMessage);
                     if (d1 is not null) DirectionReceived?.Invoke(d1);
+                    break;
+                case "show_courses":
+                    var cs = JsonSerializer.Deserialize(json, KioskJsonContext.Default.CoursesMessage);
+                    if (cs is not null) CoursesReceived?.Invoke(cs);
+                    break;
+                case "show_course_groups":
+                    var cg = JsonSerializer.Deserialize(json, KioskJsonContext.Default.CourseGroupsMessage);
+                    if (cg is not null) CourseGroupsReceived?.Invoke(cg);
                     break;
                 case "show_books":
                     var bk = JsonSerializer.Deserialize(json, KioskJsonContext.Default.BooksMessage);
