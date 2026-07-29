@@ -35,7 +35,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -364,6 +364,48 @@ async def sync_schedule(
 
 SWEEPS = ("departments", "specialties", "groups", "schedule")
 
+# A full academic year is ~114,000 lessons. Below this the schedule in hand is
+# not the whole picture — either the fetch was truncated, or the run was a
+# `--since` top-up that only touched today's edits. Pruning groups against a
+# partial schedule would delete cohorts that are perfectly current, so both
+# cases skip it and leave the mirror to the next full sweep.
+MIN_PLAUSIBLE_LESSONS = 10_000
+
+
+async def prune_groups_without_lessons(session: AsyncSession) -> int:
+    """Drop groups the institute no longer teaches.
+
+    HEMIS flags 946 groups active but publishes a timetable for 243. The other
+    703 are cohorts that graduated years ago and were never deactivated
+    upstream — several still carry their intake in the name, e.g. "Tibbiy
+    profilaktika 511-qq (2017-2018)".
+
+    Keeping them was not merely untidy. A visitor scrolled three screens of
+    dead groups to reach a live one, and the fuzzy matcher had to discriminate
+    against 946 candidates instead of 243 — which is exactly how a query lands
+    on a stranger's timetable with a confident-looking score.
+
+    The rule is "has no lessons in the mirror", not an id cutoff or a name
+    pattern, so it maintains itself: when HEMIS publishes next September's
+    timetable these groups come back on their own, and nothing needs
+    rediscovering when the naming convention changes again.
+
+    Runs only after a schedule sweep that actually landed — see the guard in
+    `run_sync`. Pruning against a half-fetched schedule would delete groups
+    that are perfectly current.
+    """
+    result = await session.execute(
+        delete(HemisGroup).where(
+            ~select(HemisLesson.id)
+            .where(HemisLesson.group_id == HemisGroup.id)
+            .exists()
+        )
+    )
+    removed = int(result.rowcount or 0)
+    if removed:
+        logger.info("hemis_pruned_groups_without_lessons", removed=removed)
+    return removed
+
 
 async def run_sync(*, since: datetime | None = None, only: str | None = None) -> int:
     """Returns a process exit code: 0 all good, 1 if any sweep failed."""
@@ -394,6 +436,21 @@ async def run_sync(*, since: datetime | None = None, only: str | None = None) ->
                         raise ValueError(f"unknown sweep: {name}")
                     await _mark(session, name, status="ok", count=count, run_at=stamp)
             logger.info("hemis_sweep_ok", resource=name, count=count)
+
+            # Prune once the timetable is in, and only if it looks whole. The
+            # groups sweep runs BEFORE the schedule one and cannot know yet
+            # which groups are taught, so this cannot live inside sync_groups.
+            if name == "schedule":
+                if count >= MIN_PLAUSIBLE_LESSONS:
+                    async with AsyncSessionLocal() as session:
+                        async with session.begin():
+                            await prune_groups_without_lessons(session)
+                else:
+                    logger.warning(
+                        "hemis_prune_skipped_short_schedule",
+                        lessons=count,
+                        minimum=MIN_PLAUSIBLE_LESSONS,
+                    )
         except Exception as e:
             failed += 1
             logger.exception("hemis_sweep_failed", resource=name)

@@ -186,6 +186,10 @@ async def faculties(session: AsyncSession) -> list[dict[str, Any]]:
 async def groups(
     session: AsyncSession, *, faculty_id: int | None = None
 ) -> list[dict[str, Any]]:
+    # No "has lessons" filter here: `hemis_sync` drops timetable-less groups at
+    # the end of every sweep, so the mirror only ever holds groups worth
+    # offering. Filtering again on read would be a second definition of the
+    # same rule, free to drift from the first.
     stmt = select(HemisGroup).where(HemisGroup.active.is_(True))
     if faculty_id is not None:
         stmt = stmt.where(HemisGroup.department_id == faculty_id)
