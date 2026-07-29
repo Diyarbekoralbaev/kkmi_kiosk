@@ -64,14 +64,19 @@ async def lessons(
 
     empty_reason = ""
     if not items:
-        # "Free day" and "the academic year isn't loaded" look identical on
-        # screen but need opposite explanations — and over the summer break the
-        # second is the normal case, so it must not read as a broken kiosk.
-        today = today_local()
-        upcoming = await schedule_q.lessons_for_group(
-            session, group_id, today, today + timedelta(days=365)
-        )
-        empty_reason = "no_lessons_that_day" if upcoming else "year_not_published"
+        # Three different situations render as the same blank list and need
+        # three different sentences: a free day, a group HEMIS has never
+        # published a timetable for (703 of 946), and the summer gap before the
+        # next year is loaded. Only the last one is worth telling a visitor to
+        # come back for.
+        if not await schedule_q.has_any_lessons(session, group_id):
+            empty_reason = "group_has_no_schedule"
+        else:
+            today = today_local()
+            upcoming = await schedule_q.lessons_for_group(
+                session, group_id, today, today + timedelta(days=365)
+            )
+            empty_reason = "no_lessons_that_day" if upcoming else "year_not_published"
 
     return {
         "group": await schedule_q.group_by_id(session, group_id),

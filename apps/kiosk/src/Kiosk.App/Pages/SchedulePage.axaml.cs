@@ -23,7 +23,7 @@ namespace Kiosk.App.Pages;
 /// list into SessionStore and this page follows via PropertyChanged. Keeping one
 /// lesson renderer for both paths is what stops the two surfaces drifting apart.
 /// </summary>
-public partial class SchedulePage : UserControl
+public partial class SchedulePage : UserControl, IBackNavigable
 {
     /// <summary>What a freshly picked group opens on.
     ///
@@ -116,14 +116,25 @@ public partial class SchedulePage : UserControl
         EmptyState.IsVisible = empty;
         if (empty)
         {
-            var yearMissing = s.ScheduleEmptyReason == "year_not_published";
+            // Three reasons, three sentences. Telling someone whose group has
+            // NO timetable in HEMIS that "the new year is not published yet"
+            // sends them back for something that is never coming.
+            var reason = s.ScheduleEmptyReason;
+            var noneEver = reason == "group_has_no_schedule";
+            var yearMissing = reason == "year_not_published";
             EmptyTitle.Text = LocalizationService.Get(
-                yearMissing ? "ScheduleYearNotPublishedTitle" : "ScheduleNoLessonsTitle");
+                noneEver ? "ScheduleNoScheduleTitle"
+                : yearMissing ? "ScheduleYearNotPublishedTitle"
+                : "ScheduleNoLessonsTitle");
             EmptyBody.Text = LocalizationService.Get(
-                yearMissing ? "ScheduleYearNotPublishedBody" : "ScheduleNoLessonsBody");
-            // Only offer the last taught week when we are not already showing
-            // it — otherwise the button reloads the empty screen you are on.
-            LastYearButton.IsVisible = yearMissing && _scope != "last_taught_week";
+                noneEver ? "ScheduleNoScheduleBody"
+                : yearMissing ? "ScheduleYearNotPublishedBody"
+                : "ScheduleNoLessonsBody");
+            // Only offer the last taught week when there IS one and we are not
+            // already showing it — otherwise the button reloads the empty
+            // screen you are already looking at.
+            LastYearButton.IsVisible =
+                yearMissing && _scope != "last_taught_week";
         }
         ShowOnly(LessonPanel);
     }
@@ -260,6 +271,29 @@ public partial class SchedulePage : UserControl
     {
         DatePickerOverlay.IsVisible = false;
         if (DayCalendar.SelectedDate is { } d) await Reload("week_of", d);
+    }
+
+    /// <summary>Lessons → groups → faculties. The date overlay counts as a
+    /// level of its own so Back dismisses it rather than skipping past the
+    /// timetable underneath.</summary>
+    public bool TryGoBack()
+    {
+        if (DatePickerOverlay.IsVisible)
+        {
+            DatePickerOverlay.IsVisible = false;
+            return true;
+        }
+        if (LessonPanel.IsVisible || ChoicesPanel.IsVisible)
+        {
+            OnBackToGroups(null, new RoutedEventArgs());
+            return true;
+        }
+        if (GroupPanel.IsVisible)
+        {
+            _ = LoadFacultiesAsync();
+            return true;
+        }
+        return false;
     }
 
     private async void OnBackToGroups(object? sender, RoutedEventArgs e)

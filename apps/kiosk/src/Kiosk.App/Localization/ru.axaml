@@ -148,6 +148,8 @@
     <x:String x:Key="ScheduleChangeGroup">Другая группа</x:String>
     <x:String x:Key="ScheduleNoLessonsTitle">В этот день занятий нет</x:String>
     <x:String x:Key="ScheduleNoLessonsBody">Попробуйте выбрать другой день.</x:String>
+    <x:String x:Key="ScheduleNoScheduleTitle">У этой группы нет расписания</x:String>
+    <x:String x:Key="ScheduleNoScheduleBody">HEMIS не публикует расписание для этой группы. Выберите другую группу или обратитесь в деканат.</x:String>
     <x:String x:Key="ScheduleYearNotPublishedTitle">Расписание нового учебного года ещё не опубликовано</x:String>
     <x:String x:Key="ScheduleYearNotPublishedBody">Расписание обычно вносится в систему перед началом учебного года.</x:String>
     <x:String x:Key="ScheduleShowLastYear">Показать последнюю учебную неделю</x:String>

@@ -153,6 +153,8 @@
     <x:String x:Key="ScheduleChangeGroup">Boshqa guruh</x:String>
     <x:String x:Key="ScheduleNoLessonsTitle">Bu kuni dars yo‘q</x:String>
     <x:String x:Key="ScheduleNoLessonsBody">Boshqa kunni tanlab ko‘ring.</x:String>
+    <x:String x:Key="ScheduleNoScheduleTitle">Bu guruhda jadval yo‘q</x:String>
+    <x:String x:Key="ScheduleNoScheduleBody">HEMIS tizimi bu guruh uchun dars jadvalini bermagan. Boshqa guruhni tanlang yoki dekanatga murojaat qiling.</x:String>
     <x:String x:Key="ScheduleYearNotPublishedTitle">Yangi o‘quv yili jadvali hali e’lon qilinmagan</x:String>
     <x:String x:Key="ScheduleYearNotPublishedBody">Jadval odatda o‘quv yili boshlanishidan oldin tizimga kiritiladi.</x:String>
     <x:String x:Key="ScheduleShowLastYear">Oxirgi darsli haftani ko‘rish</x:String>

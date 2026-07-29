@@ -303,7 +303,38 @@ public partial class SessionStore : ObservableObject
     {
         // Silent: a page change never pokes the agent. The agent speaks only in
         // response to voice input, or the one-shot [START] at WS open.
+        //
+        // Returning to Home ends whatever the visitor was browsing. Without
+        // this the collections survived, and since every page honours existing
+        // state before fetching — so that an agent push made before the page
+        // was constructed is not thrown away — the NEXT visitor opening that
+        // tile landed inside the previous one's session: the library reopened
+        // on the last book someone had read, the timetable on a stranger's
+        // group. Clearing on the way OUT keeps the agent-push path intact,
+        // because a push sets its data and only then navigates.
+        if (page == KioskPage.Home) ClearBrowsingState();
         CurrentPage = page;
+    }
+
+    /// <summary>Forget what was being browsed, without touching the half-filled
+    /// appeal and reception forms — those are the visitor's own input and are
+    /// cleared by <see cref="ResetIdle"/> when they walk away.</summary>
+    private void ClearBrowsingState()
+    {
+        ScheduleGroupName = "";
+        ScheduleScope = "";
+        ScheduleEmptyReason = "";
+        ScheduleRangeLabel = "";
+        Lessons.Clear();
+        LessonDays.Clear();
+        GroupChoices.Clear();
+
+        SelectedDirection = null;
+
+        Books.Clear();
+        BookSections.Clear();
+        SelectedBook = null;
+        BookListCaption = "";
     }
 
     /// <summary>Reset to home and clear every in-progress flow.</summary>

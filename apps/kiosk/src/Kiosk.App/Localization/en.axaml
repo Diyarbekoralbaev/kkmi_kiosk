@@ -155,6 +155,8 @@
     <x:String x:Key="ScheduleChangeGroup">Change group</x:String>
     <x:String x:Key="ScheduleNoLessonsTitle">No classes on this day</x:String>
     <x:String x:Key="ScheduleNoLessonsBody">Try another day.</x:String>
+    <x:String x:Key="ScheduleNoScheduleTitle">This group has no timetable</x:String>
+    <x:String x:Key="ScheduleNoScheduleBody">HEMIS publishes no schedule for this group. Try another group, or ask at the dean's office.</x:String>
     <x:String x:Key="ScheduleYearNotPublishedTitle">The new academic year's timetable is not published yet</x:String>
     <x:String x:Key="ScheduleYearNotPublishedBody">It is usually loaded shortly before the academic year starts.</x:String>
     <x:String x:Key="ScheduleShowLastYear">Show the last week with classes</x:String>

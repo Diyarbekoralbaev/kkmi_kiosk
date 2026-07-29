@@ -1,124 +1,122 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Қарақалпақша (Cyrillic). Default kiosk locale, per the 2026 mockup.
+    <!-- Qaraqalpaqsha (LATIN). The kiosk's default locale.
+
+         This file used to be Cyrillic, inherited from the Joqarı Keńes kiosk.
+         That produced a screen where the header, the nav buttons and the mic
+         labels were Cyrillic while everything below them — page titles, group
+         names, kafedra names — was Latin, because the institute's own HEMIS
+         records are Latin ("Medicinalıq ximiya kafedrası", "Joqarı
+         miyirbiykelik isi-233"). Two scripts on one screen read as two
+         different systems, so the whole file is Latin now and the AI is
+         instructed to match (see core/seed.py, the language section).
+
          _Locale_kk: unique sentinel for LocalizationService. -->
     <x:String x:Key="_Locale_kk">kk</x:String>
 
     <!-- ===== Header / footer / language labels ===== -->
-    <x:String x:Key="HeaderTagline">«Ақыллы қабыллаўхана» AI жәрдемшиси</x:String>
+    <x:String x:Key="HeaderTagline">«Aqıllı qabıllawxana» AI járdemshisi</x:String>
     <x:String x:Key="LangUz">O‘zbekcha</x:String>
     <x:String x:Key="LangRu">Русский</x:String>
     <x:String x:Key="LangKk">Qaraqalpaqsha</x:String>
     <x:String x:Key="LangEn">English</x:String>
-    <x:String x:Key="HelpLabel">Жәрдем:</x:String>
+    <x:String x:Key="HelpLabel">Járdem:</x:String>
 
-    <!-- ===== Home page (2 services: AI + Murajat) ===== -->
-    <x:String x:Key="HomeGreetingChip">Хош келдиңиз!</x:String>
-    <x:String x:Key="HomeQuestion">Сизге қандай жәрдем бере аламыз?</x:String>
-    <x:String x:Key="HomeSubtitle">AI жәрдемши менен сөйлесиң ямаса Жоқарғы Кеңеске мүрәжат қалдырың.</x:String>
-    <x:String x:Key="HomeTileAiTitle">AI менен сөйлесиў</x:String>
-    <x:String x:Key="HomeTileAiSubtitle">Сораўларыңызға жасалма интеллекттен тез арада жуўап алың</x:String>
+    <!-- ===== Home page ===== -->
+    <x:String x:Key="HomeGreetingChip">Xosh keldińiz!</x:String>
+    <x:String x:Key="HomeQuestion">Sizge qanday járdem bere alamız?</x:String>
+    <x:String x:Key="HomeSubtitle">Kerekli xızmetti saylań yaki AI járdemshi menen sóylesiń.</x:String>
+    <x:String x:Key="HomeTileAiTitle">AI menen sóylesiw</x:String>
+    <x:String x:Key="HomeTileAiSubtitle">Sorawlarıńızǵa jasalma intellektten tez juwap alıń</x:String>
 
     <!-- ===== NavBar ===== -->
-    <x:String x:Key="NavBack">Артқа</x:String>
-    <x:String x:Key="NavHome">Бас бет</x:String>
+    <x:String x:Key="NavBack">Artqa</x:String>
+    <x:String x:Key="NavHome">Bas bet</x:String>
 
-    <!-- ===== AI Yordamchi page ===== -->
-    <x:String x:Key="AiPageTitle">AI жәрдемши</x:String>
-    <x:String x:Key="AiPageStatusConnecting">Жалғанып атыр...</x:String>
-    <x:String x:Key="AiPageStatusListening">Сөйлеңиз, мен сизди тыңлап атырман</x:String>
-    <x:String x:Key="AiPageHint">Сораўыңызды бериң ямаса мүрәжатыңызды айтыңыз. Робот сизди тыңлап атыр.</x:String>
+    <!-- ===== AI assistant page ===== -->
+    <x:String x:Key="AiPageTitle">AI járdemshi</x:String>
+    <x:String x:Key="AiPageStatusConnecting">Jalǵanıp atır...</x:String>
+    <x:String x:Key="AiPageStatusListening">Sóyleńiz, men sizdi tıńlap atırman</x:String>
+    <x:String x:Key="AiPageHint">Sorawıńızdı beriń yamasa múrájatıńızdı aytıńız. Robot sizdi tıńlap atır.</x:String>
 
     <!-- ===== MicOrb ===== -->
-    <x:String x:Key="MicListening">Тыңлап атыр</x:String>
-    <x:String x:Key="MicTapToStart">Сөйлеў ушын басың</x:String>
-    <x:String x:Key="MicDisconnected">Жалғанбаған</x:String>
-    <x:String x:Key="MicConnecting">Жалғанып атыр</x:String>
-    <x:String x:Key="MicSpeaking">Сөйлеп атырсыз</x:String>
-    <x:String x:Key="MicStopping">Тоқтап атыр...</x:String>
-    <x:String x:Key="MicStarting">Баслап атыр...</x:String>
-    <x:String x:Key="MicError">Қәтелик</x:String>
+    <x:String x:Key="MicListening">Tıńlap atır</x:String>
+    <x:String x:Key="MicTapToStart">Sóylew ushın basıń</x:String>
+    <x:String x:Key="MicDisconnected">Jalǵanbaǵan</x:String>
+    <x:String x:Key="MicConnecting">Jalǵanıp atır</x:String>
+    <x:String x:Key="MicSpeaking">Sóylep atırsız</x:String>
+    <x:String x:Key="MicStopping">Toqtap atır...</x:String>
+    <x:String x:Key="MicStarting">Baslap atır...</x:String>
+    <x:String x:Key="MicError">Qátelik</x:String>
 
-    <!-- ===== Submit page (AI voice preview) ===== -->
-
-    <!-- ===== Contacts page (kept for back-compat; not on Home anymore) ===== -->
-    <x:String x:Key="ContactsPageTitle">Байланыс</x:String>
-    <x:String x:Key="ContactsAddressLabel">📍 Мәнзил</x:String>
-    <x:String x:Key="ContactsPhoneIconLabel">☎ Телефон</x:String>
-    <x:String x:Key="ContactsEmailLabel">✉ Электрон почта</x:String>
-    <x:String x:Key="ContactsHoursLabel">🕐 Жумыс ўақты</x:String>
+    <!-- ===== Contacts page ===== -->
+    <x:String x:Key="ContactsPageTitle">Baylanıs</x:String>
+    <x:String x:Key="ContactsAddressLabel">📍 Mánzil</x:String>
+    <x:String x:Key="ContactsPhoneIconLabel">☎ Telefon</x:String>
+    <x:String x:Key="ContactsEmailLabel">✉ Elektron pochta</x:String>
+    <x:String x:Key="ContactsHoursLabel">🕐 Jumıs waqtı</x:String>
 
     <!-- ===== Offline overlay ===== -->
-    <x:String x:Key="OfflineTitle">Байланыс жоқ</x:String>
-    <x:String x:Key="OfflineHint">Байланыс қайта тикленбекте...</x:String>
+    <x:String x:Key="OfflineTitle">Baylanıs joq</x:String>
+    <x:String x:Key="OfflineHint">Baylanıs qayta tiklenbekte...</x:String>
 
     <!-- ===== Revoked overlay ===== -->
-    <x:String x:Key="RevokedTitle">Бул киоскқа рухсат жоқ</x:String>
-    <x:String x:Key="RevokedBody">Бул үскенениң кириў коды администратор тәрепинен бийкар етилген. Сазлаўшы жаңаланыў кодын киритсин.</x:String>
-    <x:String x:Key="RevokedButton">Жаңа код киритиў</x:String>
+    <x:String x:Key="RevokedTitle">Bul kioskqa ruxsat joq</x:String>
+    <x:String x:Key="RevokedBody">Bul úskeneniń kiriw kodı administrator tárepinen biykar etilgen. Sazlawshı jańa kod kiritsin.</x:String>
+    <x:String x:Key="RevokedButton">Jańa kod kiritiw</x:String>
 
     <!-- ===== Submit success overlay (shared by voice + manual) ===== -->
-    <x:String x:Key="SubmitSuccessTitle">Мүрәжатыңыз қабыл етилди</x:String>
-    <x:String x:Key="SubmitSuccessBody">Кеңес хызметкерлери сиздиң мүрәжатыңызды көрип шығады.</x:String>
-    <x:String x:Key="SubmitSuccessIdLabel">Номер:</x:String>
+    <x:String x:Key="SubmitSuccessTitle">Múrájatıńız qabıl etildi</x:String>
+    <x:String x:Key="SubmitSuccessBody">Institut xızmetkerleri múrájatıńızdı kórip shıǵadı.</x:String>
+    <x:String x:Key="SubmitSuccessIdLabel">Nomer:</x:String>
 
     <!-- ===== Updating page ===== -->
-    <x:String x:Key="UpdatingTitle">Система жаңаланып атыр</x:String>
-    <x:String x:Key="UpdatingBody">Бираздан соң қайта иске түседи. Илтимас, күтиң...</x:String>
-    <x:String x:Key="UpdatingStatusPreparing">Таярланып атыр...</x:String>
-    <x:String x:Key="UpdatingVersionLabel">Версия: </x:String>
-    <x:String x:Key="UpdatingDownloadingLabel">Жүкленип атыр...</x:String>
-    <x:String x:Key="UpdatingMandatory">Мәжбүрий жаңаланыў...</x:String>
-    <x:String x:Key="UpdatingApplying">Жаңаланыў орнатылмақта...</x:String>
-    <x:String x:Key="UpdatingFailed">Жаңаланыў сәтсиз тамамланды — киоск ески версияда ислеп тур.</x:String>
+    <x:String x:Key="UpdatingTitle">Sistema jańalanıp atır</x:String>
+    <x:String x:Key="UpdatingBody">Birazdan soń qayta iske túsedi. Iltimas, kútiń...</x:String>
+    <x:String x:Key="UpdatingStatusPreparing">Tayarlanıp atır...</x:String>
+    <x:String x:Key="UpdatingVersionLabel">Versiya: </x:String>
+    <x:String x:Key="UpdatingDownloadingLabel">Júklenip atır...</x:String>
+    <x:String x:Key="UpdatingMandatory">Májbúriy jańalanıw...</x:String>
+    <x:String x:Key="UpdatingApplying">Jańalanıw ornatılmaqta...</x:String>
+    <x:String x:Key="UpdatingFailed">Jańalanıw sátsiz tamamlandı — kiosk eski versiyada islep tur.</x:String>
 
     <!-- ===== Admin PIN dialog ===== -->
-    <x:String x:Key="AdminPinTitle">Админ сазламалары</x:String>
-    <x:String x:Key="AdminPinPrompt">PIN-кодты киритиң</x:String>
-    <x:String x:Key="AdminPinIncorrect">PIN-код қәте</x:String>
-    <x:String x:Key="AdminPinCancel">Бийкар етиў</x:String>
-    <x:String x:Key="AdminPinConfirm">Кириў</x:String>
+    <x:String x:Key="AdminPinTitle">Admin sazlamaları</x:String>
+    <x:String x:Key="AdminPinPrompt">PIN-kodtı kiritiń</x:String>
+    <x:String x:Key="AdminPinIncorrect">PIN-kod qáte</x:String>
+    <x:String x:Key="AdminPinCancel">Biykar etiw</x:String>
+    <x:String x:Key="AdminPinConfirm">Kiriw</x:String>
 
     <!-- ===== Admin choice dialog ===== -->
-    <x:String x:Key="AdminChoiceTitle">Сайлаң</x:String>
-    <x:String x:Key="AdminChoicePrompt">Программадан шығыў ямаса сазламаларды ашыў</x:String>
-    <x:String x:Key="AdminExit">Шығыў</x:String>
-    <x:String x:Key="AdminSettings">Сазламалар</x:String>
-    <x:String x:Key="AdminCancel">Бийкар етиў</x:String>
+    <x:String x:Key="AdminChoiceTitle">Saylań</x:String>
+    <x:String x:Key="AdminChoicePrompt">Programmadan shıǵıw yamasa sazlamalardı ashıw</x:String>
+    <x:String x:Key="AdminExit">Shıǵıw</x:String>
+    <x:String x:Key="AdminSettings">Sazlamalar</x:String>
+    <x:String x:Key="AdminCancel">Biykar etiw</x:String>
 
     <!-- ===== Admin settings window ===== -->
-    <x:String x:Key="AdminSettingsTitle">Админ сазламалары</x:String>
-    <x:String x:Key="AdminSettingsIntro">Микрофон, динамик ҳәм принтерди сайлаң. Өзгерислерден кейин аудио сессияны қайта баслаң.</x:String>
-    <x:String x:Key="AdminSettingsMicLabel">Аудио кириў (Микрофон)</x:String>
-    <x:String x:Key="AdminSettingsSpeakerLabel">Аудио шығыс (Динамик)</x:String>
-    <x:String x:Key="AdminSettingsVolume">Даўыс деңгейи</x:String>
-    <x:String x:Key="AdminSettingsPrinter">Принтер</x:String>
-    <x:String x:Key="AdminSettingsAutoPrint">Қабыл талонын автомат түрде басып шығарыў</x:String>
-    <x:String x:Key="AdminSettingsTestPrint">Тест ушын басып шығарыў</x:String>
-    <x:String x:Key="AdminSettingsTestMic">Микрофонды тексериў</x:String>
-    <x:String x:Key="MicTestSpeakNow">Сөйлең (3 секунд)...</x:String>
-    <x:String x:Key="MicTestPass">Микрофон ислеп тур</x:String>
-    <x:String x:Key="MicTestSilent">Даўыс анықланбады — басқа үскенени сынап көриң</x:String>
-    <x:String x:Key="MicTestErrorOpen">Үскенени ашыў имканы болмады</x:String>
-    <x:String x:Key="MicTestNoDevice">Микрофон сайланбаған</x:String>
-    <x:String x:Key="AdminSettingsSave">Сақлаў</x:String>
+    <x:String x:Key="AdminSettingsTitle">Admin sazlamaları</x:String>
+    <x:String x:Key="AdminSettingsIntro">Mikrofon, dinamik hám printerdi saylań. Ózgerislerden keyin audio sessiyanı qayta baslań.</x:String>
+    <x:String x:Key="AdminSettingsMicLabel">Audio kiriw (Mikrofon)</x:String>
+    <x:String x:Key="AdminSettingsSpeakerLabel">Audio shıǵıs (Dinamik)</x:String>
+    <x:String x:Key="AdminSettingsVolume">Dawıs deńgeyi</x:String>
+    <x:String x:Key="AdminSettingsPrinter">Printer</x:String>
+    <x:String x:Key="AdminSettingsAutoPrint">Qabıl talonın avtomat túrde basıp shıǵarıw</x:String>
+    <x:String x:Key="AdminSettingsTestPrint">Test ushın basıp shıǵarıw</x:String>
+    <x:String x:Key="AdminSettingsTestMic">Mikrofondı tekseriw</x:String>
+    <x:String x:Key="MicTestSpeakNow">Sóyleń (3 sekund)...</x:String>
+    <x:String x:Key="MicTestPass">Mikrofon islep tur</x:String>
+    <x:String x:Key="MicTestSilent">Dawıs anıqlanbadı — basqa úskeneni sınap kóriń</x:String>
+    <x:String x:Key="MicTestErrorOpen">Úskeneni ashıw imkanı bolmadı</x:String>
+    <x:String x:Key="MicTestNoDevice">Mikrofon saylanbaǵan</x:String>
+    <x:String x:Key="AdminSettingsSave">Saqlaw</x:String>
 
     <!-- ===== Enrollment window ===== -->
-    <x:String x:Key="EnrollmentTitle">Киоскты дизимге алыў</x:String>
-    <x:String x:Key="EnrollmentIntro">Биринши мәрте жалғаныў. Супер-панелдеги дизимге алыў кодын киритиң.</x:String>
-    <x:String x:Key="EnrollmentBackendLabel">Сервер мәнзили</x:String>
-    <x:String x:Key="EnrollmentCodeLabel">Дизимге алыў коды</x:String>
-    <x:String x:Key="EnrollmentButton">Дизимнен өтиў</x:String>
-
-    <!-- Phone step -->
-
-    <!-- Identity confirm step. «Яқ» is the proper Karakalpak "no". -->
-
-    <!-- Full personal form -->
-
-    <!-- Appeal text step -->
-
-    <!-- Preview labels -->
+    <x:String x:Key="EnrollmentTitle">Kiosktı dizimge alıw</x:String>
+    <x:String x:Key="EnrollmentIntro">Birinshi márte jalǵanıw. Super-paneldegi dizimge alıw kodın kiritiń.</x:String>
+    <x:String x:Key="EnrollmentBackendLabel">Server mánzili</x:String>
+    <x:String x:Key="EnrollmentCodeLabel">Dizimge alıw kodı</x:String>
+    <x:String x:Key="EnrollmentButton">Dizimnen ótiw</x:String>
 
     <!-- ═══ Institute screens ═══ -->
     <x:String x:Key="HomeTileLibraryTitle">AI Kitapxana</x:String>
@@ -149,6 +147,8 @@
     <x:String x:Key="ScheduleChangeGroup">Basqa topar</x:String>
     <x:String x:Key="ScheduleNoLessonsTitle">Bul kúni sabaq joq</x:String>
     <x:String x:Key="ScheduleNoLessonsBody">Basqa kúndi saylap kóriń.</x:String>
+    <x:String x:Key="ScheduleNoScheduleTitle">Bul toparda keste joq</x:String>
+    <x:String x:Key="ScheduleNoScheduleBody">HEMIS sisteması bul topar ushın sabaq kestesin bermegen. Basqa topardı saylań yaki dekanatqa múrájat etiń.</x:String>
     <x:String x:Key="ScheduleYearNotPublishedTitle">Jańa oqıw jılı kestesi ele járiyalanbaǵan</x:String>
     <x:String x:Key="ScheduleYearNotPublishedBody">Keste ádette oqıw jılı baslanıwınan aldın sistemaǵa kirgiziledi.</x:String>
     <x:String x:Key="ScheduleShowLastYear">Aqırǵı sabaqlı háptani kóriw</x:String>

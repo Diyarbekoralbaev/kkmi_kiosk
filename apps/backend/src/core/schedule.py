@@ -352,6 +352,22 @@ def _clean_languages(raw: Any) -> list[str]:
     return sorted({s.strip() for s in (raw or []) if s and s.strip()})
 
 
+async def has_any_lessons(session: AsyncSession, group_id: int) -> bool:
+    """Does this group have a timetable in the mirror at all — ever?
+
+    703 of the institute's 946 active groups have none: HEMIS carries the group
+    record but no schedule rows for it. Without this check they all rendered as
+    "the new academic year is not published yet", which tells a visitor to come
+    back later for a timetable that is never coming. The two cases need
+    different sentences, so the caller needs to tell them apart.
+    """
+    return (
+        await session.execute(
+            select(HemisLesson.id).where(HemisLesson.group_id == group_id).limit(1)
+        )
+    ).first() is not None
+
+
 async def specialties(session: AsyncSession) -> list[dict[str, Any]]:
     """Degree programmes, grouped-by-faculty friendly. Feeds AI Abituriyent."""
     roll = _group_rollup()

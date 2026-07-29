@@ -18,7 +18,7 @@ namespace Kiosk.App.Pages;
 /// mirror. The agent's find_book / show_books write into the same SessionStore
 /// collections, so a visitor who asks out loud and one who taps end up looking
 /// at the same thing.</summary>
-public partial class LibraryPage : UserControl
+public partial class LibraryPage : UserControl, IBackNavigable
 {
     public LibraryPage()
     {
@@ -171,6 +171,23 @@ public partial class LibraryPage : UserControl
             return;
         }
         await LoadBooksAsync(null, q, q);
+    }
+
+    /// <summary>Card → list → sections.</summary>
+    public bool TryGoBack()
+    {
+        var s = SessionStore.Current;
+        if (s.SelectedBook is not null)
+        {
+            s.SelectedBook = null;
+            return true;
+        }
+        if (s.Books.Count > 0 || s.BookListCaption.Length > 0)
+        {
+            OnBackToSections(null, new RoutedEventArgs());
+            return true;
+        }
+        return false;
     }
 
     private async void OnBackToSections(object? sender, RoutedEventArgs e)

@@ -20,7 +20,7 @@ namespace Kiosk.App.Pages;
 /// reusing the list row: the subject list is the reason anyone opens this
 /// screen and the list endpoint does not carry it (94 programmes × 10 subjects
 /// would be most of a megabyte for a list nobody reads in full).</summary>
-public partial class AbituriyentPage : UserControl
+public partial class AbituriyentPage : UserControl, IBackNavigable
 {
     private List<DirectionDto> _all = new();
 
@@ -128,6 +128,14 @@ public partial class AbituriyentPage : UserControl
         {
             Console.Error.WriteLine($"[abituriyent] detail: {ex.Message}");
         }
+    }
+
+    /// <summary>Detail → list.</summary>
+    public bool TryGoBack()
+    {
+        if (SessionStore.Current.SelectedDirection is null) return false;
+        SessionStore.Current.SelectedDirection = null;
+        return true;
     }
 
     private void OnBackToList(object? sender, RoutedEventArgs e) =>

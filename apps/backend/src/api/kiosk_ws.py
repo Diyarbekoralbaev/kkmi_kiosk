@@ -275,17 +275,19 @@ async def kiosk_voice(ws: WebSocket) -> None:
             lessons = await schedule_q.lessons_for_group(s, group_id, day_from, day_to)
             empty_reason = ""
             if not lessons:
-                # "No class that day" and "the year isn't loaded" look identical
-                # on screen but need opposite explanations — and over the summer
-                # break the second is the normal case, so it must not read as a
-                # broken kiosk.
-                today = today_local()
-                upcoming = await schedule_q.lessons_for_group(
-                    s, group_id, today, today + timedelta(days=365)
-                )
-                empty_reason = (
-                    "no_lessons_that_day" if upcoming else "year_not_published"
-                )
+                # Three situations, one blank list, three different things to
+                # say: a free day, a group HEMIS has no timetable for at all,
+                # and the summer gap before next year is loaded.
+                if not await schedule_q.has_any_lessons(s, group_id):
+                    empty_reason = "group_has_no_schedule"
+                else:
+                    today = today_local()
+                    upcoming = await schedule_q.lessons_for_group(
+                        s, group_id, today, today + timedelta(days=365)
+                    )
+                    empty_reason = (
+                        "no_lessons_that_day" if upcoming else "year_not_published"
+                    )
         return {
             "group": group or {"id": group_id, "name": ""},
             "scope": scope,
