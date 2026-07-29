@@ -429,13 +429,45 @@ public partial class SessionStore : ObservableObject
 
     // ── KioskRuntime callbacks (always on the UI thread via Dispatcher) ───────
 
+    /// <summary>Pending "are we still disconnected?" check. Cancelled the
+    /// moment the connection comes back.</summary>
+    private DispatcherTimer? _offlineGrace;
+
+    /// <summary>How long a gap has to last before the visitor is told about it.
+    ///
+    /// Voice now reconnects on every navigation — the menu is baked into the WS
+    /// URL, so moving between screens means closing one session and opening the
+    /// next — and that gap is under a second. Announcing it flashed
+    /// "reconnecting" across the screen on every single tap. The same grace
+    /// covers ordinary network blips, which resolve well inside it.</summary>
+    private static readonly TimeSpan OfflineGrace = TimeSpan.FromSeconds(3);
+
     public void OnConnectionChanged(ConnectionState s)
     {
         ConnectionState = s;
+        _offlineGrace?.Stop();
+        _offlineGrace = null;
+
         // Don't show "reconnecting" when (a) the device is revoked — the red
         // overlay covers that with a clearer action — or (b) voice was never
         // started, which is the normal idle state.
-        ShowOfflineOverlay = !IsRevoked && IsVoiceActive && s != ConnectionState.Connected;
+        if (IsRevoked || !IsVoiceActive || s == ConnectionState.Connected)
+        {
+            ShowOfflineOverlay = false;
+            return;
+        }
+        _offlineGrace = new DispatcherTimer { Interval = OfflineGrace };
+        _offlineGrace.Tick += (_, _) =>
+        {
+            _offlineGrace?.Stop();
+            _offlineGrace = null;
+            // Re-check rather than trusting the state we captured: three
+            // seconds is long enough for the visitor to have walked away or
+            // the session to have been torn down deliberately.
+            ShowOfflineOverlay = !IsRevoked && IsVoiceActive
+                                 && ConnectionState != ConnectionState.Connected;
+        };
+        _offlineGrace.Start();
     }
 
     public void OnDeviceRevoked()
