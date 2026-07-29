@@ -65,4 +65,14 @@ async def issue_challenge(
             created_at=datetime.now(UTC),
         )
     )
+    # Commit HERE, not in the dependency teardown.
+    #
+    # `get_session` commits after the endpoint returns, which FastAPI runs once
+    # the response is already on its way. The kiosk signs the nonce and fires
+    # the real request immediately, so it could present a nonce whose row had
+    # not been written yet and get back `nonce_invalid`. Measured at 2 failures
+    # in 60 sequential requests — roughly one signed call in thirty failing at
+    # random, which on the kiosk surfaces as a screen that intermittently comes
+    # up empty.
+    await session.commit()
     return ChallengeOut(nonce=nonce_b64, expires_at=expires_at.isoformat())
