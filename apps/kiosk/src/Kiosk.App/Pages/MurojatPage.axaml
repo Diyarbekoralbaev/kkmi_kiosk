@@ -18,7 +18,9 @@
 
          The voice flow lands on the Review step directly (the agent pushes
          murojat_preview); both paths submit the same record. -->
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*"
+          Margin="{DynamicResource KioskContentMargin}"
+          MaxWidth="{DynamicResource KioskTextMaxW}" HorizontalAlignment="Center">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <TextBlock Grid.Column="0" Text="{DynamicResource MurojatPageTitle}"

@@ -25,6 +25,16 @@
                 <ResourceInclude Source="avares://Kiosk.App/Localization/ru.axaml" />
                 <ResourceInclude Source="avares://Kiosk.App/Localization/uz.axaml" />
                 <ResourceInclude Source="avares://Kiosk.App/Localization/kk.axaml" />
+
+                <!-- Screen metrics. Same swap mechanism as the locales above,
+                     and declared here for the same AOT reason. Portrait is
+                     LAST, so it wins by default: a kiosk whose screen query
+                     fails, or one running a build where LayoutService never
+                     fires, renders the lobby layout unchanged.
+                     LayoutService promotes the landscape one at startup when
+                     it finds a wider-than-tall panel. -->
+                <ResourceInclude Source="avares://Kiosk.App/Layout/Metrics.Landscape.axaml" />
+                <ResourceInclude Source="avares://Kiosk.App/Layout/Metrics.Portrait.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ===== Theme tokens — referenced as {StaticResource KioskX} -->

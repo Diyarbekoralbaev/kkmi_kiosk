@@ -21,7 +21,8 @@
          warm colour. A day is a sequence in time, and the question a student
          has standing here is "which one am I at"; a list of equal rows cannot
          answer that. -->
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*"
+          Margin="{DynamicResource KioskContentMargin}">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">

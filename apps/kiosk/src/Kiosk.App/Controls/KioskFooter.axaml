@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="88"
              x:Class="Kiosk.App.Controls.KioskFooter"
              x:DataType="state:SessionStore"
-             Height="88">
+             Height="{DynamicResource KioskFooterH}">
     <!-- Navy footer band. Left: 4-button language switcher (uz / qq / ru / en —
          the institute teaches in all four, see HEMIS group `educationLang`).
          Right: per-org helpline phone — hidden when SessionStore.HelplinePhone

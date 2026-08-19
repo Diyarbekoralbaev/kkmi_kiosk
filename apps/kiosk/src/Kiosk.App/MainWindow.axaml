@@ -11,7 +11,10 @@
         Title="Kiosk"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource KioskBg}">
-    <Grid RowDefinitions="260,*,88">
+    <!-- Chrome heights come from the header and footer controls themselves,
+         which read them from the promoted metrics dictionary — hence Auto
+         rather than the literals that used to sit here. -->
+    <Grid RowDefinitions="Auto,*,Auto">
         <!-- Sticky header (row 0). All pages share the same chrome. -->
         <controls:KioskHeader Grid.Row="0" />
 
@@ -49,7 +52,7 @@
         <Border x:Name="AdminHotZone"
                 Grid.Row="0" Grid.RowSpan="3"
                 VerticalAlignment="Top" HorizontalAlignment="Left"
-                Width="200" Height="200"
+                Width="{DynamicResource KioskOrbSize}" Height="{DynamicResource KioskOrbSize}"
                 Background="Transparent" />
 
         <!-- Debug nav. Top-right. Visible only in DEBUG builds — Release

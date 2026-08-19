@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Kiosk.App.Identity;
+using Kiosk.App.Layout;
 using Kiosk.App.Localization;
 using Kiosk.App.Net;
 using Kiosk.App.Pages;
@@ -158,6 +159,14 @@ public partial class MainWindow : Window
             CanResize = false;
             Topmost = true;
         }
+
+        // Pick the metrics dictionary for the panel this kiosk is bolted to.
+        // It has to happen here rather than before the window exists: the
+        // shape comes from the screen, and nothing knows the screen until a
+        // window is on it. Every metric is read through DynamicResource for
+        // exactly this reason — the page XAML has already loaded by now, so a
+        // StaticResource would have latched the portrait value.
+        LayoutService.Apply(LayoutService.DetectFor(this));
 
         // Hydrate the header's org name from the last persisted heartbeat
         // BEFORE ProbeAuthAsync runs. Without this, every cold start shows

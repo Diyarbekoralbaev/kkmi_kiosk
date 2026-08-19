@@ -15,7 +15,9 @@
          and auto-closes when the user navigates Home (back button or 30s
          silence timer). Navigation to Submit/Qabul from here keeps the
          session alive so the agent can complete murojaat/qabul flows. -->
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*,Auto" Margin="56,40,56,32">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*,Auto"
+          Margin="{DynamicResource KioskContentMargin}"
+          MaxWidth="{DynamicResource KioskTextMaxW}" HorizontalAlignment="Center">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <TextBlock Grid.Column="0" Text="{DynamicResource AiPageTitle}"
                        FontSize="44" FontWeight="Bold"

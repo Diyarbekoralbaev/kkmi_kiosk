@@ -7,7 +7,9 @@
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1920"
              x:Class="Kiosk.App.Pages.ContactsPage"
              x:DataType="state:SessionStore">
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,80,56,180">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*"
+          Margin="{DynamicResource KioskContactsMargin}"
+          MaxWidth="{DynamicResource KioskTextMaxW}" HorizontalAlignment="Center">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <TextBlock Grid.Column="0" Text="{DynamicResource ContactsPageTitle}"
                        FontSize="44" FontWeight="Light" Foreground="{StaticResource KioskPrimary}"

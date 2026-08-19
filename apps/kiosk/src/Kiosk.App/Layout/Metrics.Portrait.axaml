@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Portrait metrics — 1080×1572, the lobby panel the kiosk was designed
+         for. Every value here is the literal that used to sit inline in the
+         XAML, moved out unchanged. That is deliberate: as long as this
+         dictionary is the promoted one, the rendered layout is identical to
+         the build before metrics existed, so landscape support cannot regress
+         the screen that is already in service.
+
+         Only genuinely orientation-dependent numbers live here. Icon sizes,
+         corner radii and small paddings read the same on both shapes and stay
+         inline where they are — tokenising them would be churn with no
+         behaviour behind it.
+
+         Keys are NEW names, never redefinitions of the tokens declared inline
+         in App.axaml. A dictionary's own entries win over its merged ones, so
+         a metrics key that shadowed KioskFontDisplay would silently never
+         apply. LayoutService swaps this against Metrics.Landscape.axaml. -->
+
+    <!-- Sentinel — how LayoutService identifies this dictionary at runtime.
+         Same trick as the locale dictionaries: the XAML compiler resolves
+         ResourceInclude at compile time and the runtime objects expose no
+         stable Source, so a unique key is the only reliable handle. -->
+    <x:String x:Key="_Layout_portrait">portrait</x:String>
+
+    <!-- Chrome. 260+88 = 348 px of a 1572-tall panel, 22%. -->
+    <x:Double x:Key="KioskHeaderH">260</x:Double>
+    <x:Double x:Key="KioskFooterH">88</x:Double>
+
+    <!-- Page gutters. -->
+    <Thickness x:Key="KioskPageMargin">48,28,48,24</Thickness>
+
+    <!-- Reading width for text-led pages (forms, contacts, prose). At 1080
+         wide with 48 gutters the content is 984 px, so this cap never bites
+         in portrait — it exists for the landscape variant. -->
+    <x:Double x:Key="KioskTextMaxW">1080</x:Double>
+
+    <!-- Home hero. -->
+    <x:Double x:Key="KioskHeroFont">56</x:Double>
+    <x:Double x:Key="KioskHeroMaxW">900</x:Double>
+    <x:Double x:Key="KioskHeroSubMaxW">860</x:Double>
+    <Thickness x:Key="KioskHeroMargin">0,4,0,22</Thickness>
+
+    <!-- Home tiles. Two columns of three; ~470×230 each. -->
+    <x:Double x:Key="KioskTileMinH">230</x:Double>
+    <x:Double x:Key="KioskTileGlyph">92</x:Double>
+
+    <!-- Header internals. The band carries two rows — clock/weather above,
+         logo + institute name below — and every one of these has to shrink
+         together or the rows collide inside the shorter landscape band. -->
+    <Thickness x:Key="KioskHeaderPad">60,28,60,28</Thickness>
+    <x:Double x:Key="KioskHeaderLogoH">110</x:Double>
+    <x:Double x:Key="KioskClockFont">40</x:Double>
+    <x:Double x:Key="KioskBrandFont">32</x:Double>
+    <x:Double x:Key="KioskTaglineFont">28</x:Double>
+    <Thickness x:Key="KioskBrandMargin">0,16,0,0</Thickness>
+
+    <!-- Inner pages. Every one of them opens with a title row and a NavBar and
+         then a content row, so they share one gutter. -->
+    <Thickness x:Key="KioskContentMargin">56,40,56,32</Thickness>
+    <Thickness x:Key="KioskContactsMargin">56,80,56,180</Thickness>
+
+    <!-- Voice orb, bottom-right on every page but the AI one. -->
+    <x:Double x:Key="KioskOrbSize">200</x:Double>
+</ResourceDictionary>

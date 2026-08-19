@@ -16,7 +16,9 @@
 
          Steps: official → name → phone → reason → review. The voice flow lands
          directly on Review via reception_preview. -->
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="56,40,56,32">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*"
+          Margin="{DynamicResource KioskContentMargin}"
+          MaxWidth="{DynamicResource KioskTextMaxW}" HorizontalAlignment="Center">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">

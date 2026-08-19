@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Landscape metrics — 1920×1080 panels on a floor stand.
+         Same key set as Metrics.Portrait.axaml; LayoutService promotes
+         whichever matches the screen it actually finds. See that file for why
+         the keys are named the way they are.
+
+         The shape inverts the scarce dimension. Portrait has height to spare
+         and only 1080 px of width; landscape has width to spare and 1080 px
+         of height, most of which the chrome and hero would eat if they kept
+         their portrait sizes. So everything vertical shrinks and everything
+         horizontal grows. -->
+
+    <x:String x:Key="_Layout_landscape">landscape</x:String>
+
+    <!-- Chrome. Held to the same 21-22% of panel height the portrait build
+         spends (348/1572): 232 of 1080. Keeping the portrait 348 here would
+         have taken a third of the screen before a single service appeared. -->
+    <x:Double x:Key="KioskHeaderH">168</x:Double>
+    <x:Double x:Key="KioskFooterH">68</x:Double>
+
+    <Thickness x:Key="KioskPageMargin">56,20,56,20</Thickness>
+
+    <!-- The cap that actually does work. A form field or paragraph run across
+         1808 px of usable width is unreadable — the eye loses the next line on
+         the way back. Text-led pages centre inside this; timetables, book
+         lists and programme lists ignore it and take the full width, because
+         for those the width IS the information. -->
+    <x:Double x:Key="KioskTextMaxW">1280</x:Double>
+
+    <!-- Home hero. Shorter type, wider measure: the question has to clear the
+         way for two rows of tiles in 1080 px total. -->
+    <x:Double x:Key="KioskHeroFont">42</x:Double>
+    <x:Double x:Key="KioskHeroMaxW">1180</x:Double>
+    <x:Double x:Key="KioskHeroSubMaxW">1100</x:Double>
+    <Thickness x:Key="KioskHeroMargin">0,0,0,16</Thickness>
+
+    <!-- Home tiles. Three columns of two, ~589 px wide. A floor rather than a
+         target: HomePage stretches the two rows to fill the leftover height
+         instead of leaving a band of empty page under them. -->
+    <x:Double x:Key="KioskTileMinH">200</x:Double>
+    <x:Double x:Key="KioskTileGlyph">76</x:Double>
+
+    <!-- Header internals, sized to fit 168 px: 14+14 padding, a ~44 px top row
+         and a 64 px logo lockup with 8 px between them comes to 144. The two
+         rows stay as they are; a single-row landscape header would use the
+         width better and is worth doing once there is a screenshot from the
+         real panel to judge it against. -->
+    <Thickness x:Key="KioskHeaderPad">56,14,56,14</Thickness>
+    <x:Double x:Key="KioskHeaderLogoH">64</x:Double>
+    <x:Double x:Key="KioskClockFont">30</x:Double>
+    <x:Double x:Key="KioskBrandFont">24</x:Double>
+    <x:Double x:Key="KioskTaglineFont">20</x:Double>
+    <Thickness x:Key="KioskBrandMargin">0,8,0,0</Thickness>
+
+    <!-- Inner pages. Vertical gutters halve — 844 px of content height does
+         not have 72 px to spend on air — while the horizontal ones hold,
+         since KioskTextMaxW is what actually governs width here. -->
+    <Thickness x:Key="KioskContentMargin">56,24,56,20</Thickness>
+    <Thickness x:Key="KioskContactsMargin">56,32,56,40</Thickness>
+
+    <!-- Voice orb. Smaller: 200 px of a 1080-tall screen is a fifth of it,
+         and the orb sits over content rather than beside it here. -->
+    <x:Double x:Key="KioskOrbSize">160</x:Double>
+</ResourceDictionary>

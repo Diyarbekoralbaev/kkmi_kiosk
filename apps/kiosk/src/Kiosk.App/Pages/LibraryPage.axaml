@@ -19,7 +19,8 @@
          Blank fields are expected while the librarians fill the cards in. A
          missing shelf or year means "not recorded yet", never "unknown" — the
          card says so rather than hiding the book. -->
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,Auto,*" Margin="56,40,56,32">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,Auto,*"
+          Margin="{DynamicResource KioskContentMargin}">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="24">
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">

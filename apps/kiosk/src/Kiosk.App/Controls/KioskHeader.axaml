@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="260"
              x:Class="Kiosk.App.Controls.KioskHeader"
              x:DataType="state:SessionStore"
-             Height="260">
+             Height="{DynamicResource KioskHeaderH}">
     <!-- Header band: light gradient bottom→white, top row clock+weather,
          bottom row centred institute logo + 2-line brand title. The lang
          toggle now lives in the footer, per the 2026 redesign mockup. -->
@@ -18,13 +18,13 @@
             </LinearGradientBrush>
         </Border.Background>
 
-        <Grid RowDefinitions="Auto,*" Margin="60,28,60,28">
+        <Grid RowDefinitions="Auto,*" Margin="{DynamicResource KioskHeaderPad}">
             <!-- Top row: clock+date left, weather right -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16"
                             VerticalAlignment="Center">
                     <TextBlock x:Name="ClockText" Text="--:--"
-                               FontSize="40" FontWeight="Bold"
+                               FontSize="{DynamicResource KioskClockFont}" FontWeight="Bold"
                                Foreground="{StaticResource KioskPrimary}"
                                VerticalAlignment="Center" />
                     <TextBlock x:Name="DateText" Text=""
@@ -49,19 +49,19 @@
             <!-- Brand row -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="24"
                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Margin="0,16,0,0">
+                        Margin="{DynamicResource KioskBrandMargin}">
                 <!-- Horizontal lockup (≈1.52:1), so height is pinned and the
                      width follows — a fixed square box would letterbox it. -->
                 <Image Source="avares://Kiosk.App/Assets/kkmi-logo.png"
-                       Height="110" Stretch="Uniform"
+                       Height="{DynamicResource KioskHeaderLogoH}" Stretch="Uniform"
                        VerticalAlignment="Center" />
                 <StackPanel VerticalAlignment="Center" Spacing="2" MaxWidth="780">
                     <TextBlock Text="{Binding OrgName, FallbackValue=''}"
-                               FontSize="32" FontWeight="Bold"
+                               FontSize="{DynamicResource KioskBrandFont}" FontWeight="Bold"
                                Foreground="{StaticResource KioskText}"
                                TextWrapping="Wrap" />
                     <TextBlock Text="{DynamicResource HeaderTagline}"
-                               FontSize="28" FontWeight="SemiBold"
+                               FontSize="{DynamicResource KioskTaglineFont}" FontWeight="SemiBold"
                                Foreground="{StaticResource KioskPrimary}"
                                TextWrapping="Wrap" />
                 </StackPanel>

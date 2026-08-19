@@ -18,10 +18,12 @@
 
          Icons are inline stroke vectors, not an icon font: the AOT publish
          would otherwise have to carry a whole font for six glyphs. -->
-    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*" Margin="48,28,48,24">
+    <Grid Background="{StaticResource KioskBg}" RowDefinitions="Auto,*"
+          Margin="{DynamicResource KioskPageMargin}">
 
         <!-- ── Hero ──────────────────────────────────────────────────────── -->
-        <StackPanel Grid.Row="0" Spacing="14" HorizontalAlignment="Center" Margin="0,4,0,22">
+        <StackPanel Grid.Row="0" Spacing="14" HorizontalAlignment="Center"
+                    Margin="{DynamicResource KioskHeroMargin}">
             <Border Background="{StaticResource KioskTileTint}"
                     CornerRadius="{StaticResource KioskRadiusChip}"
                     Padding="22,10" HorizontalAlignment="Center">
@@ -30,19 +32,25 @@
                            Foreground="{StaticResource KioskPrimary}" />
             </Border>
             <TextBlock Text="{DynamicResource HomeQuestion}"
-                       FontSize="{StaticResource KioskFontDisplay}" FontWeight="Bold"
+                       FontSize="{DynamicResource KioskHeroFont}" FontWeight="Bold"
                        Foreground="{StaticResource KioskText}"
                        HorizontalAlignment="Center" TextAlignment="Center"
-                       TextWrapping="Wrap" MaxWidth="900" />
+                       TextWrapping="Wrap" MaxWidth="{DynamicResource KioskHeroMaxW}" />
             <TextBlock Text="{DynamicResource HomeSubtitle}"
                        FontSize="20"
                        Foreground="{StaticResource KioskTextMuted}"
                        HorizontalAlignment="Center" TextAlignment="Center"
-                       TextWrapping="Wrap" MaxWidth="860" />
+                       TextWrapping="Wrap" MaxWidth="{DynamicResource KioskHeroSubMaxW}" />
         </StackPanel>
 
         <!-- ── Tiles ─────────────────────────────────────────────────────── -->
-        <Grid Grid.Row="1" VerticalAlignment="Top"
+        <!-- Definitions and each tile's Grid.Row/Grid.Column are assigned in
+             code-behind: 2×3 standing up, 3×2 lying down. A Grid's definitions
+             are a collection rather than a value, so they cannot come from the
+             metrics dictionary the way every other number here does. The values
+             below are the portrait ones, kept so the designer preview and a
+             build where LayoutService never runs both still render. -->
+        <Grid x:Name="TileGrid" Grid.Row="1" VerticalAlignment="Top"
               ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto"
               ColumnSpacing="20" RowSpacing="20">
 
@@ -196,7 +204,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="VerticalContentAlignment" Value="Top" />
             <Setter Property="Padding" Value="28,26" />
-            <Setter Property="MinHeight" Value="230" />
+            <Setter Property="MinHeight" Value="{DynamicResource KioskTileMinH}" />
         </Style>
         <Style Selector="Button.tile:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#fbfcfe" />
@@ -207,8 +215,8 @@
         </Style>
 
         <Style Selector="Border.glyph">
-            <Setter Property="Width" Value="92" />
-            <Setter Property="Height" Value="92" />
+            <Setter Property="Width" Value="{DynamicResource KioskTileGlyph}" />
+            <Setter Property="Height" Value="{DynamicResource KioskTileGlyph}" />
             <Setter Property="CornerRadius" Value="20" />
             <Setter Property="Background" Value="{StaticResource KioskTileTint}" />
             <Setter Property="HorizontalAlignment" Value="Left" />
