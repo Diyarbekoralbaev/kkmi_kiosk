@@ -6,12 +6,15 @@ namespace Kiosk.App.Identity;
 /// <summary>
 /// Abstracts the device's per-device ECDSA P-256 keypair.
 ///
-/// Two implementations:
-/// - <see cref="TpmCryptoProvider"/>: Windows. Keys live inside the TPM via
-///   Microsoft Platform Crypto Provider (NCrypt). Private key NEVER leaves
-///   the chip — even SYSTEM-level extraction is blocked by the TPM.
-/// - <see cref="SoftCryptoProvider"/>: Linux DEV ONLY. File-stored key. Used
-///   so we can develop on Ubuntu; production is Windows + TPM.
+/// Three implementations:
+/// - <see cref="TpmCryptoProvider"/>: Windows with TPM 2.0. Keys live inside
+///   the TPM via Microsoft Platform Crypto Provider (NCrypt). Private key
+///   NEVER leaves the chip — even SYSTEM-level extraction is blocked.
+/// - <see cref="WindowsSoftwareCryptoProvider"/>: Windows without TPM 2.0.
+///   Non-exportable CNG key in the software KSP, DPAPI-encrypted at rest.
+///   Chosen only when the firmware exposes no TPM at all.
+/// - <see cref="SoftCryptoProvider"/>: Linux DEV ONLY. Plaintext PEM on disk.
+///   Never selected on Windows.
 ///
 /// Usage shape:
 ///   1. <see cref="EnsureKeypair"/> at first run → generates the keypair
@@ -25,7 +28,10 @@ public interface ICryptoProvider
     /// <summary>Idempotent: creates the persisted keypair if missing, otherwise no-op.
     /// The keypair is per-machine, not per-device — there is exactly one kiosk install
     /// per box, so a fixed key name suffices.</summary>
-    /// <exception cref="TpmNotAvailableException">Production-only: TPM is required and missing.</exception>
+    /// <exception cref="TpmNotAvailableException">Thrown by
+    /// <see cref="TpmCryptoProvider"/> when the TPM is gone. The factory
+    /// normally picks a provider that cannot raise it; enrollment catches it
+    /// as a last resort and demotes to software.</exception>
     void EnsureKeypair();
 
     /// <summary>SubjectPublicKeyInfo PEM ("-----BEGIN PUBLIC KEY-----..."). Server stores this.</summary>

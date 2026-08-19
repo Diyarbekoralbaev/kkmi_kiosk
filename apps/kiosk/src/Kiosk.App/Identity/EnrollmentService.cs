@@ -10,10 +10,11 @@ namespace Kiosk.App.Identity;
 /// Headless enrollment used by both the GUI dialog and the `--enroll` CLI mode.
 ///
 /// Flow:
-///   1. Make sure the TPM keypair exists (CryptoProviderFactory.Current).
-///      If TPM 2.0 is missing on a Windows box, this throws
-///      <see cref="TpmNotAvailableException"/> with a Karakalpak message
-///      suitable for direct UI display.
+///   1. Make sure the device keypair exists (CryptoProviderFactory.Current).
+///      On Windows that is the TPM when the machine has one and a
+///      DPAPI-protected CNG key when it does not — see
+///      <see cref="CryptoProviderFactory"/> for why the second case exists.
+///      `tpm_attested` tells the server which of the two it got.
 ///   2. POST /api/kiosk/enroll with the code + the public PEM (no shared
 ///      secret returned by the server — we don't need one).
 ///   3. Save the assigned device_id + backend URL to DeviceKeyStore.
@@ -27,15 +28,26 @@ public static class EnrollmentService
         if (string.IsNullOrWhiteSpace(backendUrl) || string.IsNullOrWhiteSpace(enrollmentCode))
             return new EnrollResult(false, "missing_input", null);
 
-        // Ensure the TPM-bound keypair exists. Hard-fail on Windows without TPM 2.0.
         var crypto = CryptoProviderFactory.Current;
         try
         {
             crypto.EnsureKeypair();
         }
-        catch (TpmNotAvailableException ex)
+        catch (TpmNotAvailableException)
         {
-            return new EnrollResult(false, ex.Message, null);
+            // The factory's probe said the TPM provider was registered, but the
+            // key creation itself was refused. Drop to the software key instead
+            // of stranding a kiosk whose firmware has no TPM page and whose
+            // chassis has no keyboard.
+            crypto = CryptoProviderFactory.DemoteToSoftware();
+            try
+            {
+                crypto.EnsureKeypair();
+            }
+            catch (Exception ex)
+            {
+                return new EnrollResult(false, $"crypto_init_failed: {ex.Message}", null);
+            }
         }
         catch (Exception ex)
         {

@@ -33,6 +33,28 @@ public sealed class TpmCryptoProvider : ICryptoProvider, IDisposable
 
     public bool HasKey => _key is not null;
 
+    /// <summary>Probe for a usable TPM without creating anything. Returns
+    /// false when the Platform Crypto Provider is not registered, which is how
+    /// a machine with no TPM 2.0 presents itself — the same
+    /// <see cref="CryptographicException"/> that <see cref="EnsureKeypair"/>
+    /// translates into <see cref="TpmNotAvailableException"/>.
+    ///
+    /// Only <see cref="CryptoProviderFactory"/> calls this: it has to pick a
+    /// provider before anyone asks for a signature, and creating a key just to
+    /// find out would leave a stray key behind on every boot.</summary>
+    public static bool IsAvailable()
+    {
+        try
+        {
+            CngKey.Exists(KeyName, new CngProvider(ProviderName));
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public void EnsureKeypair()
     {
         var provider = new CngProvider(ProviderName);
