@@ -65,22 +65,58 @@ public sealed class WindowsSoftwareCryptoProvider : ICryptoProvider, IDisposable
             "[security] no TPM 2.0 on this machine — generating a DPAPI-protected " +
             "software keypair. Enrollment will report tpm_attested=false.");
 
+        // ECDSA_P256 already names its curve, so the ECCCurveName property the
+        // TPM provider sets alongside it is redundant here — and worse than
+        // redundant: the software KSP rejects the property on a fixed-curve
+        // algorithm and NCrypt surfaces it as ERROR_INVALID_HANDLE, which is
+        // what the first build of this class died on. The Platform Crypto
+        // Provider tolerates the same line, which is why it survived there.
+        _key = TryCreate(CngAlgorithm.ECDsaP256, provider, curveName: null)
+               // Some KSP builds want the generic algorithm with the curve
+               // named separately instead. Same key either way; try both
+               // before giving up, because the alternative is a locked-out
+               // kiosk and another trip to a machine with no keyboard.
+               ?? TryCreate(new CngAlgorithm("ECDSA"), provider, curveName: "nistP256")
+               ?? throw _lastCreateError!;
+    }
+
+    private CryptographicException? _lastCreateError;
+
+    /// <summary>One key-creation attempt. Returns null on a CNG refusal so the
+    /// caller can try the other spelling; the exception is kept so the final
+    /// failure reports the real reason rather than a generic one.</summary>
+    private CngKey? TryCreate(CngAlgorithm algorithm, CngProvider provider, string? curveName)
+    {
         var creationParams = new CngKeyCreationParameters
         {
             Provider = provider,
             KeyCreationOptions = CngKeyCreationOptions.None,
             // NCryptExportKey refuses for keys created with this policy, so the
             // private half cannot be copied out through the normal API even
-            // though it is software-held.
+            // though it is software-held. Both attempts keep it: a key that
+            // enrolls but can be exported is not the trade we are making.
             ExportPolicy = CngExportPolicies.None,
         };
-        creationParams.Parameters.Add(
-            new CngProperty(
-                "ECCCurveName",
-                System.Text.Encoding.Unicode.GetBytes("nistP256\0"),
-                CngPropertyOptions.None));
+        if (curveName is not null)
+        {
+            creationParams.Parameters.Add(
+                new CngProperty(
+                    "ECCCurveName",
+                    System.Text.Encoding.Unicode.GetBytes(curveName + "\0"),
+                    CngPropertyOptions.None));
+        }
 
-        _key = CngKey.Create(CngAlgorithm.ECDsaP256, KeyName, creationParams);
+        try
+        {
+            return CngKey.Create(algorithm, KeyName, creationParams);
+        }
+        catch (CryptographicException ex)
+        {
+            _lastCreateError = ex;
+            Console.Error.WriteLine(
+                $"[security] key creation with {algorithm.Algorithm} refused: {ex.Message}");
+            return null;
+        }
     }
 
     public string GetPublicKeyPem()
