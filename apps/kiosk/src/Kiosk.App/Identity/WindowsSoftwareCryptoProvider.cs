@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -71,21 +72,31 @@ public sealed class WindowsSoftwareCryptoProvider : ICryptoProvider, IDisposable
         // algorithm and NCrypt surfaces it as ERROR_INVALID_HANDLE, which is
         // what the first build of this class died on. The Platform Crypto
         // Provider tolerates the same line, which is why it survived there.
-        _key = TryCreate(CngAlgorithm.ECDsaP256, provider, curveName: null)
-               // Some KSP builds want the generic algorithm with the curve
-               // named separately instead. Same key either way; try both
-               // before giving up, because the alternative is a locked-out
-               // kiosk and another trip to a machine with no keyboard.
-               ?? TryCreate(new CngAlgorithm("ECDSA"), provider, curveName: "nistP256")
-               ?? throw _lastCreateError!;
+        // Two spellings of the same key. Which one a given KSP build accepts is
+        // not something this code can know in advance, and the machine that
+        // needs it has no keyboard and is reached only over a remote desktop —
+        // so it tries both rather than betting on one and costing a round trip.
+        var failures = new List<string>();
+        _key = TryCreate(CngAlgorithm.ECDsaP256, provider, curveName: null, failures)
+               ?? TryCreate(new CngAlgorithm("ECDSA"), provider, curveName: "nistP256", failures);
+
+        if (_key is null)
+        {
+            // Every attempt's own error, not just the last one. This string is
+            // what the enrolment dialog puts on screen, and on a kiosk that is
+            // the only diagnostic channel there is: stdout goes nowhere because
+            // the binary is a WinExe with no console attached. One screenshot
+            // should be enough to say what to change next.
+            throw new CryptographicException(
+                "software key creation refused — " + string.Join(" | ", failures));
+        }
     }
 
-    private CryptographicException? _lastCreateError;
-
-    /// <summary>One key-creation attempt. Returns null on a CNG refusal so the
-    /// caller can try the other spelling; the exception is kept so the final
-    /// failure reports the real reason rather than a generic one.</summary>
-    private CngKey? TryCreate(CngAlgorithm algorithm, CngProvider provider, string? curveName)
+    /// <summary>One key-creation attempt. Returns null on a CNG refusal and
+    /// records why, so the caller can try the next spelling and still report
+    /// everything that went wrong if none of them work.</summary>
+    private CngKey? TryCreate(
+        CngAlgorithm algorithm, CngProvider provider, string? curveName, List<string> failures)
     {
         var creationParams = new CngKeyCreationParameters
         {
@@ -112,9 +123,11 @@ public sealed class WindowsSoftwareCryptoProvider : ICryptoProvider, IDisposable
         }
         catch (CryptographicException ex)
         {
-            _lastCreateError = ex;
-            Console.Error.WriteLine(
-                $"[security] key creation with {algorithm.Algorithm} refused: {ex.Message}");
+            // HResult is the part that identifies the failure — the localized
+            // message is whatever language the machine happens to run in, and
+            // "Предоставлен неправильный дескриптор" cost a round trip to
+            // recognise as NTE_INVALID_HANDLE (0x80090026).
+            failures.Add($"{algorithm.Algorithm}: 0x{ex.HResult:X8} {ex.Message}");
             return null;
         }
     }
