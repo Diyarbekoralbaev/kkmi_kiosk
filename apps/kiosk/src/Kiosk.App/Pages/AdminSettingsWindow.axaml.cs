@@ -47,11 +47,29 @@ public partial class AdminSettingsWindow : Window
         // the long-press entry point). DisplayName embeds the host API
         // ("Mic [WASAPI]" vs "Mic [MME]") so duplicate hardware entries
         // disambiguate cleanly in the dropdown.
-        var inputs = AudioDeviceList.EnumerateInputs();
-        var outputs = AudioDeviceList.EnumerateOutputs();
-
-        FillDeviceCombo(MicCombo, inputs.Select(i => i.DisplayName), _draft.AudioInputDevice);
-        FillDeviceCombo(SpeakerCombo, outputs.Select(i => i.DisplayName), _draft.AudioOutputDevice);
+        // Enumeration reaches into native PortAudio, which can be absent on a
+        // machine that has never had the Visual C++ runtime installed — its
+        // DllNotFoundException used to abort this whole method, so the printer
+        // list and the volume slider came up unset too and the window simply
+        // looked broken with nothing said. Report it and carry on: the printer
+        // and the PIN are still worth being able to change on a box whose
+        // audio stack is missing.
+        try
+        {
+            var inputs = AudioDeviceList.EnumerateInputs();
+            var outputs = AudioDeviceList.EnumerateOutputs();
+            FillDeviceCombo(MicCombo, inputs.Select(i => i.DisplayName), _draft.AudioInputDevice);
+            FillDeviceCombo(SpeakerCombo, outputs.Select(i => i.DisplayName), _draft.AudioOutputDevice);
+        }
+        catch (Exception ex)
+        {
+            FillDeviceCombo(MicCombo, Array.Empty<string>(), _draft.AudioInputDevice);
+            FillDeviceCombo(SpeakerCombo, Array.Empty<string>(), _draft.AudioOutputDevice);
+            _audioError = ex is DllNotFoundException
+                ? "Awdio qurılmaları oqılmadı: PortAudio juklenbedi. "
+                  + "Microsoft Visual C++ Redistributable (x64) ornatıw kerek."
+                : $"Awdio qurılmaları oqılmadı: {ex.Message}";
+        }
 
         // Printers — OS spooler. Async so the UI doesn't lock during slow
         // CUPS lookups (lpstat can take >100 ms on first call).
@@ -61,8 +79,22 @@ public partial class AdminSettingsWindow : Window
         AutoPrintCheck.IsChecked = _draft.AutoPrintReceipts;
         VolumeSlider.Value = _draft.SpeakerVolume;
         VolumeLabel.Text = $"{(int)(_draft.SpeakerVolume * 100)}%";
-        StatusText.IsVisible = false;
+
+        if (_audioError is not null)
+        {
+            StatusText.Text = _audioError;
+            StatusText.IsVisible = true;
+        }
+        else
+        {
+            StatusText.IsVisible = false;
+        }
     }
+
+    /// <summary>Why the audio dropdowns are empty, when they are. Held rather
+    /// than shown immediately so the message survives the rest of Populate
+    /// filling the printer list and the sliders.</summary>
+    private string? _audioError;
 
     private static void FillDeviceCombo(ComboBox combo, IEnumerable<string> names, string? current)
     {

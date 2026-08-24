@@ -60,6 +60,4 @@
     <Thickness x:Key="KioskContentMargin">56,40,56,32</Thickness>
     <Thickness x:Key="KioskContactsMargin">56,80,56,180</Thickness>
 
-    <!-- Voice orb, bottom-right on every page but the AI one. -->
-    <x:Double x:Key="KioskOrbSize">200</x:Double>
 </ResourceDictionary>

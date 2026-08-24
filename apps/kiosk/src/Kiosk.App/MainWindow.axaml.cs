@@ -100,13 +100,22 @@ public partial class MainWindow : Window
     {
         if (_adminFlowOpen) return;
         _adminFlowOpen = true;
+        // Stand down from Topmost for as long as a dialog is up. An owned
+        // window does not reliably rise above a fullscreen Topmost owner, and
+        // when it loses that race the dialog is still modal — so every touch on
+        // the page underneath is swallowed by something nobody can see, and the
+        // kiosk reads as frozen with no way back short of killing the process.
+        var wasTopmost = Topmost;
+        Topmost = false;
         try
         {
             var pinDialog = new AdminPinDialog();
+            KioskDialog.Prepare(pinDialog);
             await pinDialog.ShowDialog(this);
             if (!pinDialog.Authorized) return;
 
             var choice = new AdminChoiceDialog();
+            KioskDialog.Prepare(choice);
             await choice.ShowDialog(this);
             switch (choice.Result)
             {
@@ -129,6 +138,7 @@ public partial class MainWindow : Window
                     // on the next MicOrb tap.
                     try { await _runtime.StopAsync(); } catch { }
                     var settings = new AdminSettingsWindow();
+                    KioskDialog.Prepare(settings);
                     await settings.ShowDialog(this);
                     break;
 
@@ -139,6 +149,10 @@ public partial class MainWindow : Window
         }
         finally
         {
+            // Back to Topmost even if a dialog threw on the way — leaving the
+            // kiosk merely fullscreen would let anything the OS pops up sit
+            // over it for the rest of the day.
+            Topmost = wasTopmost;
             _adminFlowOpen = false;
         }
     }

@@ -59,7 +59,4 @@
     <Thickness x:Key="KioskContentMargin">56,24,56,20</Thickness>
     <Thickness x:Key="KioskContactsMargin">56,32,56,40</Thickness>
 
-    <!-- Voice orb. Smaller: 200 px of a 1080-tall screen is a fifth of it,
-         and the orb sits over content rather than beside it here. -->
-    <x:Double x:Key="KioskOrbSize">160</x:Double>
 </ResourceDictionary>

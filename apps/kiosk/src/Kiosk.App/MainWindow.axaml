@@ -52,7 +52,7 @@
         <Border x:Name="AdminHotZone"
                 Grid.Row="0" Grid.RowSpan="3"
                 VerticalAlignment="Top" HorizontalAlignment="Left"
-                Width="{DynamicResource KioskOrbSize}" Height="{DynamicResource KioskOrbSize}"
+                Width="200" Height="200"
                 Background="Transparent" />
 
         <!-- Debug nav. Top-right. Visible only in DEBUG builds — Release
