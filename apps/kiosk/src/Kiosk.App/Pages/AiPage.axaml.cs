@@ -9,12 +9,11 @@ using Kiosk.App.State;
 
 namespace Kiosk.App.Pages;
 
-/// <summary>Voice-assistant page with the 3D robot character. Robot is the
-/// listening indicator (chest glow + bob animation driven by playback FFT
-/// via Robot.Analyser). MicOrb is hidden by MainWindow while this page is
-/// active. Voice session lifecycle:
-///   - Loaded → wire analyser, StartAsync (idempotent), arm silence timer.
-///   - Unloaded → tear down analyser + timer. Stop the runtime ONLY if we're
+/// <summary>Voice-assistant page. The robot is a still image and MicOrb is
+/// the listening indicator, same as everywhere else in the kiosk. Voice
+/// session lifecycle:
+///   - Loaded → StartAsync (idempotent), arm silence timer.
+///   - Unloaded → tear down the timer. Stop the runtime ONLY if we're
 ///     going back to Home; if the agent navigated us to Submit/Qabul to
 ///     complete a flow, keep the WS alive so the user can still talk.
 ///   - 30 s with no input-level / no transcript activity → bounce to Home.
@@ -40,9 +39,6 @@ public partial class AiPage : UserControl
         // local copy keeps the rest of the method on a stable instance.
         var rt = KioskRuntime.Current;
 
-        // Chest glow / bob animation tap into the playback chain's FFT.
-        Robot.Analyser = rt?.Analyser;
-
         // Idempotent subscription: AiPage is not cached (a fresh instance
         // per visit per SessionStore.CurrentView), but the -= guard is
         // still useful if Loaded ever fires twice on the same instance
@@ -51,16 +47,13 @@ public partial class AiPage : UserControl
         SessionStore.Current.PropertyChanged += OnSessionChanged;
         UpdateStatus();
 
-        // Auto-start the voice session. Robot is the mic; no manual MicOrb
-        // tap needed. Idempotent in KioskRuntime so a re-entry doesn't
-        // double-open audio devices.
+        // Auto-start the voice session: walking onto this page is the intent,
+        // so the visitor should not also have to find the orb. Idempotent in
+        // KioskRuntime so a re-entry doesn't double-open audio devices.
         try
         {
             if (rt is not null && !rt.IsActive)
                 await rt.StartAsync(SessionStore.MenuFor(KioskPage.Ai));
-            // Re-wire the analyser after StartAsync — rt.Analyser only
-            // exists once AudioPlayback is constructed inside StartAsync.
-            Robot.Analyser = rt?.Analyser;
         }
         catch (Exception ex)
         {
@@ -82,7 +75,6 @@ public partial class AiPage : UserControl
             _silenceTimer = null;
         }
         SessionStore.Current.PropertyChanged -= OnSessionChanged;
-        Robot.Analyser = null;
 
         // Only close the WS + audio when returning to Home. If the agent
         // navigated us to Submit/Qabul mid-flow, keep the session alive so

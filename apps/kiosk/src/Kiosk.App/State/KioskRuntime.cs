@@ -42,7 +42,6 @@ public sealed class KioskRuntime : IAsyncDisposable
     private bool _speakingForUi;
     private int _quietFrames;
 
-    public AnalyserNode? Analyser => _playback?.Analyser;
     public string BackendUrl { get; private set; } = "";
     public string DeviceId { get; private set; } = "";
     /// <summary>Menu the current session was opened with. Read-only record of

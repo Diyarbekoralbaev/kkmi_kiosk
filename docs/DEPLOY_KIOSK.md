@@ -82,8 +82,7 @@ The kiosk:
 - Stores `device_id` + `backend_url` in DPAPI-encrypted file (no shared secret).
 
 Restart the kiosk app from the admin settings (or wait for the watchdog). On
-next launch it does the update gate, then opens the home screen with the
-robot.
+next launch it does the update gate, then opens the home screen.
 
 ## 5. Day-to-day operations
 

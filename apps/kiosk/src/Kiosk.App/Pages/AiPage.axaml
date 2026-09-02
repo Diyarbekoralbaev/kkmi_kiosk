@@ -2,16 +2,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:robot="using:Kiosk.App.Robot"
              xmlns:controls="using:Kiosk.App.Controls"
              xmlns:state="using:Kiosk.App.State"
              mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1572"
              x:Class="Kiosk.App.Pages.AiPage"
              x:DataType="state:SessionStore">
-    <!-- 2026 redesign: dedicated AI assistant page. Robot fills the body and
-         is audio-reactive via Robot.Analyser (wired in OnLoaded). MicOrb is
-         hidden by MainWindow while this page is active — the robot itself
-         is the listening indicator. Voice session auto-starts on Loaded
+    <!-- 2026 redesign: dedicated AI assistant page. The robot fills the body
+         as a still image; MicOrb (bottom-right, owned by MainWindow) is the
+         listening indicator on this page as on every other. It used to be a
+         live 3D scene that pulsed with the agent's voice, but that ran on
+         OpenGL, which the institute's older kiosks cannot do — see the
+         Assets note in Kiosk.App.csproj. Voice session auto-starts on Loaded
          and auto-closes when the user navigates Home (back button or 30s
          silence timer). Navigation to Submit/Qabul from here keeps the
          session alive so the agent can complete murojaat/qabul flows. -->
@@ -27,13 +28,18 @@
             <controls:NavBar Grid.Column="1" VerticalAlignment="Top" />
         </Grid>
 
-        <!-- Robot card. Background card-white so the OpenGL surface has a
-             clean frame; the OpenGL viewport clears to its own dark color. -->
+        <!-- Robot card. The navy is the colour the GL viewport used to clear
+             to, kept so the page reads the same as it always has. The still is
+             transparent, so it sits on that ground rather than carrying its
+             own. Uniform: the robot is 2:3 and the card is not, on either
+             screen shape — letterboxing it beats stretching it. -->
         <Border Grid.Row="1" Margin="0,28,0,28" CornerRadius="32"
-                Background="{StaticResource KioskCard}"
+                Background="#0A1929"
                 BorderBrush="{StaticResource KioskBorder}" BorderThickness="1"
                 ClipToBounds="True">
-            <robot:RobotControl x:Name="Robot" />
+            <Image Source="avares://Kiosk.App/Assets/robot-still.png"
+                   Stretch="Uniform" Margin="24"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
 
         <StackPanel Grid.Row="2" Spacing="14" HorizontalAlignment="Center" Margin="0,0,0,8">

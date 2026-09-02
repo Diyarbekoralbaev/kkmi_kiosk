@@ -22,14 +22,17 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Keep the kiosk alive through the Intel UHD OpenGL FBO bug. On this
-            // GPU/driver Avalonia intermittently throws OpenGlException ("Unable
-            // to configure OpenGL FBO ... GL_NO_ERROR") from the render commit
-            // when the 3D robot page is shown. Left unhandled it bubbles up as a
-            // terminal AppDomain exception and the whole app exits. Catching it
-            // here at the dispatcher (e.Handled = true) lets the render loop
-            // carry on — the robot may drop a frame but voice + UI keep working.
-            // 3D is kept (no ANGLE, no 2D) per the operator's requirement.
+            // A UI-thread exception must never take the kiosk down in front of
+            // a visitor: unhandled, it becomes a terminal AppDomain fault and
+            // the app exits. Handling it here lets the render loop drop a frame
+            // and carry on, and the throttled log still reaches us via the
+            // crash-log upload on next start.
+            //
+            // This was written for the Intel OpenGL FBO exception the 3D robot
+            // page raised. That page now draws a still image, so the specific
+            // fault is gone — but the guard stays: a kiosk with no keyboard,
+            // reached only over a remote desktop, should not be one exception
+            // away from a black screen.
             Dispatcher.UIThread.UnhandledException += OnUiThreadException;
 
             // Load the saved UI language BEFORE building MainWindow so every

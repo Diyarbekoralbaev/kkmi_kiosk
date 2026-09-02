@@ -13,8 +13,6 @@ namespace Kiosk.App.Audio;
 /// `EnqueuePcm` pushes raw bytes (the WS binary frame, Int16 LE). The
 /// PortAudio output callback drains the queue at the playback rate, padding
 /// with silence if the queue is empty (no glitches on momentary starvation).
-/// Each played sample is also fed to the AnalyserNode so the 3D robot
-/// (slice 8) gets FFT-driven reactivity.
 /// </summary>
 public sealed class AudioPlayback : IDisposable
 {
@@ -27,7 +25,6 @@ public sealed class AudioPlayback : IDisposable
     private readonly PaStream.Callback _callback;
     private bool _disposed;
 
-    public AnalyserNode Analyser { get; } = new AnalyserNode(fftSize: 256);
 
     public AudioPlayback(int? deviceIndex = null)
     {
@@ -92,7 +89,6 @@ public sealed class AudioPlayback : IDisposable
             // Remaining samples already 0 (silence) by array init.
         }
         Marshal.Copy(samples, 0, output, samples.Length);
-        Analyser.Feed(samples);
         return StreamCallbackResult.Continue;
     }
 

@@ -4,7 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,17 +17,11 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="PortAudioSharp2" Version="1.0.6" />
-    <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.6" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
-    <PackageReference Include="StbImageSharp" Version="2.30.15" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.7" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Assets\robot.glb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <!-- SumatraPDF portable .exe (3.6.1 64-bit, 19 MB). Bundled so the
          Windows print path can drive POS-80 thermal printers without
          relying on the OS PDF file-association (which Edge breaks by
@@ -40,5 +33,10 @@
     <!-- Avalonia bundles AvaloniaResource items into the assembly as
          avares:// URIs. The institute logo is referenced from KioskHeader.axaml. -->
     <AvaloniaResource Include="Assets\kkmi-logo.png" />
+    <!-- Robot still. Replaced the 3D scene: the GL path could not run on the
+         institute's older kiosks at all (their Intel graphics cap out at
+         OpenGL 3.1 and the shader needed 3.3) and hung the ones it did run
+         on. Referenced from AiPage.axaml. -->
+    <AvaloniaResource Include="Assets\robot-still.png" />
   </ItemGroup>
 </Project>

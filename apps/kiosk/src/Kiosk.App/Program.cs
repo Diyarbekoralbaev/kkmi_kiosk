@@ -379,24 +379,12 @@ class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
-            // Force WGL (desktop OpenGL) as the preferred Win32 renderer.
-            // Default order is [AngleEgl, Software], but ANGLE silently
-            // refuses our `#version 330 core` shader (it's an OpenGL ES 3.0
-            // backend that expects `#version 300 es`); the RobotControl
-            // surface then renders nothing and we see the parent Border's
-            // white background. WGL gives us a real desktop GL 3.3+ context
-            // so the existing PbrShader compiles. Software stays as a last
-            // resort so the rest of the UI still draws on hardware with no
-            // GL support at all. See Avalonia#18713 + discussion#15055.
-            .With(new Avalonia.Win32PlatformOptions
-            {
-                RenderingMode = new[]
-                {
-                    Avalonia.Win32RenderingMode.Wgl,
-                    Avalonia.Win32RenderingMode.AngleEgl,
-                    Avalonia.Win32RenderingMode.Software,
-                },
-            })
+            // No explicit RenderingMode: Avalonia's Win32 default is
+            // [AngleEgl, Software]. This used to force Wgl first so the
+            // robot's `#version 330 core` shader had a desktop GL context —
+            // the robot is gone, and forcing Wgl is the documented way to
+            // meet Intel's OpenGL driver bugs (AvaloniaUI/Avalonia#11945,
+            // #18560), which is precisely how the kiosks froze.
 #if DEBUG
             .WithDeveloperTools()
 #endif

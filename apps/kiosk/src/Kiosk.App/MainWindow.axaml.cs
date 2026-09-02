@@ -243,11 +243,11 @@ public partial class MainWindow : Window
         {
             RestartIdleTimer();
         }
-        // Hide the MicOrb on the AI assistant page — the robot's chest glow
-        // is the listening indicator there. Show it everywhere else.
         if (e.PropertyName == nameof(SessionStore.CurrentPage))
         {
-            MicOrb.IsVisible = SessionStore.Current.CurrentPage != KioskPage.Ai;
+            // The orb used to be hidden on the AI page, where the 3D robot's
+            // chest glow did the job. The robot is a still now, so the orb is
+            // the listening indicator there too.
             _ = SyncVoiceToPageAsync(SessionStore.Current.CurrentPage);
         }
     }
