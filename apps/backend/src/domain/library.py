@@ -51,6 +51,7 @@ SECTIONS: tuple[str, ...] = (
     "surgery",
     "pediatrics",
     "obstetrics",
+    "psychiatry",
     "dentistry",
     "nursing",
     "public_health",
@@ -98,6 +99,10 @@ SECTION_LABELS: dict[str, dict[str, str]] = {
     "obstetrics": {
         "kk": "Akusherlik hám ginekologiya", "uz": "Akusherlik va ginekologiya",
         "ru": "Акушерство и гинекология", "en": "Obstetrics and gynaecology",
+    },
+    "psychiatry": {
+        "kk": "Psixiatriya", "uz": "Psixiatriya",
+        "ru": "Психиатрия", "en": "Psychiatry",
     },
     "dentistry": {
         "kk": "Stomatologiya", "uz": "Stomatologiya",

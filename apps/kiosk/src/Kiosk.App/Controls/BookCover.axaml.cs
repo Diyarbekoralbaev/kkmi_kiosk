@@ -37,6 +37,7 @@ public partial class BookCover : UserControl
         ["surgery"] = ("#93331f", "#722617"),
         ["pediatrics"] = ("#20674a", "#164e37"),
         ["obstetrics"] = ("#8a3b5e", "#6a2c48"),
+        ["psychiatry"] = ("#3a3566", "#2a264d"),
         ["dentistry"] = ("#2b6070", "#1f4753"),
         ["nursing"] = ("#5d4a86", "#463769"),
         ["public_health"] = ("#3f6135", "#2e4827"),

@@ -55,6 +55,7 @@ const SECTIONS = [
   { value: 'surgery', label: 'Хирургия' },
   { value: 'pediatrics', label: 'Педиатрия' },
   { value: 'obstetrics', label: 'Акушерство и гинекология' },
+  { value: 'psychiatry', label: 'Психиатрия' },
   { value: 'dentistry', label: 'Стоматология' },
   { value: 'nursing', label: 'Сестринское дело' },
   { value: 'public_health', label: 'Общественное здоровье' },
