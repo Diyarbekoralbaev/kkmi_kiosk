@@ -78,7 +78,9 @@ const sectionLabel = (v: string) =>
 const languageLabel = (v: string) =>
   LANGUAGES.find((l) => l.value === v)?.label ?? v
 
-type BookForm = Omit<Book, 'id' | 'year'> & { year: string }
+// `pages` is the server's count of the uploaded scan, not something the
+// librarian types — it stays out of the form and off the PATCH payload.
+type BookForm = Omit<Book, 'id' | 'year' | 'pages'> & { year: string }
 
 const EMPTY: BookForm = {
   title: '',
@@ -190,7 +192,7 @@ export function BooksPage() {
 
   function openEdit(b: Book) {
     setEditing(b)
-    const { id: _id, year, ...rest } = b
+    const { id: _id, year, pages: _pages, ...rest } = b
     setForm({ ...rest, year: year === null ? '' : String(year) })
     setError('')
     setOpen(true)
