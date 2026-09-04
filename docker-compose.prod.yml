@@ -68,9 +68,11 @@ services:
       REDIS_URL: redis://redis:6379/0
       RELEASES_DIR: /var/lib/kiosk/releases
       PHOTOS_DIR: /var/lib/kiosk/photos
+      BOOKS_DIR: /var/lib/kiosk/books
     volumes:
       - releases:/var/lib/kiosk/releases
       - photos:/var/lib/kiosk/photos
+      - books:/var/lib/kiosk/books
     ports:
       - "127.0.0.1:8031:8000"
     healthcheck:
@@ -134,4 +136,5 @@ volumes:
   redisdata:
   releases:
   photos:
+  books:
   gatusdata:

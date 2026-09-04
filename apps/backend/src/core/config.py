@@ -82,6 +82,10 @@ class Settings(BaseSettings):
     # Mounted as a docker volume in prod so photos survive container rebuilds.
     photos_dir: Path = Field(default=Path("/var/lib/kiosk/photos"))
 
+    # Scanned books + the page images rendered from them. A docker volume in
+    # prod, same as releases and photos, so the scans survive a rebuild.
+    books_dir: Path = Field(default=Path("/var/lib/kiosk/books"))
+
     # GitHub repo (owner/repo) to sync releases from. Empty disables sync.
     kiosk_github_repo: str = Field(default="")
 

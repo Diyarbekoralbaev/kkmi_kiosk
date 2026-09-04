@@ -13,11 +13,11 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Query, Request, status
+from fastapi import APIRouter, File, Query, Request, UploadFile, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 
-from ...core import audit
+from ...core import audit, bookpages
 from ...core.deps import CurrentOrg, DbSession, OrgAdmin
 from ...core.errors import NotFoundError, ValidationError
 from ...domain.library import BOOK_LANGUAGES, SECTIONS, LibraryBook
@@ -38,6 +38,7 @@ class BookOut(BaseModel):
     shelf: str
     description: str
     available: bool
+    pages: int
 
 
 class BookListOut(BaseModel):
@@ -93,6 +94,7 @@ def _out(b: LibraryBook) -> BookOut:
         shelf=b.shelf,
         description=b.description,
         available=b.available,
+        pages=b.page_count,
     )
 
 
@@ -248,3 +250,87 @@ async def delete_book(
         before={"title": b.title},
         request=request,
     )
+
+
+# A scanned textbook of 100-250 pages runs 10-35 MB. 60 gives room for a
+# heavier scan without letting a mis-picked file (a video, a disk image) reach
+# the disk.
+PDF_MAX_BYTES = 60 * 1024 * 1024
+
+
+@router.post("/{book_id}/pdf", response_model=BookOut)
+async def upload_pdf(
+    book_id: uuid.UUID,
+    session: DbSession,
+    actor: OrgAdmin,
+    org: CurrentOrg,
+    request: Request,
+    file: UploadFile = File(...),
+) -> BookOut:
+    """Attach (or replace) the scanned book a visitor reads at the kiosk.
+
+    The upload is validated by its bytes, not by the Content-Type the browser
+    claims, and then by actually opening it — a file that pdfium cannot page
+    through is rejected here, while the librarian is still looking at the form,
+    rather than becoming a reader that fails at the kiosk.
+    """
+    b = await _get(session, org.id, book_id)
+
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await file.read(256 * 1024):
+        chunks.append(chunk)
+        total += len(chunk)
+        if total > PDF_MAX_BYTES:
+            raise ValidationError("pdf_too_large")
+    data = b"".join(chunks)
+    if not data:
+        raise ValidationError("pdf_empty")
+    if not data.startswith(b"%PDF-"):
+        raise ValidationError("pdf_invalid_format")
+
+    try:
+        name, pages = await bookpages.store(b.id, data)
+    except Exception as e:
+        raise ValidationError("pdf_unreadable") from e
+
+    b.pdf_path = name
+    b.page_count = pages
+    await session.flush()
+    await audit.record(
+        session,
+        actor_user_id=actor.id,
+        actor_org_id=org.id,
+        action="book.pdf.upload",
+        entity_type="library_book",
+        entity_id=b.id,
+        after={"pages": pages, "size": total},
+        request=request,
+    )
+    return _out(b)
+
+
+@router.delete("/{book_id}/pdf", response_model=BookOut)
+async def delete_pdf(
+    book_id: uuid.UUID,
+    session: DbSession,
+    actor: OrgAdmin,
+    org: CurrentOrg,
+    request: Request,
+) -> BookOut:
+    """Detach the scan. The catalogue card stays; only the reader goes away."""
+    b = await _get(session, org.id, book_id)
+    await bookpages.delete(b.id, b.pdf_path)
+    b.pdf_path = ""
+    b.page_count = 0
+    await session.flush()
+    await audit.record(
+        session,
+        actor_user_id=actor.id,
+        actor_org_id=org.id,
+        action="book.pdf.delete",
+        entity_type="library_book",
+        entity_id=b.id,
+        request=request,
+    )
+    return _out(b)

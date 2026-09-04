@@ -447,7 +447,18 @@ TOOL_DECLS: dict[str, dict[str, Any]] = {
 # Which tools each menu declares. The kiosk sends the menu on the WS URL; an
 # unknown value falls back to "maslahatchi" (see api/kiosk_ws.py).
 MENU_TOOLS: dict[str, tuple[str, ...]] = {
-    "maslahatchi": ("navigate_to_screen", "show_info_card"),
+    # The general assistant carries the two book lookups as well. A visitor
+    # who asks "do you have a book on anatomy" from here was previously told
+    # to go and ask a librarian — the agent had no way to see the catalogue,
+    # so it invented the only answer it could. Two read-only lookups are a
+    # different scale from declaring all ten tools at once, which is the thing
+    # that made flows blend.
+    "maslahatchi": (
+        "navigate_to_screen",
+        "show_info_card",
+        "find_book",
+        "show_books",
+    ),
     "library": ("navigate_to_screen", "find_book", "show_books"),
     "abituriyent": (
         "navigate_to_screen",

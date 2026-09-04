@@ -178,6 +178,22 @@ class LibraryBook(Base, TimestampMixin):
     """Cleared when a title is withdrawn or lost, instead of deleting the row —
     a librarian who mistypes a search should not be able to erase a record."""
 
+    pdf_path: Mapped[str] = mapped_column(
+        String(255), nullable=False, default="", server_default=""
+    )
+    """Filename of the scanned book under `settings.books_dir`, or "" when the
+    library has not supplied one. The file itself never leaves the server: the
+    kiosk asks for one rendered page at a time, because the machines in the
+    lobby are from 2011 and putting a PDF engine on them is the same class of
+    thing that already froze them once."""
+
+    page_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    """Pages in that PDF, counted once at upload. Zero means there is nothing
+    to read — it is the flag the kiosk uses to decide whether to offer the
+    reader at all, so it must stay in step with `pdf_path`."""
+
     cover: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     """The jacket image, stored as bytes rather than a URL.
 

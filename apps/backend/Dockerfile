@@ -45,7 +45,7 @@ COPY src /app/src
 # Volume mount targets. `app` user owns them so /api/super/releases/upload
 # and /api/gov/officials/<id>/photo writes succeed even when the volume is
 # created fresh (docker volumes default to root-owned mountpoints).
-RUN mkdir -p /var/lib/kiosk/releases /var/lib/kiosk/photos \
+RUN mkdir -p /var/lib/kiosk/releases /var/lib/kiosk/photos /var/lib/kiosk/books \
  && chown -R app:app /var/lib/kiosk /app
 USER app
 

@@ -15,6 +15,7 @@ from typing import Any
 from fastapi import APIRouter, Header, Query, Response
 from sqlalchemy import select
 
+from ..core import bookpages
 from ..core import library as library_q
 from ..core.deps import DbSession
 from ..core.device_auth import AUTH_HEADER_NAME, resolve_device_from_signed_request
@@ -88,6 +89,51 @@ async def book_cover(
         media_type="image/jpeg",
         # Jackets never change once stored, and the kiosk re-requests them on
         # every browse. A long cache keeps the shelf instant.
+        headers={"Cache-Control": "public, max-age=604800"},
+    )
+
+
+@router.get("/books/{book_id}/page/{page}.jpg")
+async def book_page(
+    book_id: uuid.UUID,
+    page: int,
+    session: DbSession,
+    x_kiosk_auth: str | None = Header(default=None, alias=AUTH_HEADER_NAME),
+) -> Response:
+    """One page of a scanned book, rendered to JPEG.
+
+    A page at a time rather than the file: the reader on the kiosk is an image
+    viewer, not a PDF viewer, which is what lets it run on hardware that cannot
+    manage the second thing. The first request for a page renders it, every
+    request after that is served from the cache beside the scan.
+    """
+    device = await resolve_device_from_signed_request(session, x_kiosk_auth)
+    row = (
+        await session.execute(
+            select(LibraryBook.pdf_path, LibraryBook.page_count).where(
+                LibraryBook.id == book_id,
+                LibraryBook.org_id == device.org_id,
+                LibraryBook.deleted_at.is_(None),
+            )
+        )
+    ).one_or_none()
+    if row is None or not row.pdf_path or row.page_count <= 0:
+        raise NotFoundError()
+    if page < 1 or page > row.page_count:
+        raise NotFoundError()
+
+    try:
+        data = await bookpages.page_jpeg(book_id, row.pdf_path, page)
+    except FileNotFoundError:
+        # The row says there is a scan and the disk disagrees. Answer 404 so
+        # the reader closes rather than hanging on a page that will never come.
+        raise NotFoundError() from None
+
+    return Response(
+        content=data,
+        media_type="image/jpeg",
+        # A rendered page is immutable for the life of the scan, and a reader
+        # walks back and forth over the same few pages.
         headers={"Cache-Control": "public, max-age=604800"},
     )
 

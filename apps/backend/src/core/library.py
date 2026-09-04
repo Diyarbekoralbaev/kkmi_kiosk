@@ -41,6 +41,10 @@ def _book_dict(b: LibraryBook, locale: str = "kk") -> dict[str, Any]:
         # between fetching the image and drawing its own designed cover, and it
         # keeps a browse listing small.
         "has_cover": b.cover is not None,
+        # Page count doubles as "is there anything to read": the kiosk shows
+        # the reader button only when this is non-zero, and needs the number
+        # anyway to render "12 / 142" and to stop at the last page.
+        "pages": b.page_count,
     }
 
 

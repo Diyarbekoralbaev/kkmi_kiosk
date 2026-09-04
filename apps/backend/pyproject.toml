@@ -25,6 +25,9 @@ dependencies = [
     "google-genai>=0.3",
     "PyYAML>=6.0",
     "uuid7>=0.1.0",
+    # Renders a scanned book's pages for the kiosk reader. PDFium via a
+    # manylinux wheel — no poppler, no apt line in the image.
+    "pypdfium2>=4.30",
 ]
 
 [project.optional-dependencies]
