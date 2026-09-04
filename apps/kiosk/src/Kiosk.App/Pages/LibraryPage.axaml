@@ -253,9 +253,12 @@
             </ScrollViewer>
         </Grid>
 
-        <!-- Covers the page while a book is open. Spans every row so the
-             search box and section list cannot be tapped through it. -->
-        <controls:BookReader Grid.Row="0" Grid.RowSpan="3" x:Name="Reader" />
+        <!-- The reader is put here by code-behind on first use, not declared
+             in this XAML. A control that fails to construct takes its whole
+             parent down with it, and the parent here is the only way into the
+             catalogue — the shelf must not be reachable only if the reader
+             works. Empty panel, zero cost until somebody opens a book. -->
+        <Panel Grid.Row="0" Grid.RowSpan="3" x:Name="ReaderHost" />
     </Grid>
 
     <UserControl.Styles>

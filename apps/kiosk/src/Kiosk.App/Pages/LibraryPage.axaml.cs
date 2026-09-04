@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Kiosk.App.Controls;
 using Kiosk.App.Localization;
 using Kiosk.App.Net;
 using Kiosk.App.State;
@@ -49,7 +50,7 @@ public partial class LibraryPage : UserControl, IBackNavigable
         // The agent can navigate away while a book is open. Closing here is
         // what clears IsReadingBook — left set, the idle timer would never
         // fire again and the kiosk would sit on whatever page it was on.
-        Reader.Close();
+        _reader?.Close();
     }
 
     private void OnSessionChanged(object? sender, PropertyChangedEventArgs e)
@@ -114,9 +115,26 @@ public partial class LibraryPage : UserControl, IBackNavigable
     /// one on screen rather than re-deriving it from the button's Tag.</summary>
     private BookDto? _detail;
 
+    private BookReader? _reader;
+
     private void OnReadClick(object? sender, RoutedEventArgs e)
     {
-        if (_detail is { Pages: > 0 }) Reader.Open(_detail);
+        if (_detail is not { Pages: > 0 }) return;
+        try
+        {
+            if (_reader is null)
+            {
+                _reader = new BookReader();
+                ReaderHost.Children.Add(_reader);
+            }
+            _reader.Open(_detail);
+        }
+        catch (Exception ex)
+        {
+            // Losing the reader costs one button. Losing the page would cost
+            // the catalogue, so this never escapes.
+            Console.Error.WriteLine($"[library] reader: {ex}");
+        }
     }
 
     // ── Loading ──────────────────────────────────────────────────────────────
@@ -232,7 +250,7 @@ public partial class LibraryPage : UserControl, IBackNavigable
 
     private void OnBackToList(object? sender, RoutedEventArgs e)
     {
-        Reader.Close();
+        _reader?.Close();
         SessionStore.Current.SelectedBook = null;
     }
 }

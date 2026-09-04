@@ -342,7 +342,7 @@ public partial class SessionStore : ObservableObject
 
     public ObservableCollection<string> TranscriptLog { get; } = new();
 
-    public Control CurrentView => CurrentPage switch
+    public Control CurrentView => Safe(() => CurrentPage switch
     {
         KioskPage.Home => _home ??= new HomePage(),
         KioskPage.Library => _library ??= new LibraryPage(),
@@ -357,7 +357,50 @@ public partial class SessionStore : ObservableObject
         // silence timer.
         KioskPage.Ai => new AiPage(),
         _ => _home ??= new HomePage(),
-    };
+    });
+
+    /// <summary>Build a page, or show why it could not be built.
+    ///
+    /// This getter is read from a binding, and a binding swallows whatever it
+    /// throws — so a page that fails to construct leaves the ContentControl
+    /// empty and the kiosk shows a blank screen with nothing written anywhere.
+    /// That is the worst possible failure to debug remotely, on machines
+    /// reached only over a remote desktop. Put the reason on the screen and in
+    /// crash.log, which uploads to the backend on the next start.</summary>
+    private static Control Safe(Func<Control> build)
+    {
+        try
+        {
+            return build();
+        }
+        catch (Exception ex)
+        {
+            var text = ex.ToString();
+            try
+            {
+                var dir = System.IO.Path.GetDirectoryName(
+                    Settings.KioskSettings.SettingsPath) ?? ".";
+                System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(dir, "crash.log"),
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [page] {text}\n");
+            }
+            catch { /* the screen still gets the message */ }
+
+            return new Border
+            {
+                Background = Avalonia.Media.Brushes.White,
+                Padding = new Avalonia.Thickness(40),
+                Child = new SelectableTextBlock
+                {
+                    Text = text,
+                    FontSize = 16,
+                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    Foreground = Avalonia.Media.Brushes.Firebrick,
+                },
+            };
+        }
+    }
 
     public void Navigate(KioskPage page)
     {

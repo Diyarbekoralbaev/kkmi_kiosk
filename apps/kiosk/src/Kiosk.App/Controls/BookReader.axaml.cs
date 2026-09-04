@@ -3,7 +3,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Kiosk.App.Localization;
@@ -44,8 +43,6 @@ public partial class BookReader : UserControl
         PrevButton.Click += (_, _) => _ = GoAsync(_page - 1);
         NextButton.Click += (_, _) => _ = GoAsync(_page + 1);
     }
-
-    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
     public void Open(BookDto book)
     {
