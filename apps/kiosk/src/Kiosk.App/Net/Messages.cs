@@ -228,6 +228,10 @@ public sealed record BookDto
     /// <summary>A jacket image is stored for this book. When false the kiosk
     /// draws its own designed cover instead of showing a broken frame.</summary>
     [JsonPropertyName("has_cover")] public bool HasCover { get; init; }
+    /// <summary>Pages in the scanned copy, or 0 when the library has not
+    /// supplied one. Doubles as the flag for whether to offer the reader —
+    /// there is nothing to open when it is zero.</summary>
+    [JsonPropertyName("pages")] public int Pages { get; init; }
 }
 
 public sealed record BookSectionDto

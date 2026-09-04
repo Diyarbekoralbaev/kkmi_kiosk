@@ -172,6 +172,12 @@
     <x:String x:Key="LibraryBackToList">Назад к списку</x:String>
     <x:String x:Key="LibraryShelf">ПОЛКА</x:String>
     <x:String x:Key="LibraryCopies">ЭКЗЕМПЛЯРОВ</x:String>
+    <x:String x:Key="LibraryRead">Читать книгу</x:String>
+    <x:String x:Key="ReaderClose">Закрыть</x:String>
+    <x:String x:Key="ReaderPrev">◀ Назад</x:String>
+    <x:String x:Key="ReaderNext">Вперёд ▶</x:String>
+    <x:String x:Key="ReaderLoading">Страница загружается...</x:String>
+    <x:String x:Key="ReaderFailed">Не удалось открыть страницу</x:String>
     <x:String x:Key="LibraryAbout">О КНИГЕ</x:String>
     <x:String x:Key="LibraryYear">Год издания</x:String>
     <x:String x:Key="LibraryPublisher">Издательство</x:String>

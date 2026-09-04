@@ -202,6 +202,12 @@
                         </Grid>
                     </Border>
 
+                    <!-- Only when the library supplied a scan. A card with no
+                         book behind it must not offer to open one. -->
+                    <Button x:Name="ReadButton" Click="OnReadClick"
+                            Classes="read" IsVisible="False"
+                            Content="{DynamicResource LibraryRead}" />
+
                     <Border Classes="card" x:Name="DescriptionCard">
                         <StackPanel Spacing="10">
                             <TextBlock Text="{DynamicResource LibraryAbout}"
@@ -246,9 +252,26 @@
                 </StackPanel>
             </ScrollViewer>
         </Grid>
+
+        <!-- Covers the page while a book is open. Spans every row so the
+             search box and section list cannot be tapped through it. -->
+        <controls:BookReader Grid.Row="0" Grid.RowSpan="3" x:Name="Reader" />
     </Grid>
 
     <UserControl.Styles>
+        <Style Selector="Button.read">
+            <Setter Property="Background" Value="{StaticResource KioskAccent}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="{StaticResource KioskRadiusButton}" />
+            <Setter Property="FontSize" Value="26" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="MinHeight" Value="88" />
+            <Setter Property="Padding" Value="34,20" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
         <Style Selector="Button.row">
             <Setter Property="Background" Value="{StaticResource KioskCard}" />
             <Setter Property="BorderBrush" Value="{StaticResource KioskBorder}" />

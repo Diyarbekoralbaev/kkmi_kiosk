@@ -43,8 +43,14 @@ public partial class LibraryPage : UserControl, IBackNavigable
         await LoadSectionsAsync();
     }
 
-    private void OnUnloaded(object? sender, RoutedEventArgs e) =>
+    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    {
         SessionStore.Current.PropertyChanged -= OnSessionChanged;
+        // The agent can navigate away while a book is open. Closing here is
+        // what clears IsReadingBook — left set, the idle timer would never
+        // fire again and the kiosk would sit on whatever page it was on.
+        Reader.Close();
+    }
 
     private void OnSessionChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -99,6 +105,18 @@ public partial class LibraryPage : UserControl, IBackNavigable
         DetailIsbn.Text = OrDash(b.Isbn);
         DetailDescription.Text = b.Description;
         DescriptionCard.IsVisible = !string.IsNullOrWhiteSpace(b.Description);
+        // Pages doubles as "is there a scan" — see BookDto.
+        ReadButton.IsVisible = b.Pages > 0;
+        _detail = b;
+    }
+
+    /// <summary>The book the detail panel is showing, so the reader opens the
+    /// one on screen rather than re-deriving it from the button's Tag.</summary>
+    private BookDto? _detail;
+
+    private void OnReadClick(object? sender, RoutedEventArgs e)
+    {
+        if (_detail is { Pages: > 0 }) Reader.Open(_detail);
     }
 
     // ── Loading ──────────────────────────────────────────────────────────────
@@ -212,6 +230,9 @@ public partial class LibraryPage : UserControl, IBackNavigable
         await LoadSectionsAsync();
     }
 
-    private void OnBackToList(object? sender, RoutedEventArgs e) =>
+    private void OnBackToList(object? sender, RoutedEventArgs e)
+    {
+        Reader.Close();
         SessionStore.Current.SelectedBook = null;
+    }
 }

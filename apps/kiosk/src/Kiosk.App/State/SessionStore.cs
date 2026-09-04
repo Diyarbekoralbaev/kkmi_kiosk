@@ -147,6 +147,12 @@ public partial class SessionStore : ObservableObject
 
     [ObservableProperty] private string _liveTranscript = "";
 
+    /// <summary>A scanned book is open in the reader. The idle timer stands
+    /// down while it is: a visitor reading a page of a textbook can easily go
+    /// two minutes without touching the screen, and being returned to the home
+    /// tiles mid-paragraph is the reader failing at its one job.</summary>
+    [ObservableProperty] private bool _isReadingBook;
+
     /// <summary>Backend menu name for a page. Pages with no agent (Home,
     /// Contacts) never open a session, so they map to the general assistant
     /// purely as a safe default.</summary>

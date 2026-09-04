@@ -179,6 +179,12 @@
     <x:String x:Key="LibraryBackToList">Back to the list</x:String>
     <x:String x:Key="LibraryShelf">SHELF</x:String>
     <x:String x:Key="LibraryCopies">COPIES</x:String>
+    <x:String x:Key="LibraryRead">Read the book</x:String>
+    <x:String x:Key="ReaderClose">Close</x:String>
+    <x:String x:Key="ReaderPrev">◀ Previous</x:String>
+    <x:String x:Key="ReaderNext">Next ▶</x:String>
+    <x:String x:Key="ReaderLoading">Loading page...</x:String>
+    <x:String x:Key="ReaderFailed">Could not open that page</x:String>
     <x:String x:Key="LibraryAbout">ABOUT THIS BOOK</x:String>
     <x:String x:Key="LibraryYear">Year</x:String>
     <x:String x:Key="LibraryPublisher">Publisher</x:String>

@@ -177,6 +177,12 @@
     <x:String x:Key="LibraryBackToList">Ro‘yxatga qaytish</x:String>
     <x:String x:Key="LibraryShelf">JAVON</x:String>
     <x:String x:Key="LibraryCopies">NUSXA</x:String>
+    <x:String x:Key="LibraryRead">Kitobni o‘qish</x:String>
+    <x:String x:Key="ReaderClose">Yopish</x:String>
+    <x:String x:Key="ReaderPrev">◀ Oldingi</x:String>
+    <x:String x:Key="ReaderNext">Keyingi ▶</x:String>
+    <x:String x:Key="ReaderLoading">Sahifa yuklanmoqda...</x:String>
+    <x:String x:Key="ReaderFailed">Sahifani ochib bo‘lmadi</x:String>
     <x:String x:Key="LibraryAbout">KITOB HAQIDA</x:String>
     <x:String x:Key="LibraryYear">Nashr yili</x:String>
     <x:String x:Key="LibraryPublisher">Nashriyot</x:String>

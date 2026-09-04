@@ -171,6 +171,12 @@
     <x:String x:Key="LibraryBackToList">Dizimge qaytıw</x:String>
     <x:String x:Key="LibraryShelf">JAVAN</x:String>
     <x:String x:Key="LibraryCopies">NUSQA</x:String>
+    <x:String x:Key="LibraryRead">Kitaptı oqıw</x:String>
+    <x:String x:Key="ReaderClose">Jabıw</x:String>
+    <x:String x:Key="ReaderPrev">◀ Aldıńǵı</x:String>
+    <x:String x:Key="ReaderNext">Keyingi ▶</x:String>
+    <x:String x:Key="ReaderLoading">Bet júklenip atır...</x:String>
+    <x:String x:Key="ReaderFailed">Bettі ashıp bolmadı</x:String>
     <x:String x:Key="LibraryAbout">KITAP HAQQINDA</x:String>
     <x:String x:Key="LibraryYear">Baspa jılı</x:String>
     <x:String x:Key="LibraryPublisher">Baspaxana</x:String>

@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="1400"
+             x:Class="Kiosk.App.Controls.BookReader"
+             IsVisible="False">
+    <!-- Full-cover reader for a scanned book. The page arrives from the backend
+         already rendered to JPEG, so this is an image viewer: the kiosks in the
+         lobby are from 2011 and a PDF engine on them is the same class of thing
+         that already froze them.
+
+         Dark ground on purpose — a lit white page against a lit white app is
+         hard to read across a hall, and the darkness marks that the visitor has
+         stepped into a book rather than another screen of the kiosk. -->
+    <Border Background="#0E1620">
+        <Grid RowDefinitions="Auto,*,Auto" Margin="24,20,24,20">
+
+            <!-- Title + close -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="20">
+                <TextBlock Grid.Column="0" x:Name="TitleText"
+                           FontSize="26" FontWeight="SemiBold" Foreground="#E8EEF5"
+                           VerticalAlignment="Center"
+                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1" x:Name="CloseButton" Classes="readerClose"
+                        Content="{DynamicResource ReaderClose}" />
+            </Grid>
+
+            <!-- The page. Uniform: a scan must never be stretched, a distorted
+                 line of type is harder to read than a smaller one. -->
+            <Border Grid.Row="1" Margin="0,18,0,18" CornerRadius="10"
+                    Background="#0A121B" ClipToBounds="True">
+                <Grid>
+                    <Image x:Name="PageImage" Stretch="Uniform"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <TextBlock x:Name="StatusText"
+                               Text="{DynamicResource ReaderLoading}"
+                               FontSize="22" Foreground="#8FA3B8"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Paging. Deliberately large: this is operated with a finger, by
+                 someone standing up, often an older visitor. -->
+            <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="20">
+                <Button Grid.Column="0" x:Name="PrevButton" Classes="readerNav"
+                        Content="{DynamicResource ReaderPrev}" />
+                <TextBlock Grid.Column="1" x:Name="PageText"
+                           FontSize="26" FontWeight="SemiBold" Foreground="#C8D6E5"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Button Grid.Column="2" x:Name="NextButton" Classes="readerNav"
+                        Content="{DynamicResource ReaderNext}" />
+            </Grid>
+        </Grid>
+    </Border>
+
+    <UserControl.Styles>
+        <Style Selector="Button.readerNav">
+            <Setter Property="MinWidth" Value="190" />
+            <Setter Property="MinHeight" Value="86" />
+            <Setter Property="FontSize" Value="26" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Background" Value="#1B2A3C" />
+            <Setter Property="Foreground" Value="#E8EEF5" />
+            <Setter Property="BorderBrush" Value="#2C425C" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.readerNav:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#141F2C" />
+            <Setter Property="TextElement.Foreground" Value="#4A5C70" />
+        </Style>
+        <Style Selector="Button.readerClose">
+            <Setter Property="MinWidth" Value="150" />
+            <Setter Property="MinHeight" Value="64" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Background" Value="#24384F" />
+            <Setter Property="Foreground" Value="#E8EEF5" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

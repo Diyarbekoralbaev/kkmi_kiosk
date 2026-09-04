@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { BookOpen, Pencil, Plus, Search, Trash2, Upload } from 'lucide-react'
 import { Layout } from '../components/Layout'
 import { PageHeader } from '../components/PageHeader'
 import {
@@ -41,6 +41,9 @@ interface Book {
   shelf: string
   description: string
   available: boolean
+  /** Pages in the uploaded scan, 0 when there is none. The kiosk offers the
+   *  reader on this alone, so it is what the column shows. */
+  pages: number
 }
 
 // Must match domain/library.SECTIONS — the kiosk browses by these keys.
@@ -130,6 +133,47 @@ export function BooksPage() {
     onError: (e) => setError(asApiError(e).message),
   })
 
+  // One picker for the whole table; the row that asked for it is held in
+  // uploadFor so the file lands on the right book.
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploadFor, setUploadFor] = useState<string | null>(null)
+
+  const uploadPdf = useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File }) => {
+      const fd = new FormData()
+      fd.append('file', file)
+      // A scan is 10-35 MB and the institute's uplink is not fast; the client
+      // default of 30 s cuts a legitimate upload off part-way.
+      await api.post(`/api/gov/books/${id}/pdf`, fd, { timeout: 600_000 })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['gov-books'] })
+      setError('')
+    },
+    onError: (e) => setError(asApiError(e).message),
+  })
+
+  const removePdf = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/api/gov/books/${id}/pdf`)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['gov-books'] }),
+    onError: (e) => setError(asApiError(e).message),
+  })
+
+  function pickPdf(id: string) {
+    setUploadFor(id)
+    fileRef.current?.click()
+  }
+
+  function onPdfChosen(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    // Clear immediately so picking the same file twice still fires onChange.
+    e.target.value = ''
+    if (file && uploadFor) uploadPdf.mutate({ id: uploadFor, file })
+    setUploadFor(null)
+  }
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       await api.delete(`/api/gov/books/${id}`)
@@ -154,6 +198,14 @@ export function BooksPage() {
 
   return (
     <Layout>
+      {/* Shared by every row — see pickPdf. */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={onPdfChosen}
+      />
       <PageHeader
         title="Библиотека"
         description="Каталог книг института. Киоск и ИИ-ассистент отвечают только по этому списку — книги, которой здесь нет, для них не существует."
@@ -219,6 +271,7 @@ export function BooksPage() {
                   <TH>Год</TH>
                   <TH>Полка</TH>
                   <TH>Экз.</TH>
+                  <TH>Скан</TH>
                   <TH />
                 </TR>
               </THead>
@@ -238,7 +291,35 @@ export function BooksPage() {
                         <span className="text-warning">не указана</span>
                       )}
                     </TD>
-                    <TD>{b.copies}</TD>
+                    {/* The scan is what lets a visitor read the book at the
+                        kiosk rather than only find it on a shelf. */}
+                    <TD>
+                      {b.pages > 0 ? (
+                        <span className="inline-flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-success" />
+                          {b.pages} стр.
+                          <button
+                            type="button"
+                            className="text-xs text-danger underline"
+                            onClick={() => {
+                              if (confirm(`Убрать скан «${b.title}»?`))
+                                removePdf.mutate(b.id)
+                            }}
+                          >
+                            убрать
+                          </button>
+                        </span>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          disabled={uploadPdf.isPending}
+                          onClick={() => pickPdf(b.id)}
+                        >
+                          <Upload className="h-4 w-4" />
+                          <span className="ml-2 text-xs">PDF</span>
+                        </Button>
+                      )}
+                    </TD>
                     <TD className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" onClick={() => openEdit(b)}>

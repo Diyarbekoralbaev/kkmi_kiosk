@@ -247,6 +247,28 @@ public static class KioskApi
         }
     }
 
+    /// <summary>One page of a scanned book, already rendered to JPEG by the
+    /// backend. The kiosk asks for pictures rather than the PDF: it has no PDF
+    /// engine, deliberately — see the note on the endpoint.</summary>
+    public static async Task<byte[]?> GetBookPageAsync(string bookId, int page)
+    {
+        var creds = DeviceKeyStore.Load();
+        if (creds is null) return null;
+        try
+        {
+            var resp = await SignedHttpClient.GetAsync(
+                creds.BackendUrl,
+                $"/api/kiosk/library/books/{bookId}/page/{page}.jpg");
+            if (!resp.IsSuccessStatusCode) return null;
+            return await resp.Content.ReadAsByteArrayAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[api] page {bookId}/{page}: {ex.Message}");
+            return null;
+        }
+    }
+
     public static Task<BookSectionListResponse?> GetBookSectionsAsync(string locale) =>
         GetAsync($"/api/kiosk/library/sections?locale={Uri.EscapeDataString(locale)}",
                  KioskJsonContext.Default.BookSectionListResponse);

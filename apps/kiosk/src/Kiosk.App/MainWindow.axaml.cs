@@ -219,6 +219,8 @@ public partial class MainWindow : Window
         _idleTimer = new DispatcherTimer { Interval = IdleTimeout };
         _idleTimer.Tick += (_, _) =>
         {
+            // Reading is activity, it just isn't touching.
+            if (SessionStore.Current.IsReadingBook) return;
             // After 2 min of total inactivity, drop back to home AND stop the voice
             // session if it's still running — saves Gemini quota when someone walks
             // away mid-conversation.
